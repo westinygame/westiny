@@ -14,4 +14,8 @@ impl UnitToPixelCalculator {
     pub fn to_pixels(&self, size_unit: &SizeUnit) -> u32 {
         self.multiplier * size_unit
     }
+
+    pub fn to_units(&self, size_pixel: u32) -> u32 {
+        size_pixel / self.multiplier
+    }
 }
