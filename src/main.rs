@@ -1,52 +1,89 @@
 mod board;
 mod size;
+mod tile;
+mod assets;
 
+use std::env;
+use std::path;
 use ggez::{GameResult, ContextBuilder, event, Context};
 use ggez::event::EventHandler;
-use ggez::conf::{WindowSetup, WindowMode, Backend, NumSamples};
+use ggez::conf::{
+    WindowSetup,
+    WindowMode,
+    Backend,
+};
 use ggez::graphics::*;
-use board::Board;
+use board::{
+    Board,
+};
 use size::UnitToPixelCalculator;
-use ggez::nalgebra::Point2;
+use ggez::nalgebra::{Point2, Vector2};
+use assets::TileTexture;
+use crate::board::TILE_SIZE;
 
 const BG_COLOR: [f32; 4] = [0.3, 0.3, 0.3, 1.0];
 
 struct GameState {
     board: Board,
     unit_to_pixel: UnitToPixelCalculator,
+    tile_texture: TileTexture,
 }
 
 impl GameState {
-    fn new() -> GameState {
+    fn new(ctx: &mut Context) -> GameState {
         GameState{
             board: Board::new(),
             unit_to_pixel: UnitToPixelCalculator::new(2),
+            tile_texture: TileTexture::create_texture_map(ctx),
         }
     }
 
     fn draw_tiles(&mut self, ctx: &mut Context) -> GameResult {
-        let mut mb = MeshBuilder::new();
+        let opt_hovered_idx = self.board.get_hovered();
+        let tile_size = self.unit_to_pixel.to_pixels(&TILE_SIZE) as f32;
         for x in 0..self.board.get_width() {
             for y in 0..self.board.get_height() {
-                self.refresh_tile( Point::new(x, y), &mut mb)?;
+                let idx = Point::new(x, y);
+                let tile = self.board.get_tile_spot_by_idx(idx).unwrap(); // TODO Error
+
+                let texture_id = tile.get_texture_id();
+
+                let texture = self.tile_texture.get(texture_id)
+                    .expect(format!("Texture not found '{}'", texture_id).as_str()); // TODO Error
+
+                let tile_top = idx.y as f32 * (tile_size);
+                let tile_left = idx.x as f32 * (tile_size);
+
+                let draw_param = DrawParam::new().dest(Point2::new(tile_top, tile_left)).scale(Vector2::new(2.0, 2.0));
+                draw(ctx, texture, draw_param)?;
             }
         }
-        let mesh = &mb.build(ctx)?;
-        draw(ctx, mesh, DrawParam::new())?;
+
+        if let Some(hover_idx) = opt_hovered_idx {
+            self.draw_border(ctx, hover_idx, tile_size);
+        }
         Ok(())
     }
 
-    fn refresh_tile(&mut self, idx: Point<usize>, mb: &mut MeshBuilder) -> GameResult {
-        let tile = self.board.get_tile_spot_by_idx(idx).unwrap();
-        let tile_color = tile.get_view().get_color();
-        let tile_size = self.unit_to_pixel.to_pixels(&tile.size) as f32;
+    fn draw_border(&mut self, ctx: &mut Context, coords: Point<usize>, tile_size: f32) {
+            let top = coords.x as f32 * (tile_size);
+            let bottom = top + tile_size;
+            let left = coords.y as f32 * (tile_size);
+            let right = left + tile_size;
 
-        let tile_top = idx.y as f32 * (tile_size);
-        let tile_left = idx.x as f32 * (tile_size);
+            let top_left = Point2::new(top, left);
+            let top_right = Point2::new(top, right);
+            let bottom_left = Point2::new(bottom, left);
+            let bottom_right = Point2::new(bottom, right);
 
-        let rect = Rect { x: tile_left, y: tile_top, w: tile_size, h: tile_size};
-        mb.rectangle(DrawMode::fill(), rect, tile_color);
-        Ok(())
+            let mesh = &MeshBuilder::default()   // TODO Error
+                .line(&[top_left, top_right], 2_f32, BLACK).unwrap()
+                .line(&[bottom_left, bottom_right], 2_f32, BLACK).unwrap()
+                .line(&[top_left, bottom_left], 2_f32, BLACK).unwrap()
+                .line(&[top_right, bottom_right], 2_f32, BLACK).unwrap()
+                .build(ctx).unwrap();
+
+            draw(ctx, mesh, DrawParam::new()).unwrap_or_default(); // TODO handle Result
     }
 }
 
@@ -73,20 +110,29 @@ impl EventHandler for GameState {
 }
 
 pub fn main() -> GameResult {
+
+    let resource_dir = if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
+        let mut path = path::PathBuf::from(manifest_dir);
+        path.push("resources");
+        path
+    } else {
+        path::PathBuf::from("./resources")
+    };
+
     let window_mode = WindowMode::default()
-        .dimensions(1024_f32, 1024_f32); // TODO get resolution from config
+        .dimensions(512_f32, 512_f32); // TODO get resolution from config
 //        .fullscreen_type(FullscreenType::Desktop);
     let window_setup = WindowSetup::default()
-        .title("Botanique")
-        .samples(NumSamples::Two);
+        .title("Botanique");
     let context_builder = ContextBuilder::new("Botanique", "surdom")
         .window_setup(window_setup)
         .window_mode(window_mode)
-        .backend(Backend::default().version(3, 2));
+        .backend(Backend::default().version(3, 2))
+        .add_resource_path(resource_dir);
     let (mut context, mut event_loop) = context_builder.build()?;
 
 
-    let mut state = GameState::new();
+    let mut state = GameState::new(&mut context);
     event::run(&mut context, &mut event_loop, &mut state)
 }
 

@@ -1,8 +1,11 @@
 use crate::size::*;
-use ggez::graphics::Color;
 use crate::Point;
+use crate::tile::Tile;
+use crate::tile::barren_land::BarrenLandTile;
+use array_init;
+use crate::assets::MappingID;
 
-pub const BOARD_SIZE : usize = 32;
+pub const BOARD_SIZE : usize = 16;
 
 pub struct Board {
     tiles: [[TileSpot; BOARD_SIZE]; BOARD_SIZE],
@@ -11,8 +14,14 @@ pub struct Board {
 
 impl Board {
     pub fn new() -> Board {
+        let tiles: [[TileSpot; BOARD_SIZE]; BOARD_SIZE] = array_init::array_init(|_| {
+            let col: [TileSpot; BOARD_SIZE] = array_init::array_init(|_| {
+                TileSpot::new(Box::new(BarrenLandTile::new()))
+            });
+            col
+        });
         Board {
-            tiles: [[TileSpot::new(); BOARD_SIZE]; BOARD_SIZE],
+            tiles,
             hovered: None,
         }
     }
@@ -44,66 +53,31 @@ impl Board {
 
     pub fn hover(&mut self, hover_idx: Point<usize>) -> Option<Point<usize>> {
         let old_hover_idx= self.hovered;
-        if let Some(i) = &self.hovered {
-            let old_hover = &mut self.tiles[i.x][i.y];
-            old_hover.view.unhover();
-        }
-
-        let new_hover = &mut self.tiles[hover_idx.x][hover_idx.y];
         self.hovered = Some(hover_idx);
-        new_hover.view.hover();
         old_hover_idx
+    }
+
+    pub fn get_hovered(&self) -> Option<Point<usize>> {
+        self.hovered
     }
 }
 
 pub const TILE_SIZE: SizeUnit = 16;
 
-#[derive(Copy, Clone)]
 pub struct TileSpot {
     pub size: SizeUnit,
-    view: TileView,
+    tile: Box<dyn Tile>,
 }
 
 impl TileSpot {
-    pub fn new() -> TileSpot {
+    pub fn new(tile: Box<dyn Tile>) -> TileSpot {
         TileSpot {
             size: TILE_SIZE,
-            view: TileView::new(),
+            tile,
         }
     }
 
-    pub fn get_view(&mut self) -> &mut TileView {
-        &mut self.view
-    }
-}
-
-#[derive(Copy, Clone)]
-pub struct TileView {
-    color: Color,
-}
-
-const DEFAULT_TILE_COLOR: [f32; 4] = [0.2, 0.2, 0.2, 1.0];
-const HOVER_TILE_COLOR:[f32; 4] = [0.6, 0.2, 0.2, 1.0];
-
-impl TileView {
-    pub fn new() -> TileView {
-        TileView {
-            color: DEFAULT_TILE_COLOR.into(),
-        }
-    }
-
-    pub fn get_color(&self) -> Color {
-        self.color
-    }
-
-    fn set_color(&mut self, color: Color) {
-        self.color = color;
-    }
-
-    fn hover(&mut self) {
-        self.set_color(HOVER_TILE_COLOR.into());
-    }
-    fn unhover(&mut self) {
-        self.set_color(DEFAULT_TILE_COLOR.into());
+    pub fn get_texture_id(&self) -> &MappingID {
+        self.tile.get_texture_map_id()
     }
 }

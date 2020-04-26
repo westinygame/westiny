@@ -6,3 +6,5 @@ edition = "2018"
 
 [dependencies]
 ggez = "0.5.1"
+array-init = "0.1.1"
+
