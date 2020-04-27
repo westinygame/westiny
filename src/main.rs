@@ -2,6 +2,7 @@ mod board;
 mod size;
 mod tile;
 mod assets;
+mod player;
 
 use std::env;
 use std::path;
@@ -20,6 +21,8 @@ use size::UnitToPixelCalculator;
 use ggez::nalgebra::{Point2, Vector2};
 use assets::TileTexture;
 use crate::board::TILE_SIZE;
+use crate::player::Player;
+use crate::size::SizeUnit;
 
 const BG_COLOR: [f32; 4] = [0.3, 0.3, 0.3, 1.0];
 
@@ -27,6 +30,7 @@ struct GameState {
     board: Board,
     unit_to_pixel: UnitToPixelCalculator,
     tile_texture: TileTexture,
+    player: Player,
 }
 
 impl GameState {
@@ -35,6 +39,7 @@ impl GameState {
             board: Board::new(),
             unit_to_pixel: UnitToPixelCalculator::new(2),
             tile_texture: TileTexture::create_texture_map(ctx),
+            player: Player::new(ctx, Point::new(256_f32, 256_f32)),
         }
     }
 
@@ -85,6 +90,15 @@ impl GameState {
 
             draw(ctx, mesh, DrawParam::new()).unwrap_or_default(); // TODO handle Result
     }
+
+    fn draw_player(&mut self, ctx: &mut Context) -> GameResult {
+        let offset = -1_f32 * self.unit_to_pixel.to_pixels(&(TILE_SIZE/2)) as f32;
+        let player_draw_pos = Point2::new(self.player.get_position().x + offset, self.player.get_position().y + offset);
+        let draw_param = DrawParam::default()
+            .dest(player_draw_pos)
+            .scale(Vector2::new(2.0, 2.0));
+        draw(ctx, self.player.get_texture(), draw_param)
+    }
 }
 
 impl EventHandler for GameState {
@@ -95,6 +109,7 @@ impl EventHandler for GameState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         clear(ctx, BG_COLOR.into());
         self.draw_tiles(ctx)?;
+        self.draw_player(ctx)?;
         present(ctx)?;
         Ok(())
     }
@@ -131,7 +146,7 @@ pub fn main() -> GameResult {
         .add_resource_path(resource_dir);
     let (mut context, mut event_loop) = context_builder.build()?;
 
-
+    set_default_filter(&mut context, FilterMode::Nearest);
     let mut state = GameState::new(&mut context);
     event::run(&mut context, &mut event_loop, &mut state)
 }
