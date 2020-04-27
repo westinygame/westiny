@@ -7,12 +7,8 @@ mod player;
 use std::env;
 use std::path;
 use ggez::{GameResult, ContextBuilder, event, Context};
-use ggez::event::EventHandler;
-use ggez::conf::{
-    WindowSetup,
-    WindowMode,
-    Backend,
-};
+use ggez::event::{EventHandler, KeyMods};
+use ggez::conf::{WindowSetup, WindowMode, Backend, NumSamples};
 use ggez::graphics::*;
 use board::{
     Board,
@@ -22,7 +18,7 @@ use ggez::nalgebra::{Point2, Vector2};
 use assets::TileTexture;
 use crate::board::TILE_SIZE;
 use crate::player::Player;
-use crate::size::SizeUnit;
+use std::f32::consts::PI;
 
 const BG_COLOR: [f32; 4] = [0.3, 0.3, 0.3, 1.0];
 
@@ -31,6 +27,7 @@ struct GameState {
     unit_to_pixel: UnitToPixelCalculator,
     tile_texture: TileTexture,
     player: Player,
+    cursor_pos: Point<f32>,
 }
 
 impl GameState {
@@ -39,7 +36,8 @@ impl GameState {
             board: Board::new(),
             unit_to_pixel: UnitToPixelCalculator::new(2),
             tile_texture: TileTexture::create_texture_map(ctx),
-            player: Player::new(ctx, Point::new(256_f32, 256_f32)),
+            player: Player::new(ctx, Point::new(256.0, 256.0)),
+            cursor_pos: Point::new(0.0, 0.0),
         }
     }
 
@@ -93,16 +91,26 @@ impl GameState {
 
     fn draw_player(&mut self, ctx: &mut Context) -> GameResult {
         let offset = -1_f32 * self.unit_to_pixel.to_pixels(&(TILE_SIZE/2)) as f32;
-        let player_draw_pos = Point2::new(self.player.get_position().x + offset, self.player.get_position().y + offset);
+        let sin_dir = f32::sin(self.player.get_direction());
+        let cos_dir = f32::cos(self.player.get_direction());
+        let rotated_offset_x = offset * (cos_dir - sin_dir);
+        let rotated_offset_y = offset * (cos_dir + sin_dir);
+
+
+        let player_draw_pos = Point2::new(self.player.get_position().x + rotated_offset_x, self.player.get_position().y + rotated_offset_y);
         let draw_param = DrawParam::default()
             .dest(player_draw_pos)
-            .scale(Vector2::new(2.0, 2.0));
+            .scale(Vector2::new(2.0, 2.0))
+            .rotation(self.player.get_direction());
         draw(ctx, self.player.get_texture(), draw_param)
     }
 }
 
 impl EventHandler for GameState {
     fn update(&mut self, _ctx: &mut Context) -> GameResult {
+        let rad_diff = f32::atan((self.cursor_pos.x - self.player.get_position().x) / (self.cursor_pos.y - self.player.get_position().y));
+        let res_diff = if self.cursor_pos.y < self.player.get_position().y { -rad_diff + PI } else { -rad_diff };
+        self.player.direction(res_diff);
         Ok(())
     }
 
@@ -120,8 +128,8 @@ impl EventHandler for GameState {
         if let Some(tile_idx) = self.board.to_tile_idx(Point::new(x_unit, y_unit)) {
             self.board.hover(tile_idx);
         }
+        self.cursor_pos = Point::new(x, y);
     }
-
 }
 
 pub fn main() -> GameResult {
@@ -138,7 +146,8 @@ pub fn main() -> GameResult {
         .dimensions(512_f32, 512_f32); // TODO get resolution from config
 //        .fullscreen_type(FullscreenType::Desktop);
     let window_setup = WindowSetup::default()
-        .title("Westiny");
+        .title("Westiny")
+        .samples(NumSamples::Zero);
     let context_builder = ContextBuilder::new("Westiny", "surdom")
         .window_setup(window_setup)
         .window_mode(window_mode)
