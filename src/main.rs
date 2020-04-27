@@ -138,8 +138,8 @@ pub fn main() -> GameResult {
         .dimensions(512_f32, 512_f32); // TODO get resolution from config
 //        .fullscreen_type(FullscreenType::Desktop);
     let window_setup = WindowSetup::default()
-        .title("Botanique");
-    let context_builder = ContextBuilder::new("Botanique", "surdom")
+        .title("Westiny");
+    let context_builder = ContextBuilder::new("Westiny", "surdom")
         .window_setup(window_setup)
         .window_mode(window_mode)
         .backend(Backend::default().version(3, 2))
