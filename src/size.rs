@@ -1,4 +1,4 @@
-pub type SizeUnit = u32;
+pub type SizeUnit = f32;
 
 pub struct UnitToPixelCalculator {
     multiplier: u32,
@@ -11,11 +11,11 @@ impl UnitToPixelCalculator {
         }
     }
 
-    pub fn to_pixels(&self, size_unit: &SizeUnit) -> u32 {
-        self.multiplier * size_unit
+    pub fn to_pixels(&self, size_unit: SizeUnit) -> u32 {
+        (self.multiplier as f32 * size_unit) as u32
     }
 
-    pub fn to_units(&self, size_pixel: u32) -> u32 {
-        size_pixel / self.multiplier
+    pub fn to_units(&self, size_pixel: u32) -> SizeUnit {
+        (size_pixel / self.multiplier) as SizeUnit
     }
 }
