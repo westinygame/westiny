@@ -43,8 +43,6 @@ impl Board {
     }
 
     pub fn to_tile_idx(&self, pos: Point2<SizeUnit>) -> Option<(usize, usize)> {
-        let idx_x = pos.x / TILE_SIZE;
-        let idx_y = pos.y / TILE_SIZE;
         let idx = ((pos.x / TILE_SIZE) as usize, (pos.y / TILE_SIZE) as usize);
         if idx.0 > BOARD_SIZE - 1 || idx.1 > BOARD_SIZE - 1 {
             None
@@ -54,7 +52,6 @@ impl Board {
     }
 
     pub fn hover(&mut self, hover_idx: (usize, usize)) {
-        let old_hover_idx= self.hovered;
         self.hovered = Some(hover_idx);
     }
 

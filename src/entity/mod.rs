@@ -15,9 +15,9 @@ impl Direction {
     pub fn rotation(&self) -> f32 {
         match self {
             Direction::FORWARD => 0.0,
-            Direction::LEFT => PI / 2.0,
+            Direction::LEFT => -PI / 2.0,
             Direction::BACKWARD => PI,
-            Direction::RIGHT => -PI / 2.0
+            Direction::RIGHT => PI / 2.0
         }
     }
 }

@@ -21,7 +21,6 @@ use entity::player::Player;
 use std::f32::consts::PI;
 use ggez::input::keyboard::KeyCode;
 use entity::Direction::*;
-use crate::entity::Direction;
 
 const BG_COLOR: [f32; 4] = [0.3, 0.3, 0.3, 1.0];
 
