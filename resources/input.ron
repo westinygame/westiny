@@ -1,0 +1,11 @@
+(
+    axes: {},
+    actions: {
+        "forward": [ [Key(W)] ],
+        "backward": [ [Key(S)] ],
+        "strafe_left": [ [Key(A)] ],
+        "strafe_right": [ [Key(D)] ],
+        "fire": [ [Mouse(Left)] ],
+        "use": [ [Mouse(Right)] ],
+    },
+)
