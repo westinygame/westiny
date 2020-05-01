@@ -6,8 +6,12 @@ use amethyst::renderer::plugins::{RenderFlat2D, RenderToWindow};
 use amethyst::renderer::types::DefaultBackend;
 use amethyst::utils::application_root_dir;
 
+use log::{info, warn};
+
 mod state;
 mod systems;
+mod entities;
+mod components;
 
 
 /// Desert sand color
@@ -33,9 +37,12 @@ fn main() -> amethyst::Result<()> {
             )
             .with_plugin(RenderFlat2D::default())
         )?
-        .with(systems::MouseDebugSystem, "mouse_debug_system", &["input_system"]);
+        // .with(systems::MouseDebugSystem, "mouse_debug_system", &["input_system"]);
+        .with(systems::PlayerMovementSystem, "player_movement_system", &["input_system"]);
 
     let mut game = Application::new(resources_dir, state::PlayState, game_data)?;
+
+    info!("Starting...");
     game.run();
 
     Ok(())

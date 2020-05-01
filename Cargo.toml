@@ -8,6 +8,7 @@ edition = "2018"
 amethyst = "0.15.0"
 mint = "0.5.5"
 array-init = "0.1.1"
+log = "0.4.8"
 
 [features]
 default = ["vulkan"]
