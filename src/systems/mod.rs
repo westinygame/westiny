@@ -1,5 +1,7 @@
-pub use mouse_debug::MouseDebugSystem;
+pub use input_debug::InputDebugSystem;
 pub use player_movement::PlayerMovementSystem;
+pub use camera_movement::CameraMovementSystem;
 
-mod mouse_debug;
+mod input_debug;
 mod player_movement;
+mod camera_movement;

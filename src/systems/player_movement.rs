@@ -24,7 +24,8 @@ impl<'s> System<'s> for PlayerMovementSystem {
         for (_player, mut transform) in (&players, &mut transforms).join() {
             rotate_toward_mouse(&mut transform, &input, &screen);
 
-            // TODO walking
+            // TODO walking, ingame position? (rotation with vectors? might be easier for shooting,
+            // walking, etc.) or use Tranform for it?
         }
     }
 

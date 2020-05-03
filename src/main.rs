@@ -6,7 +6,7 @@ use amethyst::renderer::plugins::{RenderFlat2D, RenderToWindow};
 use amethyst::renderer::types::DefaultBackend;
 use amethyst::utils::application_root_dir;
 
-use log::{info, warn};
+use log::info;
 
 mod state;
 mod systems;
@@ -37,7 +37,8 @@ fn main() -> amethyst::Result<()> {
             )
             .with_plugin(RenderFlat2D::default())
         )?
-        // .with(systems::MouseDebugSystem, "mouse_debug_system", &["input_system"]);
+        .with(systems::InputDebugSystem::default(), "input_debug_system", &["input_system"])
+        .with(systems::CameraMovementSystem, "camera_movement_system", &["input_system"])
         .with(systems::PlayerMovementSystem, "player_movement_system", &["input_system"]);
 
     let mut game = Application::new(resources_dir, state::PlayState, game_data)?;

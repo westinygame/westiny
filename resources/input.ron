@@ -1,5 +1,7 @@
 (
-    axes: {},
+    axes: {
+        "zoom": MouseWheel(horizontal: false),
+    },
     actions: {
         "forward": [ [Key(W)] ],
         "backward": [ [Key(S)] ],

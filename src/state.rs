@@ -4,9 +4,9 @@ use amethyst::{
         transform::Transform,
         math::{Point2, Vector3},
     },
-    input::{get_key, is_close_requested, is_key_down, VirtualKeyCode},
+    input::{is_close_requested, is_key_down, VirtualKeyCode},
     prelude::*,
-    renderer::{Camera, ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
+    renderer::{Camera, ImageFormat, SpriteSheet, SpriteSheetFormat, Texture},
     window::ScreenDimensions,
 };
 
