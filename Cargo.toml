@@ -5,7 +5,13 @@ authors = ["Domonkos Suranyi <domonkos.suranyi@protonmail.com>"]
 edition = "2018"
 
 [dependencies]
-ggez = "0.5.1"
+amethyst = "0.15.0"
 mint = "0.5.5"
 array-init = "0.1.1"
+log = "0.4.8"
 
+[features]
+default = ["vulkan"]
+empty = ["amethyst/empty"]
+metal = ["amethyst/metal"]
+vulkan = ["amethyst/vulkan"]
