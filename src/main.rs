@@ -5,6 +5,7 @@ use amethyst::renderer::RenderingBundle;
 use amethyst::renderer::plugins::{RenderFlat2D, RenderToWindow};
 use amethyst::renderer::types::DefaultBackend;
 use amethyst::utils::application_root_dir;
+use amethyst::tiles::{RenderTiles2D, MortonEncoder};
 
 use log::info;
 
@@ -12,7 +13,7 @@ mod state;
 mod systems;
 mod entities;
 mod components;
-
+mod resources;
 
 /// Desert sand color
 const BACKGROUND_COLOR: [f32; 4] = [0.75, 0.65, 0.5, 1.0];
@@ -36,6 +37,7 @@ fn main() -> amethyst::Result<()> {
                     .with_clear(BACKGROUND_COLOR)
             )
             .with_plugin(RenderFlat2D::default())
+            .with_plugin(RenderTiles2D::<resources::GroundTile, MortonEncoder>::default())
         )?
         .with(systems::InputDebugSystem::default(), "input_debug_system", &["input_system"])
         .with(systems::CameraMovementSystem, "camera_movement_system", &["input_system"])

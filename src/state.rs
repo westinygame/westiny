@@ -11,6 +11,7 @@ use amethyst::{
 };
 
 use crate::entities::initialize_player;
+use crate::entities::initialize_tilemap;
 
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState;
@@ -28,7 +29,8 @@ impl SimpleState for PlayState {
             dimensions.width() * 0.5,
             dimensions.height() * 0.5
         );
-        initialize_player(world, sprite_sheet_handle, player_init_pos);
+        initialize_player(world, sprite_sheet_handle.clone(), player_init_pos);
+        initialize_tilemap(world, sprite_sheet_handle, Point2::new(dimensions.width() / 2.0, dimensions.height() / 2.0))
     }
 
     fn handle_event(

@@ -11,7 +11,8 @@ array-init = "0.1.1"
 log = "0.4.8"
 
 [features]
-default = ["vulkan"]
+default = ["vulkan", "tiles"]
 empty = ["amethyst/empty"]
 metal = ["amethyst/metal"]
 vulkan = ["amethyst/vulkan"]
+tiles = ["amethyst/tiles"]
