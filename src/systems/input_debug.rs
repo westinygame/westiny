@@ -1,6 +1,6 @@
 use amethyst::input::{InputHandler, StringBindings};
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Read, System, SystemData, World};
+use amethyst::ecs::{Read, System, SystemData};
 
 use log::info;
 
