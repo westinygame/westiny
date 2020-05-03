@@ -8,7 +8,6 @@ use log::info;
 use crate::components::Player;
 use amethyst::core::math::Point2;
 
-// fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
 pub fn initialize_player(world: &mut World,
                          sprite_sheet_handle: Handle<SpriteSheet>,
                          start_pos: Point2<f32>

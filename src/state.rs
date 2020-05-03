@@ -25,8 +25,8 @@ impl SimpleState for PlayState {
         init_camera(world, &dimensions);
 
         let player_init_pos = Point2::new(
-            dimensions.width() * 0.5 as f32,
-            dimensions.height() * 0.5 as f32
+            dimensions.width() * 0.5,
+            dimensions.height() * 0.5
         );
         initialize_player(world, sprite_sheet_handle, player_init_pos);
     }
