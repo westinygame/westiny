@@ -14,6 +14,7 @@ pub enum SpriteId {
     Player = 3,
     ShootingPlayer = 4,
     Bullet = 5,
+    Barrel = 6,
 }
 
 impl SpriteResource {
