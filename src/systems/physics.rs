@@ -36,7 +36,7 @@ impl<'s> System<'s> for PhysicsSystem {
 
 /// Updates transform with velocity based on time
 /// Returns delta (x,y) vector
-fn update_position(transform: &mut Transform, velocity: &Velocity, time: &Time) -> Vector2<f32> {
+pub fn update_position(transform: &mut Transform, velocity: &Velocity, time: &Time) -> Vector2<f32> {
     let delta = velocity.0 * time.delta_seconds();
     transform.prepend_translation_x(delta.x);
     transform.prepend_translation_y(delta.y);

@@ -14,6 +14,13 @@ use crate::entities::initialize_tilemap;
 use crate::resources::initialize_sprite_resource;
 use crate::resources::initialize_audio;
 
+//TODO for barrel
+use crate::resources::{SpriteResource, SpriteId};
+//use amethyst::core::Transform;
+use crate::components::BoundingCircle;
+use crate::components::Projectile;
+use crate::resources::{Collisions, ProjectileCollisions};
+
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState;
 
@@ -24,6 +31,8 @@ impl SimpleState for PlayState {
 
         let sprites = initialize_sprite_resource(world);
 
+        world.insert(Collisions::default());
+        world.insert(ProjectileCollisions::default());
         init_camera(world, &dimensions);
 
         let player_init_pos = Point2::new(
@@ -32,7 +41,17 @@ impl SimpleState for PlayState {
         );
         initialize_player(world, &sprites, player_init_pos);
         initialize_tilemap(world, &sprites, Point2::new(dimensions.width() / 2.0, dimensions.height() / 2.0));
-        initialize_audio(world)
+        initialize_audio(world);
+
+        // barrels
+        place_barrel(world, &sprites, player_init_pos, 3, 3);
+        place_barrel(world, &sprites, player_init_pos, 3, 5);
+        place_barrel(world, &sprites, player_init_pos, 3, 6);
+        place_barrel(world, &sprites, player_init_pos, 3, 7);
+        place_barrel(world, &sprites, player_init_pos, 3, 8);
+        place_barrel(world, &sprites, player_init_pos, 4, 8);
+        place_barrel(world, &sprites, player_init_pos, 5, 8);
+        place_barrel(world, &sprites, player_init_pos, 5, 7);
     }
 
     fn handle_event(
@@ -49,6 +68,19 @@ impl SimpleState for PlayState {
 
         Trans::None
     }
+}
+
+fn place_barrel(world: &mut World, sprites: &SpriteResource, player_init_pos: Point2<f32>, x: u32, y: u32) {
+
+    let mut transform = Transform::default();
+    transform.set_translation_xyz(player_init_pos.x + (x as f32) * 16.0, player_init_pos.y + (y as f32) * 16.0, 0.0);
+
+    world
+        .create_entity()
+        .with(sprites.sprite_render_for(SpriteId::Barrel))
+        .with(transform)
+        .with(BoundingCircle{radius: 8.0})
+        .build();
 }
 
 pub fn init_camera(world: &mut World, dimensions: &ScreenDimensions) {
