@@ -55,7 +55,12 @@ impl<'s> System<'s> for PlayerMovementSystem {
             if let Some(mouse_pos) = input.mouse_position() {
                 rotate_toward_mouse(&mut transform, mouse_pos);
             }
-            update_velocity(&transform, &input, &mut velocity);
+
+            let move_inputs: Vec<MoveDirection> = MOVE_ACTIONS.iter()
+                .filter(|s| input.action_is_down(&s.to_string()).unwrap_or(false))
+                .filter_map(|&s| MoveDirection::from_action(s))
+                .collect();
+            update_velocity(&transform, &move_inputs, &mut velocity);
         }
     }
 
@@ -82,27 +87,24 @@ fn rotate_toward_mouse(
 
 const PLAYER_MAX_WALK_SPEED: f32 = 64.0;
 
+// TODO It would be better to use a more generic IntoIterator instead of the specific vector type.
+// I did not manage to call into_iter on <T: IntoIterator<Item=MoveDirection>> type
 fn update_velocity(
     transform: &Transform,
-    input: &InputHandler<StringBindings>,
+    move_inputs: &Vec<MoveDirection>,
     velocity: &mut Velocity
 ) {
-    let velocities: Vec<Vector2<f32>> = MOVE_ACTIONS.iter()
-        .filter(|s| input.action_is_down(&s.to_string()).unwrap_or(false))
-        .map(|&s| MoveDirection::from_action(s))
-        .filter(Option::is_some)
-        .map(Option::unwrap)
-        .map(as_vector2)
-        .collect();
-
-    if velocities.is_empty() {
-        *velocity = Velocity::default();
+    *velocity = if move_inputs.is_empty() {
+        Velocity::default()
     } else {
-        let rot = Rotation2::new(transform.rotation().angle());
+        let velocities: Vec<Vector2<f32>> = move_inputs.into_iter()
+            .map(|dir| as_vector2(*dir))
+            .collect();
 
-        *velocity = Velocity(rot * vector_avg(&velocities));
-    }
-
+        let angle = transform.rotation().axis().map(|vec| vec.z).unwrap_or(1.0) * transform.rotation().angle();
+        let rot = Rotation2::new(angle);
+        Velocity(rot * vector_avg(&velocities))
+    };
 }
 
 fn vector_avg<'a, I>(velocities: I) -> Vector2<f32>
@@ -139,13 +141,16 @@ mod test {
     use super::*;
     use std::f32::consts::PI;
     use amethyst::core::Transform;
-    use amethyst::core::math::Vector3;
 
-    fn assert_f32_equals(exp: f32, act:f32, threshold: f32) {
-        let diff = (exp - act).abs();
+    const FACING_UP: f32 = PI;
+    const FACING_DOWN: f32 = 0.0;
+    const FACING_LEFT: f32 = -PI/2.0;
+    const FACING_RIGHT: f32 = PI/2.0;
 
-
-        assert!(diff < threshold, "Expected: {}, Actual: {}", exp, act);
+    #[inline]
+    fn f32_eq(f1: f32, f2: f32) -> bool {
+        const F32_ALLOWED_DIFF: f32 = 0.00001;
+        (f1 - f2).abs() < F32_ALLOWED_DIFF
     }
 
     mod test_rotate_toward_mouse {
@@ -165,19 +170,53 @@ mod test {
 
                         let angle = transform.rotation().axis().map(|vec| vec.z).unwrap_or(1.0) * transform.rotation().angle();
 
-                        // sin is being called to normalize the angles (e.g. -PI = PI)
-                        assert_f32_equals(f32::sin($expected), angle.sin(), 0.000001);
+                        // sin is called to normalize the angles (e.g. -PI = PI)
+                        assert!(f32_eq(f32::sin($expected), angle.sin()), "Expected angle: {}, Actual angle: {}", $expected, angle);
                     }
                 )*
             }
         }
 
         test_rotate_toward_mouse! {
-            cursor_up: (3.0, 3.0), (3.0, 2.0), PI,
-            cursor_left: (3.0, 3.0), (2.0, 3.0), -PI/2.0,
-            cursor_down: (3.0, 3.0), (3.0, 4.0), 0.0,
-            cursor_right: (3.0, 3.0), (4.0, 3.0), PI/2.0,
+            cursor_up: (3.0, 3.0), (3.0, 2.0), FACING_UP,
+            cursor_left: (3.0, 3.0), (2.0, 3.0), FACING_LEFT,
+            cursor_down: (3.0, 3.0), (3.0, 4.0), FACING_DOWN,
+            cursor_right: (3.0, 3.0), (4.0, 3.0), FACING_RIGHT,
             cursor_upright_45deg: (3.0, 3.0), (4.0, 2.0), 3.0*PI/4.0,
         }
+    }
+
+    mod test_update_velocity {
+        use super::*;
+
+        macro_rules! test_update_velocity {
+            ($($name:ident: $player_rotation:expr, $move_dirs:expr, $expected:expr,)*) => {$(
+                #[test]
+                fn $name() {
+                    let mut transform: Transform = Transform::default();
+                    transform.set_rotation_2d($player_rotation);
+
+                    let inputs = $move_dirs;
+                    let (exp_x, exp_y) = $expected;
+
+                    let mut velocity = Velocity::default();
+                    update_velocity(&transform, &inputs, &mut velocity);
+
+                    assert!(f32_eq(exp_x, velocity.0.x), "velocity x -> Expected: {}, Actual: {}", exp_x, velocity.0.x);
+                    assert!(f32_eq(exp_y, velocity.0.y), "velocity y -> Expected: {}, Actual: {}", exp_y, velocity.0.y);
+                }
+            )*}
+        }
+
+        use MoveDirection::*;
+
+        test_update_velocity! {
+            // forward
+            fwd_up: FACING_UP, vec!{Forward}, (0.0, PLAYER_MAX_WALK_SPEED),
+            fwd_down: FACING_DOWN, vec!{Forward}, (0.0, -PLAYER_MAX_WALK_SPEED),
+            fwd_left: FACING_LEFT, vec!{Forward}, (-PLAYER_MAX_WALK_SPEED, 0.0),
+            fwd_right: FACING_RIGHT, vec!{Forward}, (PLAYER_MAX_WALK_SPEED, 0.0),
+        }
+
     }
 }
