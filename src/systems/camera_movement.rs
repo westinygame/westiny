@@ -2,6 +2,7 @@ use amethyst::input::{InputHandler, StringBindings};
 use amethyst::derive::SystemDesc;
 use amethyst::ecs::{Read, System, SystemData, ReadStorage, WriteStorage};
 use amethyst::core::Transform;
+use amethyst::core::math::Vector3;
 
 use amethyst::ecs::prelude::Join;
 use amethyst::renderer::Camera;
@@ -26,8 +27,9 @@ impl<'s> System<'s> for CameraMovementSystem {
     fn run(&mut self, (mut transforms, cameras, input, players): Self::SystemData) {
 
         let player_pos = (&players, &transforms).join().next()
-            .map(|(_p, tf)| tf)
-            .map(|tf| tf.translation().xy());
+            .map(|(_, transform)| transform)
+            .map(Transform::translation)
+            .map(&Vector3::xy);
         if let Some((_camera, transform)) = (&cameras, &mut transforms).join().next() {
             // Emulated axis value is from [-1, 1].
             // -1 when "neg" is pressed
