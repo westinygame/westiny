@@ -6,7 +6,6 @@ edition = "2018"
 
 [dependencies]
 amethyst = "0.15.0"
-mint = "0.5.5"
 array-init = "0.1.1"
 log = "0.4.8"
 

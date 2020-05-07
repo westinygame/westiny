@@ -5,7 +5,7 @@ use amethyst::renderer::{SpriteSheet, SpriteRender};
 use amethyst::core::Transform;
 
 use log::info;
-use crate::components::Player;
+use crate::components::{Player, Velocity};
 use amethyst::core::math::Point2;
 
 pub fn initialize_player(world: &mut World,
@@ -26,6 +26,7 @@ pub fn initialize_player(world: &mut World,
         .with(sprite_render.clone())
         .with(transform)
         .with(Player)
+        .with(Velocity::default())
         .build();
 
     info!("Player created.");

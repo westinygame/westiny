@@ -1,4 +1,3 @@
-
 use amethyst::ecs::prelude::{Component, DenseVecStorage};
 
 pub struct Player;
