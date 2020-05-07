@@ -15,6 +15,9 @@ mod entities;
 mod components;
 mod resources;
 
+#[cfg(test)]
+mod test_helpers;
+
 /// Desert sand color
 const BACKGROUND_COLOR: [f32; 4] = [0.75, 0.65, 0.5, 1.0];
 
@@ -39,7 +42,7 @@ fn main() -> amethyst::Result<()> {
             .with_plugin(RenderFlat2D::default())
             .with_plugin(RenderTiles2D::<resources::GroundTile, MortonEncoder>::default())
         )?
-        .with(systems::InputDebugSystem::default(), "input_debug_system", &["input_system"])
+        // .with(systems::InputDebugSystem::default(), "input_debug_system", &["input_system"])
         .with(systems::CameraMovementSystem, "camera_movement_system", &["input_system"])
         .with(systems::PlayerMovementSystem, "player_movement_system", &["input_system"])
         .with(systems::PhysicsSystem, "physics_system", &["player_movement_system"])

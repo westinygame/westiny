@@ -216,6 +216,6 @@ mod test {
             fwd_left: FACING_LEFT, vec!{Forward}, (-PLAYER_MAX_WALK_SPEED, 0.0),
             fwd_right: FACING_RIGHT, vec!{Forward}, (PLAYER_MAX_WALK_SPEED, 0.0),
         }
-
     }
+
 }

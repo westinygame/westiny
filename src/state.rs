@@ -49,7 +49,7 @@ impl SimpleState for PlayState {
     }
 }
 
-fn init_camera(world: &mut World, dimensions: &ScreenDimensions) {
+pub fn init_camera(world: &mut World, dimensions: &ScreenDimensions) {
     let mut transform = Transform::default();
     transform.set_translation_xyz(
         dimensions.width() * 0.5,
