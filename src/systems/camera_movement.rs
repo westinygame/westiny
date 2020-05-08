@@ -1,11 +1,12 @@
 use amethyst::input::{InputHandler, StringBindings};
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Read, System, SystemData, ReadStorage, WriteStorage, ReadExpect};
+use amethyst::ecs::{Read, System, SystemData, ReadStorage, WriteStorage};
 use amethyst::core::Transform;
+use amethyst::core::math::Vector3;
 
 use amethyst::ecs::prelude::Join;
-use amethyst::window::ScreenDimensions;
 use amethyst::renderer::Camera;
+use crate::components::Player;
 
 
 #[derive(SystemDesc)]
@@ -20,11 +21,16 @@ impl<'s> System<'s> for CameraMovementSystem {
         WriteStorage<'s, Transform>,
         ReadStorage<'s, Camera>,
         Read<'s, InputHandler<StringBindings>>,
-        ReadExpect<'s, ScreenDimensions>,
+        ReadStorage<'s, Player>,
     );
 
-    fn run(&mut self, (mut transforms, cameras, input, _screen): Self::SystemData) {
-        for (_camera, transform) in (&cameras, &mut transforms).join() {
+    fn run(&mut self, (mut transforms, cameras, input, players): Self::SystemData) {
+
+        let player_pos = (&players, &transforms).join().next()
+            .map(|(_, transform)| transform)
+            .map(Transform::translation)
+            .map(&Vector3::xy);
+        if let Some((_camera, transform)) = (&cameras, &mut transforms).join().next() {
             // Emulated axis value is from [-1, 1].
             // -1 when "neg" is pressed
             //  1 when "pos" is pressed
@@ -43,6 +49,11 @@ impl<'s> System<'s> for CameraMovementSystem {
 
                 transform.scale_mut().x = new_scale;
                 transform.scale_mut().y = new_scale;
+            }
+
+            if let Some(player_coord) = player_pos {
+                transform.set_translation_x(player_coord.x);
+                transform.set_translation_y(player_coord.y);
             }
         }
     }
