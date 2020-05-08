@@ -2,9 +2,10 @@ use amethyst::input::{InputHandler, StringBindings};
 use amethyst::derive::SystemDesc;
 use amethyst::ecs::{Read, System, SystemData, ReadStorage, WriteStorage, prelude::Join};
 use amethyst::core::Transform;
-use amethyst::core::math::{Vector2, Rotation2};
+use amethyst::core::math::{Vector2, Rotation2, Point2};
 
 use crate::components::{Player, Velocity};
+use crate::resources::CursorPosition;
 
 pub(crate) const ACTION_FORWARD: &str = "forward";
 pub(crate) const ACTION_BACKWARD: &str = "backward";
@@ -48,13 +49,12 @@ impl<'s> System<'s> for PlayerMovementSystem {
         WriteStorage<'s, Velocity>,
         ReadStorage<'s, Player>,
         Read<'s, InputHandler<StringBindings>>,
+        Read<'s, CursorPosition>
     );
 
-    fn run(&mut self, (mut transforms, mut velocities, players, input): Self::SystemData) {
+    fn run(&mut self, (mut transforms, mut velocities, players, input, cursor_pos): Self::SystemData) {
         for (_player, mut velocity, mut transform) in (&players, &mut velocities, &mut transforms).join() {
-            if let Some(mouse_pos) = input.mouse_position() {
-                rotate_toward_mouse(&mut transform, mouse_pos);
-            }
+            rotate_toward_mouse(&mut transform, &cursor_pos.pos);
 
             let move_inputs: Vec<MoveDirection> = MOVE_ACTIONS.iter()
                 .filter(|s| input.action_is_down(&s.to_string()).unwrap_or(false))
@@ -68,16 +68,13 @@ impl<'s> System<'s> for PlayerMovementSystem {
 
 fn rotate_toward_mouse(
     transform: &mut Transform,
-    (mouse_x, mouse_y): (f32, f32),
+    cursor_pos: &Point2<f32>,
 ) {
     // Calculate the vector from player position to mouse cursor
-    let mouse_direction = Vector2::new(
-        mouse_x - transform.translation().x,
-        transform.translation().y - mouse_y
-    );
+    let mouse_direction = cursor_pos.to_homogeneous() - transform.translation();
 
     let base_vector = Vector2::new(0.0, -1.0);
-    let mut angle = base_vector.angle(&mouse_direction);
+    let mut angle = base_vector.angle(&mouse_direction.xy());
 
     if mouse_direction.x < 0.0 {
         angle = 2.0 * std::f32::consts::PI - angle;
@@ -166,7 +163,9 @@ mod test {
                         transform.set_translation_x(player.0);
                         transform.set_translation_y(player.1);
 
-                        rotate_toward_mouse(transform, $cursor_coord);
+                        let cursor_pos = Point2::new($cursor_coord.0, $cursor_coord.1);
+
+                        rotate_toward_mouse(transform, &cursor_pos);
 
                         let angle = transform.rotation().axis().map(|vec| vec.z).unwrap_or(1.0) * transform.rotation().angle();
 
