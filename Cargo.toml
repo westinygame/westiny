@@ -5,10 +5,10 @@ authors = ["Domonkos Suranyi <domonkos.suranyi@protonmail.com>"]
 edition = "2018"
 
 [dependencies]
-amethyst = "0.15.1"
-amethyst_test = "0.6.0"
-array-init = "0.1.1"
-log = "0.4.8"
+amethyst = "0.15.3"
+amethyst_test = "0.15.3"
+array-init = "1.0.0"
+log = "0.4.11"
 
 [features]
 default = ["vulkan", "tiles"]
