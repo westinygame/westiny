@@ -26,7 +26,7 @@ impl<'s> System<'s> for CursorPosUpdateSystem {
     fn run(&mut self, (transforms, cameras, input, screen_dimensions, mut cursor_pos): Self::SystemData) {
         for (camera, transform) in (&cameras, &transforms).join() {
             if let Some((mouse_x, mouse_y)) = input.mouse_position() {
-                let ray = camera.projection().screen_ray(
+                let ray = camera.screen_ray(
                     Point2::new(mouse_x, mouse_y),
                     Vector2::new(screen_dimensions.width(), screen_dimensions.height()),
                     transform,

@@ -5,7 +5,7 @@ authors = ["Domonkos Suranyi <domonkos.suranyi@protonmail.com>"]
 edition = "2018"
 
 [dependencies]
-amethyst = "0.15.0"
+amethyst = "0.15.1"
 amethyst_test = "0.6.0"
 array-init = "0.1.1"
 log = "0.4.8"
