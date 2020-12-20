@@ -9,6 +9,7 @@ amethyst = "0.15.3"
 amethyst_test = "0.15.3"
 array-init = "1.0.0"
 log = "0.4.11"
+serde = { version = "1", features = ["derive"] }
 
 [features]
 default = ["vulkan", "tiles"]

@@ -1,5 +1,6 @@
 pub use input_debug::InputDebugSystem;
 pub use player_movement::PlayerMovementSystem;
+pub use player_movement::MovementBindingTypes;
 pub use camera_movement::CameraMovementSystem;
 pub use physics::PhysicsSystem;
 pub use cursor_pos_update::CursorPosUpdateSystem;

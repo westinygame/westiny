@@ -1,13 +1,13 @@
 (
     axes: {
-        "zoom": MouseWheel(horizontal: false),
+        Zoom: MouseWheel(horizontal: false),
     },
     actions: {
-        "forward": [ [Key(W)] ],
-        "backward": [ [Key(S)] ],
-        "strafe_left": [ [Key(A)] ],
-        "strafe_right": [ [Key(D)] ],
-        "fire": [ [Mouse(Left)] ],
-        "use": [ [Mouse(Right)] ],
+        Forward: [ [Key(W)] ],
+        Backward: [ [Key(S)] ],
+        StrafeLeft: [ [Key(A)] ],
+        StrafeRight: [ [Key(D)] ],
+        Shoot: [ [Mouse(Left)] ],
+        Use: [ [Mouse(Right)] ],
     },
 )
