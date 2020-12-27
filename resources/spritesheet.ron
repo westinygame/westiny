@@ -30,5 +30,19 @@ List((
             width: 16,
             height: 16,
         ),
+        // 4: shooting player
+        (
+            x: 0,
+            y: 16,
+            width: 16,
+            height: 18,
+        ),
+        // 5: bullet
+        (
+            x: 16,
+            y: 16,
+            width: 1,
+            height: 3,
+        ),
     ],
 ))

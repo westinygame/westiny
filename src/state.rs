@@ -1,17 +1,17 @@
 use amethyst::{
-    assets::{AssetStorage, Loader},
     core::{
         transform::Transform,
         math::{Point2, Vector3},
     },
     input::{is_close_requested, is_key_down, VirtualKeyCode},
     prelude::*,
-    renderer::{Camera, ImageFormat, SpriteSheet, SpriteSheetFormat, Texture},
+    renderer::Camera,
     window::ScreenDimensions,
 };
 
 use crate::entities::initialize_player;
 use crate::entities::initialize_tilemap;
+use crate::resources::initialize_sprite_resource;
 
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState;
@@ -21,7 +21,7 @@ impl SimpleState for PlayState {
         let world = data.world;
         let dimensions = (*world.read_resource::<ScreenDimensions>()).clone();
 
-        let sprite_sheet_handle = load_sprite_sheet(world);
+        let sprites = initialize_sprite_resource(world);
 
         init_camera(world, &dimensions);
 
@@ -29,8 +29,8 @@ impl SimpleState for PlayState {
             dimensions.width() * 0.5,
             dimensions.height() * 0.5
         );
-        initialize_player(world, sprite_sheet_handle.clone(), player_init_pos);
-        initialize_tilemap(world, sprite_sheet_handle, Point2::new(dimensions.width() / 2.0, dimensions.height() / 2.0))
+        initialize_player(world, &sprites, player_init_pos);
+        initialize_tilemap(world, &sprites, Point2::new(dimensions.width() / 2.0, dimensions.height() / 2.0));
     }
 
     fn handle_event(
@@ -64,27 +64,4 @@ pub fn init_camera(world: &mut World, dimensions: &ScreenDimensions) {
         .with(Camera::standard_2d(dimensions.width(), dimensions.height()))
         .with(transform)
         .build();
-}
-
-use amethyst::assets::Handle;
-
-fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
-    let texture_handle = {
-        let loader = world.read_resource::<Loader>();
-        let texture_storage = world.read_resource::<AssetStorage<Texture>>();
-        loader.load(
-            "spritesheet.png",
-            ImageFormat::default(),
-            (),
-            &texture_storage,
-        )
-    };
-    let loader = world.read_resource::<Loader>();
-    let sprite_sheet_store = world.read_resource::<AssetStorage<SpriteSheet>>();
-    loader.load(
-        "spritesheet.ron",
-        SpriteSheetFormat(texture_handle),
-        (),
-        &sprite_sheet_store,
-    )
 }
