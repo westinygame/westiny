@@ -1,4 +1,4 @@
-use amethyst::input::{InputHandler, StringBindings};
+use amethyst::input::InputHandler;
 use amethyst::derive::SystemDesc;
 use amethyst::ecs::{Read, System, SystemData, ReadStorage, ReadExpect, WriteExpect};
 use amethyst::ecs::prelude::Join;
@@ -9,7 +9,7 @@ use amethyst::core::geometry::Plane;
 use amethyst::window::ScreenDimensions;
 use amethyst::renderer::camera::Camera;
 use crate::resources::CursorPosition;
-
+use crate::systems::MovementBindingTypes;
 
 #[derive(SystemDesc, Default)]
 pub struct CursorPosUpdateSystem;
@@ -18,7 +18,7 @@ impl<'s> System<'s> for CursorPosUpdateSystem {
     type SystemData = (
         ReadStorage<'s, Transform>,
         ReadStorage<'s, Camera>,
-        Read<'s, InputHandler<StringBindings>>,
+        Read<'s, InputHandler<MovementBindingTypes>>,
         ReadExpect<'s, ScreenDimensions>,
         WriteExpect<'s, CursorPosition>
     );
@@ -48,13 +48,13 @@ mod test_integration {
     use amethyst::Error;
     use amethyst::prelude::*;
     use amethyst_test::prelude::*;
-    use amethyst::input::StringBindings;
     use crate::test_helpers as helper;
     use crate::state::init_camera;
 
     #[test]
     fn simple_cursor_position_update() -> Result<(), Error> {
-        AmethystApplication::ui_base::<StringBindings>()
+        amethyst::start_logger(Default::default());
+        AmethystApplication::ui_base::<MovementBindingTypes>()
             .with_system(CursorPosUpdateSystem::default(), "cursor_pos_update_system", &[])
             .with_setup(|world| {
                 // resources must be added during setup

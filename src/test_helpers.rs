@@ -12,7 +12,9 @@ use amethyst::winit::{
 };
 use amethyst::winit::dpi::LogicalPosition;
 use amethyst::ecs::Component;
-use amethyst::input::{InputHandler, StringBindings};
+use amethyst::input::InputHandler;
+
+use crate::systems::MovementBindingTypes;
 
 pub fn make_window_event(win_event: WindowEvent) -> Event {
     Event::WindowEvent {
@@ -41,7 +43,7 @@ pub fn get_component<T: Component + Clone>(world: &World) -> T {
 
 /// Call this from `with_effect` block
 pub fn send_input_event(event: Event, world: &World) {
-    let mut input_handler = world.fetch_mut::<InputHandler<StringBindings>>();
+    let mut input_handler = world.fetch_mut::<InputHandler<MovementBindingTypes>>();
     let mut dummy_event_channel = EventChannel::<>::new();
     input_handler.send_event(&event, &mut dummy_event_channel, 1.0);
 }

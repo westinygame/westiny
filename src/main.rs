@@ -1,5 +1,5 @@
 use amethyst::core::transform::TransformBundle;
-use amethyst::input::{InputBundle, StringBindings};
+use amethyst::input::InputBundle;
 use amethyst::prelude::*;
 use amethyst::renderer::RenderingBundle;
 use amethyst::renderer::plugins::{RenderFlat2D, RenderToWindow};
@@ -29,10 +29,10 @@ fn main() -> amethyst::Result<()> {
     let display_config = resources_dir.join("display_config.ron");
     let key_binding = resources_dir.join("input.ron");
 
+    let input_bundle = InputBundle::<systems::MovementBindingTypes>::new().with_bindings_from_file(key_binding)?;
+
     let game_data = GameDataBuilder::default()
-        .with_bundle(
-            InputBundle::<StringBindings>::new().with_bindings_from_file(key_binding)?
-        )?
+        .with_bundle(input_bundle)?
         .with_bundle(TransformBundle::new())?
         .with_bundle(RenderingBundle::<DefaultBackend>::new()
             .with_plugin(
@@ -44,9 +44,10 @@ fn main() -> amethyst::Result<()> {
         )?
         // .with(systems::InputDebugSystem::default(), "input_debug_system", &["input_system"])
         .with(systems::CameraMovementSystem, "camera_movement_system", &["input_system"])
+        .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"])
         .with(systems::PlayerMovementSystem, "player_movement_system", &["input_system"])
         .with(systems::PhysicsSystem, "physics_system", &["player_movement_system"])
-        .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"]);
+        .with(systems::PlayerShooterSystem, "player_shooter_system", &["input_system"]);
 
     let mut game = Application::new(resources_dir, state::PlayState, game_data)?;
 
