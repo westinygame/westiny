@@ -1,4 +1,4 @@
-use std::net::IpAddr;
+use std::net::SocketAddr;
 use amethyst::StateEvent;
 
 use amethyst::core::{
@@ -17,7 +17,7 @@ use amethyst::derive::EventReader;
 
 #[derive(Clone, Debug)]
 pub enum AppEvent {
-    Connected(IpAddr),
+    Connected(SocketAddr),
 }
 
 #[derive(Clone, Debug, EventReader)]

@@ -5,8 +5,11 @@ use crate::{
 };
 use amethyst::shred::{Dispatcher, DispatcherBuilder};
 use amethyst::core::ecs::WorldExt;
-use amethyst::core::ArcThreadPool;
+use amethyst::core::{ArcThreadPool, SystemBundle};
 use crate::events::WestinyEvent;
+use amethyst::network::simulation::laminar::{LaminarNetworkBundle, LaminarSocket};
+use std::net::{IpAddr, SocketAddr};
+use std::str::FromStr;
 
 #[derive(Default)]
 pub struct ConnectState {
@@ -17,11 +20,18 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
     fn on_start(&mut self, data: StateData<'_, GameData<'static, 'static>>) {
         let mut world = data.world;
 
-        let sd = systems::client_connect::ClientConnectSystemDesc::default();
-        let sys = sd.build(&mut world);
+        let server_addr = ServerAddress { address: Some(SocketAddr::new("127.0.0.1".parse().unwrap(), 4321))};
+        world.insert(server_addr);
 
         let mut dispatcher_builder = DispatcherBuilder::new();
-        dispatcher_builder.add(sys, "client_connect_system", &[]);
+
+        let socket = LaminarSocket::bind("127.0.0.1:1234").unwrap();
+        LaminarNetworkBundle::new(Some(socket)).build(&mut world, &mut dispatcher_builder).unwrap();
+
+        dispatcher_builder.add(
+            systems::client_connect::ClientConnectSystemDesc::default().build(&mut world),
+            "client_connect_system",
+            &["network_recv"]);
 
         let mut dispatcher = dispatcher_builder
             .with_pool((*world.read_resource::<ArcThreadPool>()).clone())
@@ -38,7 +48,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
                     log::info!("Connection established ({})", ip);
 
                     // TODO state transition
-                    Trans::None
+                    Trans::Quit
                 }
             }
         } else {
@@ -53,4 +63,9 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
         // call `data.data.update(&data.world);` if you want to run the core systems (defined in `game_data`)
         Trans::None
     }
+}
+
+#[derive(Default)]
+pub struct ServerAddress {
+    pub address: Option<SocketAddr>
 }
