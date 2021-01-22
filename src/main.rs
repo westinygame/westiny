@@ -8,18 +8,17 @@ use amethyst::utils::application_root_dir;
 use amethyst::tiles::{RenderTiles2D, MortonEncoder};
 
 use log::info;
-use amethyst::network::simulation::laminar::LaminarNetworkBundle;
 
 mod state;
 mod systems;
 mod entities;
 mod components;
 mod resources;
+mod states;
+mod events;
 
 #[cfg(test)]
 mod test_helpers;
-mod states;
-mod events;
 
 /// Desert sand color
 const BACKGROUND_COLOR: [f32; 4] = [0.75, 0.65, 0.5, 1.0];

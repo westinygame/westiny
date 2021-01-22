@@ -8,8 +8,7 @@ use amethyst::core::ecs::WorldExt;
 use amethyst::core::{ArcThreadPool, SystemBundle};
 use crate::events::WestinyEvent;
 use amethyst::network::simulation::laminar::{LaminarNetworkBundle, LaminarSocket};
-use std::net::{IpAddr, SocketAddr};
-use std::str::FromStr;
+use std::net::SocketAddr;
 
 #[derive(Default)]
 pub struct ConnectState {
@@ -20,6 +19,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
     fn on_start(&mut self, data: StateData<'_, GameData<'static, 'static>>) {
         let mut world = data.world;
 
+        // TODO get server address from user/config
         let server_addr = ServerAddress { address: Some(SocketAddr::new("127.0.0.1".parse().unwrap(), 4321))};
         world.insert(server_addr);
 
