@@ -6,11 +6,8 @@ use amethyst::core::{Transform, math::{Vector3, Vector2}};
 use amethyst::ecs::prelude::LazyUpdate;
 use amethyst::ecs::prelude::Join;
 
-// use crate::components::{Player, Velocity};
-// use amethyst::core::math::{Vector2, Rotation2, Point2};
-
 use crate::systems::player_movement::{ActionBinding, MovementBindingTypes};
-use crate::components::{Player, Velocity};
+use crate::components::{Player, Velocity, DistanceLimit};
 use crate::entities::spawn_bullet;
 use crate::resources::{SpriteResource, SpriteId};
 
@@ -38,7 +35,8 @@ impl<'s> System<'s> for PlayerShooterSystem {
                 let direction3d = (bullet_transform.rotation() * Vector3::y()).normalize();
                 let speed = 100.0;
                 let velocity = Velocity(Vector2::new(-direction3d.x * speed, -direction3d.y * speed));
-                spawn_bullet(bullet_transform, velocity, sprites.sprite_render_for(SpriteId::Bullet), &entities, &lazy_update);
+                let distance_limit = DistanceLimit::new(100.0);
+                spawn_bullet(bullet_transform, velocity, sprites.sprite_render_for(SpriteId::Bullet), distance_limit, &entities, &lazy_update);
             }
         }
     }
