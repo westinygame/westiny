@@ -8,6 +8,7 @@ use amethyst::utils::application_root_dir;
 use amethyst::tiles::{RenderTiles2D, MortonEncoder};
 
 use log::info;
+use amethyst::network::simulation::laminar::LaminarNetworkBundle;
 
 mod state;
 mod systems;
@@ -17,6 +18,8 @@ mod resources;
 
 #[cfg(test)]
 mod test_helpers;
+mod states;
+mod events;
 
 /// Desert sand color
 const BACKGROUND_COLOR: [f32; 4] = [0.75, 0.65, 0.5, 1.0];
@@ -42,13 +45,17 @@ fn main() -> amethyst::Result<()> {
             .with_plugin(RenderFlat2D::default())
             .with_plugin(RenderTiles2D::<resources::GroundTile, MortonEncoder>::default())
         )?
+        .with_bundle(LaminarNetworkBundle::new(None))?
         // .with(systems::InputDebugSystem::default(), "input_debug_system", &["input_system"])
-        .with(systems::CameraMovementSystem, "camera_movement_system", &["input_system"])
         .with(systems::PlayerMovementSystem, "player_movement_system", &["input_system"])
+        .with(systems::CameraMovementSystem, "camera_movement_system", &["player_movement_system"])
         .with(systems::PhysicsSystem, "physics_system", &["player_movement_system"])
         .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"]);
 
-    let mut game = Application::new(resources_dir, state::PlayState, game_data)?;
+    let mut game = CoreApplication::<_, events::WestinyEvent, events::WestinyEventReader>::build(
+        resources_dir,
+        states::client_states::ConnectState::default(),
+    )?.build(game_data)?;
 
     info!("Starting...");
     game.run();

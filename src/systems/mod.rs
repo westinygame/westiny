@@ -9,3 +9,4 @@ mod player_movement;
 mod camera_movement;
 mod physics;
 mod cursor_pos_update;
+pub mod client_connect;
