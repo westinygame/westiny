@@ -6,6 +6,7 @@ use amethyst::renderer::plugins::{RenderFlat2D, RenderToWindow};
 use amethyst::renderer::types::DefaultBackend;
 use amethyst::utils::application_root_dir;
 use amethyst::tiles::{RenderTiles2D, MortonEncoder};
+use amethyst::audio::AudioBundle;
 
 use log::info;
 
@@ -42,6 +43,7 @@ fn main() -> amethyst::Result<()> {
             .with_plugin(RenderFlat2D::default())
             .with_plugin(RenderTiles2D::<resources::GroundTile, MortonEncoder>::default())
         )?
+        .with_bundle(AudioBundle::default())?
         // .with(systems::InputDebugSystem::default(), "input_debug_system", &["input_system"])
         .with(systems::CameraMovementSystem, "camera_movement_system", &["input_system"])
         .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"])
