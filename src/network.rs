@@ -1,18 +1,18 @@
-use amethyst::core::Transform;
 use serde::{Serialize, Deserialize};
 use derive_new::new;
-use std::fmt::{Display, Debug};
-use serde::__private::Formatter;
+use std::fmt::{Display, Debug, Formatter};
+use amethyst::core::math::Point2;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PackageType {
     // player name
     ConnectionRequest(String),
+    ConnectionResponse(Result<ClientInitialData>),
 }
 
-#[derive(Serialize, Deserialize, new)]
-pub struct ConnectionPackage {
-    pub initial_trans: Transform,
+#[derive(Clone, Debug, Serialize, Deserialize, new)]
+pub struct ClientInitialData {
+    pub initial_pos: Point2<f32>,
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize, Debug)]
@@ -32,7 +32,7 @@ impl Display for ErrorKind {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, new)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, new)]
 pub struct Error {
     error_kind: ErrorKind,
 }

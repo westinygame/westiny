@@ -11,9 +11,9 @@ use crate::events::AppEvent;
 use amethyst::core::Time;
 use std::time::Duration;
 use crate::states::client_states::ServerAddress;
-use bincode::{deserialize, serialize, ErrorKind};
+use bincode::{deserialize, serialize};
 use crate::network;
-use crate::network::{ConnectionPackage, Error};
+use crate::network::PackageType;
 
 const RUN_EVERY_N_SEC: u64 = 1;
 const PLAYER_NAME_MAGIC: &str = "Narancsos_Feco";
@@ -63,17 +63,19 @@ impl<'s> System<'s> for ClientConnectSystem {
         for event in net_event_ch.read(&mut self.reader) {
             match event {
                 NetworkSimulationEvent::Message(addr, msg) => {
+                    log::info!("Message: [{}], {:?}", addr, msg);
                     if server.address.filter(|srv_addr| srv_addr == addr).is_some() {
-
-                        // if deserialization was successful
-                        match deserialize(&msg) as bincode::Result<network::Result<ConnectionPackage>> {
-                            Ok(Ok(connection_response)) => {
-
-                            },
-                            Ok(Err(refuse_cause)) => {
-                                log::error!("Connection refused. Cause: {}", refuse_cause);
-                            },
-                            Err(err) => log::error!("Connection response could not be deserialized")
+                        match deserialize(&msg) as bincode::Result<network::PackageType> {
+                            Ok(package) => {
+                                match package {
+                                    PackageType::ConnectionResponse(result) => {
+                                       // push event
+                                        app_event.single_write(AppEvent::Connection(result));
+                                    }
+                                    _ => log::error!("Unexpected package from server")
+                                }
+                            }
+                            Err(err) => log::error!("Connection response could not be deserialized. Cause: {}", err)
                         }
                     } else {
                         log::warn!("Unexpected message arrived from {} while waiting for connection response", addr);

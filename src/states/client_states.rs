@@ -44,11 +44,18 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
     fn handle_event(&mut self, _data: StateData<'_, GameData<'_, '_>>, event: WestinyEvent) -> Trans<GameData<'static, 'static>, WestinyEvent> {
         if let WestinyEvent::App(app_event) = event {
             match app_event {
-                AppEvent::Connected(ip) => {
-                    log::info!("Connection established ({})", ip);
-
-                    // TODO state transition
-                    Trans::Quit
+                AppEvent::Connection(result) => {
+                    match result {
+                        Ok(init_data) => {
+                            log::info!("Initial position: {:?}", init_data.initial_pos);
+                            // TODO state transition with initial data
+                            Trans::Quit
+                        }
+                        Err(refuse_cause) => {
+                            log::error!("Connection refused. Cause: {}", refuse_cause);
+                            Trans::Quit
+                        }
+                    }
                 }
             }
         } else {

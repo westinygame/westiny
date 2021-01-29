@@ -1,4 +1,3 @@
-use std::net::SocketAddr;
 use amethyst::StateEvent;
 
 use amethyst::core::{
@@ -14,10 +13,11 @@ use amethyst::core::{
     },
 };
 use amethyst::derive::EventReader;
+use crate::network;
 
 #[derive(Clone, Debug)]
 pub enum AppEvent {
-    Connected(SocketAddr),
+    Connection(network::Result<network::ClientInitialData>),
 }
 
 #[derive(Clone, Debug, EventReader)]
