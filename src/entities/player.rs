@@ -4,7 +4,7 @@ use amethyst::core::Transform;
 
 use log::info;
 use crate::components::{Player, Velocity};
-use crate::resources::SpriteResource;
+use crate::resources::{SpriteResource, SpriteId};
 use amethyst::core::math::Point2;
 
 pub fn initialize_player(world: &mut World,
@@ -17,7 +17,7 @@ pub fn initialize_player(world: &mut World,
 
     world
         .create_entity()
-        .with(sprite_resource.sprite_render_for_player())
+        .with(sprite_resource.sprite_render_for(SpriteId::Player))
         .with(transform)
         .with(Player)
         .with(Velocity::default())
