@@ -6,7 +6,8 @@ use amethyst::{
 };
 use amethyst::core::ecs::{Write, Read};
 use amethyst::core::ecs::shrev::EventChannel;
-use amethyst::network::simulation::TransportResource;
+use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
+use amethyst::core::Transform;
 
 #[derive(SystemDesc)]
 #[system_desc(name(ServerNetworkSystemDesc))]
@@ -31,8 +32,10 @@ impl<'s> System<'s> for ServerNetworkSystem {
         for event in net_event_ch.read(&mut self.reader) {
             match event {
                 NetworkSimulationEvent::Message(addr, _) => {
+                    let initial_pos = crate::network::ConnectionPackage { initial_trans: Transform::default()};
+                    let msg = bincode::serialize(&initial_pos).unwrap(); // TODO result
                     log::info!("Message received [{}], sending response...", addr);
-                    net.send(*addr, b"hi client");
+                    net.send_with_requirements(*addr, &msg, DeliveryRequirement::Reliable, UrgencyRequirement::OnTick);
                 }
                 _ => log::info!("Network event: {:?}", event)
 

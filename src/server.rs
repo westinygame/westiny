@@ -9,6 +9,7 @@ mod components;
 mod resources;
 mod states;
 mod events;
+mod network;
 
 #[cfg(test)]
 mod test_helpers;
