@@ -16,7 +16,7 @@ pub struct ConnectState {
 }
 
 impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
-    fn on_start(&mut self, data: StateData<'_, GameData<'static, 'static>>) {
+    fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         let mut world = data.world;
 
         // TODO get server address from user/config
@@ -48,8 +48,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
                     match result {
                         Ok(init_data) => {
                             log::info!("Initial position: {:?}", init_data.initial_pos);
-                            // TODO state transition with initial data
-                            Trans::Quit
+                            Trans::Switch(Box::new(crate::state::PlayState))
                         }
                         Err(refuse_cause) => {
                             log::error!("Connection refused. Cause: {}", refuse_cause);

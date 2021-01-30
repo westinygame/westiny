@@ -14,11 +14,16 @@ use crate::entities::initialize_player;
 use crate::entities::initialize_tilemap;
 
 // later, other states like "MenuState", "PauseState" can be added.
-pub struct PlayState;
+pub struct PlayState {
+    dispatcher: Option<Dispatcher<'static, 'static>>,
+}
 
-impl SimpleState for PlayState {
+impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         let world = data.world;
+
+
+
         let dimensions = (*world.read_resource::<ScreenDimensions>()).clone();
 
         let sprite_sheet_handle = load_sprite_sheet(world);
@@ -36,15 +41,19 @@ impl SimpleState for PlayState {
     fn handle_event(
         &mut self,
         _data: StateData<'_, GameData<'_, '_>>,
-        event: StateEvent
-    ) -> SimpleTrans {
-
-        if let StateEvent::Window(event) = &event {
+        event: WestinyEvent
+    ) -> Trans<GameData<'static, 'static>, WestinyEvent> {
+        if let WestinyEvent::EngineEvent(StateEvent::Window(event)) = &event {
             if is_close_requested(event) || is_key_down(&event, VirtualKeyCode::Escape) {
                 return Trans::Quit;
             }
         }
 
+        Trans::None
+    }
+
+    fn update(&mut self, data: StateData<GameData<'_, '_>>) -> Trans<GameData<'static, 'static>, WestinyEvent> {
+        data.data.update(data.world);
         Trans::None
     }
 }
@@ -67,6 +76,8 @@ pub fn init_camera(world: &mut World, dimensions: &ScreenDimensions) {
 }
 
 use amethyst::assets::Handle;
+use crate::events::WestinyEvent;
+use amethyst::core::ecs::Dispatcher;
 
 fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
     let texture_handle = {
