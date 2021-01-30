@@ -8,17 +8,18 @@ pub struct SpriteResource {
     pub sheet: Handle<SpriteSheet>
 }
 
+#[derive(Copy, Clone)]
+#[repr(usize)]
+pub enum SpriteId {
+    Player = 3,
+    ShootingPlayer = 4,
+    Bullet = 5,
+    Barrel = 6,
+}
+
 impl SpriteResource {
-    pub fn sprite_render_for_player(&self) -> SpriteRender {
-        self.sprite_render_at_index(3)
-    }
-
-    pub fn sprite_render_for_shooting_player(&self) -> SpriteRender {
-        self.sprite_render_at_index(4)
-    }
-
-    pub fn sprite_render_for_bullet(&self) -> SpriteRender {
-        self.sprite_render_at_index(5)
+    pub fn sprite_render_for(&self, id: SpriteId) -> SpriteRender {
+        self.sprite_render_at_index(id as usize)
     }
 
     fn sprite_render_at_index(&self, index: usize) -> SpriteRender {

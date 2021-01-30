@@ -12,8 +12,7 @@ use amethyst::ecs::prelude::Join;
 use crate::systems::player_movement::{ActionBinding, MovementBindingTypes};
 use crate::components::{Player, Velocity};
 use crate::entities::spawn_bullet;
-use crate::resources::SpriteResource;
-use log::info;
+use crate::resources::{SpriteResource, SpriteId};
 
 #[derive(SystemDesc)]
 pub struct PlayerShooterSystem;
@@ -32,7 +31,6 @@ impl<'s> System<'s> for PlayerShooterSystem {
         for (_player, player_transform) in (&players, &transforms).join() {
             if input.action_is_down(&ActionBinding::Shoot).unwrap_or(false)
             {
-                info!("Player is shooting...");
                 let mut bullet_transform = Transform::default();
                 bullet_transform.set_translation(*player_transform.translation());
                 bullet_transform.set_rotation(*player_transform.rotation());
@@ -40,7 +38,7 @@ impl<'s> System<'s> for PlayerShooterSystem {
                 let direction3d = (bullet_transform.rotation() * Vector3::y()).normalize();
                 let speed = 100.0;
                 let velocity = Velocity(Vector2::new(-direction3d.x * speed, -direction3d.y * speed));
-                spawn_bullet(bullet_transform, velocity, sprites.sprite_render_for_bullet(), &entities, &lazy_update);
+                spawn_bullet(bullet_transform, velocity, sprites.sprite_render_for(SpriteId::Bullet), &entities, &lazy_update);
             }
         }
     }

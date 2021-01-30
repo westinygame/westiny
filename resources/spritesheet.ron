@@ -44,5 +44,12 @@ List((
             width: 1,
             height: 3,
         ),
+        // 6: barrel
+        (
+            x: 17,
+            y: 16,
+            width: 16,
+            height: 16,
+        )
     ],
 ))
