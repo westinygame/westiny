@@ -12,6 +12,7 @@ use amethyst::{
 use crate::entities::initialize_player;
 use crate::entities::initialize_tilemap;
 use crate::resources::initialize_sprite_resource;
+use crate::resources::initialize_audio;
 
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState;
@@ -31,6 +32,7 @@ impl SimpleState for PlayState {
         );
         initialize_player(world, &sprites, player_init_pos);
         initialize_tilemap(world, &sprites, Point2::new(dimensions.width() / 2.0, dimensions.height() / 2.0));
+        initialize_audio(world)
     }
 
     fn handle_event(
