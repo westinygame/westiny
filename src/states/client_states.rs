@@ -5,10 +5,11 @@ use crate::{
 };
 use amethyst::shred::{Dispatcher, DispatcherBuilder};
 use amethyst::core::ecs::WorldExt;
-use amethyst::core::{ArcThreadPool, SystemBundle};
+use amethyst::core::{ArcThreadPool, SystemBundle, TransformBundle};
 use crate::events::WestinyEvent;
 use amethyst::network::simulation::laminar::{LaminarNetworkBundle, LaminarSocket};
 use std::net::SocketAddr;
+use amethyst::input::{InputBundle, StringBindings};
 
 #[derive(Default)]
 pub struct ConnectState {
@@ -25,13 +26,9 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
 
         let mut dispatcher_builder = DispatcherBuilder::new();
 
-        let socket = LaminarSocket::bind("127.0.0.1:1234").unwrap();
-        LaminarNetworkBundle::new(Some(socket)).build(&mut world, &mut dispatcher_builder).unwrap();
-
         dispatcher_builder.add(
             systems::client_connect::ClientConnectSystemDesc::default().build(&mut world),
-            "client_connect_system",
-            &["network_recv"]);
+            "client_connect_system", &[]);
 
         let mut dispatcher = dispatcher_builder
             .with_pool((*world.read_resource::<ArcThreadPool>()).clone())
@@ -48,7 +45,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
                     match result {
                         Ok(init_data) => {
                             log::info!("Initial position: {:?}", init_data.initial_pos);
-                            Trans::Switch(Box::new(crate::state::PlayState))
+                            Trans::Switch(Box::new(crate::state::PlayState::default()))
                         }
                         Err(refuse_cause) => {
                             log::error!("Connection refused. Cause: {}", refuse_cause);
@@ -63,10 +60,10 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
     }
 
     fn update(&mut self, data: StateData<GameData<'_, '_>>) -> Trans<GameData<'static, 'static>, WestinyEvent> {
+        data.data.update(&data.world);
         if let Some(dispatcher) = self.dispatcher.as_mut() {
             dispatcher.dispatch(&data.world);
         }
-        // call `data.data.update(&data.world);` if you want to run the core systems (defined in `game_data`)
         Trans::None
     }
 }

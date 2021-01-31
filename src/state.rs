@@ -14,15 +14,30 @@ use crate::entities::initialize_player;
 use crate::entities::initialize_tilemap;
 
 // later, other states like "MenuState", "PauseState" can be added.
+#[derive(Default)]
 pub struct PlayState {
     dispatcher: Option<Dispatcher<'static, 'static>>,
 }
 
 impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
-        let world = data.world;
+        let mut world = data.world;
 
+        let mut dispatcher_builder = DispatcherBuilder::new();
 
+        let key_bindings = application_root_dir().unwrap().join("resources").join("input.ron");
+        InputBundle::<StringBindings>::new().with_bindings_from_file(key_bindings).unwrap().build(&mut world, &mut dispatcher_builder).unwrap();
+        let mut dispatcher = dispatcher_builder
+            .with(systems::PlayerMovementSystem, "player_movement_system", &["input_system"])
+            .with(systems::CameraMovementSystem, "camera_movement_system", &["player_movement_system"])
+            .with(systems::PhysicsSystem, "physics_system", &["player_movement_system"])
+            .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"])
+
+            .with_pool((*world.read_resource::<ArcThreadPool>()).clone())
+            .build();
+        dispatcher.setup(world);
+
+        self.dispatcher = Some(dispatcher);
 
         let dimensions = (*world.read_resource::<ScreenDimensions>()).clone();
 
@@ -53,7 +68,10 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
     }
 
     fn update(&mut self, data: StateData<GameData<'_, '_>>) -> Trans<GameData<'static, 'static>, WestinyEvent> {
-        data.data.update(data.world);
+        if let Some(dispatcher) = self.dispatcher.as_mut() {
+            dispatcher.dispatch(&data.world);
+        }
+        data.data.update(&data.world);
         Trans::None
     }
 }
@@ -77,7 +95,11 @@ pub fn init_camera(world: &mut World, dimensions: &ScreenDimensions) {
 
 use amethyst::assets::Handle;
 use crate::events::WestinyEvent;
-use amethyst::core::ecs::Dispatcher;
+use amethyst::core::ecs::{Dispatcher, DispatcherBuilder};
+use amethyst::input::{InputBundle, StringBindings};
+use crate::systems;
+use amethyst::core::{SystemBundle, ArcThreadPool};
+use amethyst::utils::application_root_dir;
 
 fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
     let texture_handle = {

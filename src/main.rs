@@ -30,12 +30,8 @@ fn main() -> amethyst::Result<()> {
     let app_root = application_root_dir()?;
     let resources_dir = app_root.join("resources");
     let display_config = resources_dir.join("display_config.ron");
-    let key_binding = resources_dir.join("input.ron");
 
     let game_data = GameDataBuilder::default()
-        .with_bundle(
-            InputBundle::<StringBindings>::new().with_bindings_from_file(key_binding)?
-        )?
         .with_bundle(TransformBundle::new())?
         .with_bundle(RenderingBundle::<DefaultBackend>::new()
             .with_plugin(
@@ -44,12 +40,7 @@ fn main() -> amethyst::Result<()> {
             )
             .with_plugin(RenderFlat2D::default())
             .with_plugin(RenderTiles2D::<resources::GroundTile, MortonEncoder>::default())
-        )?
-        // .with(systems::InputDebugSystem::default(), "input_debug_system", &["input_system"])
-        .with(systems::PlayerMovementSystem, "player_movement_system", &["input_system"])
-        .with(systems::CameraMovementSystem, "camera_movement_system", &["player_movement_system"])
-        .with(systems::PhysicsSystem, "physics_system", &["player_movement_system"])
-        .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"]);
+        )?;
 
     let mut game = CoreApplication::<_, events::WestinyEvent, events::WestinyEventReader>::build(
         resources_dir,
