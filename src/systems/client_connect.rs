@@ -10,7 +10,7 @@ use amethyst::network::simulation::{TransportResource, DeliveryRequirement, Urge
 use crate::events::AppEvent;
 use amethyst::core::Time;
 use std::time::Duration;
-use crate::states::client_states::ServerAddress;
+use crate::states::connection::ServerAddress;
 use bincode::{deserialize, serialize};
 use crate::network;
 use crate::network::PackageType;
@@ -52,7 +52,7 @@ impl<'s> System<'s> for ClientConnectSystem {
         if (time_since_start-self.last_run) >= Duration::from_secs(RUN_EVERY_N_SEC) {
             self.last_run = time_since_start;
             if let Some(addr) = server.address {
-                let msg = serialize(&network::PackageType::ConnectionRequest(PLAYER_NAME_MAGIC.to_string()))
+                let msg = serialize(&network::PackageType::ConnectionRequest { player_name: PLAYER_NAME_MAGIC.to_string() })
                     .expect("ConnectionRequest could not be serialized");
 
                 log::info!("Sending message. Time: {}", time_since_start.as_secs_f32());

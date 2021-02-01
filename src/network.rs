@@ -5,8 +5,9 @@ use amethyst::core::math::Point2;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PackageType {
-    // player name
-    ConnectionRequest(String),
+    ConnectionRequest {
+        player_name: String
+    },
     ConnectionResponse(Result<ClientInitialData>),
 }
 

@@ -21,9 +21,5 @@ vulkan = ["amethyst/vulkan"]
 tiles = ["amethyst/tiles"]
 
 [[bin]]
-name = "westiny_client"
-path = "src/client.rs"
-
-[[bin]]
 name = "westiny_server"
 path = "src/server.rs"

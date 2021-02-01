@@ -62,7 +62,7 @@ impl ServerNetworkSystem {
         use network::*;
 
         match message {
-            PackageType::ConnectionRequest(player_name) => {
+            PackageType::ConnectionRequest{ player_name } => {
                 log::debug!("Connection request received: {}, {}", address, player_name);
                 // TODO place checks here (blacklisted, already connected, different version, etc.)
                 // TODO store somewhere as connected client

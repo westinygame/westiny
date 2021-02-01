@@ -50,7 +50,6 @@ mod test_integration {
     use amethyst_test::prelude::*;
     use amethyst::input::StringBindings;
     use crate::test_helpers as helper;
-    use crate::state::init_camera;
 
     #[test]
     fn simple_cursor_position_update() -> Result<(), Error> {
@@ -62,7 +61,6 @@ mod test_integration {
             })
             .with_effect(|world| {
                 let dimensions = (*world.read_resource::<ScreenDimensions>()).clone();
-                init_camera(world, &dimensions);
 
                 let event = helper::make_cursor_moved(
                     (dimensions.width() / 2.0).into(),

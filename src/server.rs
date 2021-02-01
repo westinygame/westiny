@@ -2,7 +2,6 @@ use amethyst::utils::application_root_dir;
 use amethyst::{GameDataBuilder, CoreApplication};
 use amethyst::network::simulation::laminar::{LaminarNetworkBundle, LaminarSocket};
 
-mod state;
 mod systems;
 mod entities;
 mod components;

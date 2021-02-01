@@ -1,22 +1,30 @@
 use amethyst::{
-    assets::{AssetStorage, Loader},
+    assets::{AssetStorage, Loader, Handle},
     core::{
         transform::Transform,
         math::{Point2, Vector3},
+        ecs::{Dispatcher, DispatcherBuilder},
+        SystemBundle,
+        ArcThreadPool,
     },
-    input::{is_close_requested, is_key_down, VirtualKeyCode},
+    input::{is_close_requested, is_key_down, VirtualKeyCode, InputBundle, StringBindings},
     prelude::*,
     renderer::{Camera, ImageFormat, SpriteSheet, SpriteSheetFormat, Texture},
     window::ScreenDimensions,
 };
-
-use crate::entities::initialize_player;
-use crate::entities::initialize_tilemap;
+use crate::{
+    events::WestinyEvent,
+    entities::{initialize_player, initialize_tilemap},
+    systems,
+};
+use std::path::PathBuf;
 
 // later, other states like "MenuState", "PauseState" can be added.
 #[derive(Default)]
 pub struct PlayState {
     dispatcher: Option<Dispatcher<'static, 'static>>,
+
+    resources_path: PathBuf,
 }
 
 impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
@@ -25,7 +33,8 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         let mut dispatcher_builder = DispatcherBuilder::new();
 
-        let key_bindings = application_root_dir().unwrap().join("resources").join("input.ron");
+        let key_bindings = self.resources_path.join("input.ron");
+
         InputBundle::<StringBindings>::new().with_bindings_from_file(key_bindings).unwrap().build(&mut world, &mut dispatcher_builder).unwrap();
         let mut dispatcher = dispatcher_builder
             .with(systems::PlayerMovementSystem, "player_movement_system", &["input_system"])
@@ -93,13 +102,7 @@ pub fn init_camera(world: &mut World, dimensions: &ScreenDimensions) {
         .build();
 }
 
-use amethyst::assets::Handle;
-use crate::events::WestinyEvent;
-use amethyst::core::ecs::{Dispatcher, DispatcherBuilder};
-use amethyst::input::{InputBundle, StringBindings};
-use crate::systems;
-use amethyst::core::{SystemBundle, ArcThreadPool};
-use amethyst::utils::application_root_dir;
+
 
 fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
     let texture_handle = {

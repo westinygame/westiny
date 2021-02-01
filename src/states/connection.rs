@@ -5,11 +5,9 @@ use crate::{
 };
 use amethyst::shred::{Dispatcher, DispatcherBuilder};
 use amethyst::core::ecs::WorldExt;
-use amethyst::core::{ArcThreadPool, SystemBundle, TransformBundle};
+use amethyst::core::ArcThreadPool;
 use crate::events::WestinyEvent;
-use amethyst::network::simulation::laminar::{LaminarNetworkBundle, LaminarSocket};
 use std::net::SocketAddr;
-use amethyst::input::{InputBundle, StringBindings};
 
 #[derive(Default)]
 pub struct ConnectState {
@@ -45,7 +43,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
                     match result {
                         Ok(init_data) => {
                             log::info!("Initial position: {:?}", init_data.initial_pos);
-                            Trans::Switch(Box::new(crate::state::PlayState::default()))
+                            Trans::Switch(Box::new(super::game_states::PlayState::default()))
                         }
                         Err(refuse_cause) => {
                             log::error!("Connection refused. Cause: {}", refuse_cause);
