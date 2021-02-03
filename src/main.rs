@@ -33,11 +33,12 @@ fn main() -> amethyst::Result<()> {
 
     let client_port: u16 = {
         let ron_path = resources_dir.join("client_network.ron");
-        read_ron(&ron_path).unwrap_or_else(|_| {
+        read_ron(&ron_path).unwrap_or_else(|err| {
             let client_port: ClientPort = Default::default();
-            log::warn!("Failed to read client network configuration file: {}, \
-            Using default client port ({})",
+                log::warn!("Failed to read server network configuration file: {}, error: [{}] \
+                Using default server port ({})",
                        ron_path.as_os_str().to_str().unwrap(),
+                       err,
                        client_port.0);
             client_port.0
         })

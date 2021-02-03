@@ -8,6 +8,7 @@ use crate::{
 use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 use std::time::Duration;
+use amethyst::core::frame_limiter::FrameRateLimitStrategy;
 
 mod systems;
 mod entities;
@@ -29,16 +30,20 @@ fn main() -> amethyst::Result<()> {
 
     let server_port: u16 = {
         let ron_path = resources_dir.join("server_network.ron");
-        read_ron(&ron_path).unwrap_or_else(|_| {
-            let srv_port = ServerAddress::default().address.port();
-            log::warn!("Failed to read server network configuration file: {}, \
-            Using default server port ({})",
-                       ron_path.as_os_str().to_str().unwrap(),
-                       srv_port);
-            srv_port
-        })
+        read_ron::<ServerAddress>(&ron_path)
+            .map(|addr| addr.address.port())
+            .unwrap_or_else(|err| {
+                let srv_port = ServerAddress::default().address.port();
+                log::warn!("Failed to read server network configuration file: {}, error: [{}] \
+                Using default server port ({})",
+                           ron_path.as_os_str().to_str().unwrap(),
+                           err,
+                           srv_port);
+                srv_port
+            })
     };
     let socket_address = SocketAddr::new(IpAddr::from_str("127.0.0.1").unwrap(), server_port);
+    log::info!("Start listening on {}", socket_address);
 
     let laminar_config = {
         let mut conf = LaminarConfig::default();
@@ -52,11 +57,18 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(LaminarNetworkBundle::new(Some(socket)))?
         .with_system_desc(systems::server_network::ServerNetworkSystemDesc::default(), "game_network", &["network_recv"]);
 
+    let frame_limit = 60;
+
     let mut game =
         CoreApplication::<_, events::WestinyEvent, events::WestinyEventReader>::build(
             resources_dir,
             states::server_states::ServerState::default(),
-        )?.build(game_data)?;
+        )?
+        .with_frame_limit(
+            FrameRateLimitStrategy::SleepAndYield(Duration::from_millis(2)),
+            frame_limit
+        )
+        .build(game_data)?;
 
     log::info!("Starting server");
     game.run();

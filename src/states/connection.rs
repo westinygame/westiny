@@ -29,11 +29,12 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
 
         let server_address: ServerAddress = {
             let ron_path = self.resource_dir.join("server_network.ron");
-            read_ron(&ron_path).unwrap_or_else(|_| {
+            read_ron(&ron_path).unwrap_or_else(|err| {
                 let address = ServerAddress::default();
-                log::warn!("Failed to read server network configuration file: {}, \
-            Using default server address ({})",
+                log::warn!("Failed to read server network configuration file: {}, error: [{}] \
+                Using default server port ({})",
                            ron_path.as_os_str().to_str().unwrap(),
+                           err,
                            address.address);
                 address
             })
