@@ -20,11 +20,18 @@ use crate::{
 use std::path::PathBuf;
 
 // later, other states like "MenuState", "PauseState" can be added.
-#[derive(Default)]
 pub struct PlayState {
     dispatcher: Option<Dispatcher<'static, 'static>>,
+    resource_dir: PathBuf,
+}
 
-    resources_path: PathBuf,
+impl PlayState {
+    pub fn new(resource_dir: &std::path::Path) -> Self {
+        PlayState {
+            dispatcher: Default::default(),
+            resource_dir: resource_dir.to_path_buf(),
+        }
+    }
 }
 
 impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
@@ -33,7 +40,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         let mut dispatcher_builder = DispatcherBuilder::new();
 
-        let key_bindings = self.resources_path.join("input.ron");
+        let key_bindings = self.resource_dir.join("input.ron");
 
         InputBundle::<StringBindings>::new().with_bindings_from_file(key_bindings).unwrap().build(&mut world, &mut dispatcher_builder).unwrap();
         let mut dispatcher = dispatcher_builder

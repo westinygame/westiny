@@ -10,10 +10,9 @@ use amethyst::network::simulation::{TransportResource, DeliveryRequirement, Urge
 use crate::events::AppEvent;
 use amethyst::core::Time;
 use std::time::Duration;
-use crate::states::connection::ServerAddress;
 use bincode::{deserialize, serialize};
 use crate::network;
-use crate::network::PackageType;
+use crate::resources::ServerAddress;
 
 const RUN_EVERY_N_SEC: u64 = 1;
 const PLAYER_NAME_MAGIC: &str = "Narancsos_Feco";
@@ -51,24 +50,22 @@ impl<'s> System<'s> for ClientConnectSystem {
 
         if (time_since_start-self.last_run) >= Duration::from_secs(RUN_EVERY_N_SEC) {
             self.last_run = time_since_start;
-            if let Some(addr) = server.address {
                 let msg = serialize(&network::PackageType::ConnectionRequest { player_name: PLAYER_NAME_MAGIC.to_string() })
                     .expect("ConnectionRequest could not be serialized");
 
                 log::info!("Sending message. Time: {}", time_since_start.as_secs_f32());
-                net.send_with_requirements(addr, &msg, DeliveryRequirement::Reliable, UrgencyRequirement::OnTick);
-            }
+                net.send_with_requirements(server.address, &msg, DeliveryRequirement::Reliable, UrgencyRequirement::OnTick);
         }
 
         for event in net_event_ch.read(&mut self.reader) {
             match event {
                 NetworkSimulationEvent::Message(addr, msg) => {
                     log::info!("Message: [{}], {:?}", addr, msg);
-                    if server.address.filter(|srv_addr| srv_addr == addr).is_some() {
+                    if &server.address == addr {
                         match deserialize(&msg) as bincode::Result<network::PackageType> {
                             Ok(package) => {
                                 match package {
-                                    PackageType::ConnectionResponse(result) => {
+                                    network::PackageType::ConnectionResponse(result) => {
                                        // push event
                                         app_event.single_write(AppEvent::Connection(result));
                                     }

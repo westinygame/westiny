@@ -5,6 +5,10 @@ use amethyst::renderer::{RenderingBundle, RenderToWindow, RenderFlat2D, types::D
 use amethyst::tiles::{RenderTiles2D, MortonEncoder};
 use amethyst::network::simulation::laminar::{LaminarSocket, LaminarNetworkBundle, LaminarConfig};
 use std::time::Duration;
+use crate::resources::ClientPort;
+use crate::utilities::read_ron;
+use std::net::{SocketAddr, IpAddr};
+use std::str::FromStr;
 
 mod systems;
 mod entities;
@@ -13,6 +17,7 @@ mod resources;
 mod states;
 mod events;
 mod network;
+mod utilities;
 
 #[cfg(test)]
 mod test_helpers;
@@ -24,13 +29,28 @@ fn main() -> amethyst::Result<()> {
     let resources_dir = app_root.join("resources");
     let display_config = resources_dir.join("display_config.ron");
 
+
+
+    let client_port: u16 = {
+        let ron_path = resources_dir.join("client_network.ron");
+        read_ron(&ron_path).unwrap_or_else(|_| {
+            let client_port: ClientPort = Default::default();
+            log::warn!("Failed to read client network configuration file: {}, \
+            Using default client port ({})",
+                       ron_path.as_os_str().to_str().unwrap(),
+                       client_port.0);
+            client_port.0
+        })
+    };
+    let client_socket = SocketAddr::new(IpAddr::from_str("127.0.0.1")?, client_port);
+
     let laminar_config = {
         let mut conf = LaminarConfig::default();
         // send heartbeat in every 3 seconds
         conf.heartbeat_interval = Some(Duration::from_secs(3));
         conf
     };
-    let socket = LaminarSocket::bind_with_config("127.0.0.1:1234", laminar_config).unwrap();
+    let socket = LaminarSocket::bind_with_config(client_socket, laminar_config).unwrap();
 
     let game_data = GameDataBuilder::default()
         .with_bundle(TransformBundle::new())?
@@ -45,8 +65,8 @@ fn main() -> amethyst::Result<()> {
 
     let mut game =
         CoreApplication::<_, events::WestinyEvent, events::WestinyEventReader>::build(
-            resources_dir,
-            states::connection::ConnectState::default(),
+            &resources_dir,
+            states::connection::ConnectState::new(&resources_dir),
         )?.build(game_data)?;
 
     log::info!("Starting client");
