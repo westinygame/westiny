@@ -14,9 +14,7 @@ use crate::entities::initialize_tilemap;
 use crate::resources::initialize_sprite_resource;
 use crate::resources::initialize_audio;
 
-//TODO for barrel
 use crate::resources::{SpriteResource, SpriteId};
-//use amethyst::core::Transform;
 use crate::components::BoundingCircle;
 use crate::components::Projectile;
 use crate::resources::{Collisions, ProjectileCollisions};
@@ -42,16 +40,7 @@ impl SimpleState for PlayState {
         initialize_player(world, &sprites, player_init_pos);
         initialize_tilemap(world, &sprites, Point2::new(dimensions.width() / 2.0, dimensions.height() / 2.0));
         initialize_audio(world);
-
-        // barrels
-        place_barrel(world, &sprites, player_init_pos, 3, 3);
-        place_barrel(world, &sprites, player_init_pos, 3, 5);
-        place_barrel(world, &sprites, player_init_pos, 3, 6);
-        place_barrel(world, &sprites, player_init_pos, 3, 7);
-        place_barrel(world, &sprites, player_init_pos, 3, 8);
-        place_barrel(world, &sprites, player_init_pos, 4, 8);
-        place_barrel(world, &sprites, player_init_pos, 5, 8);
-        place_barrel(world, &sprites, player_init_pos, 5, 7);
+        place_objects(world, &sprites, player_init_pos);
     }
 
     fn handle_event(
@@ -68,6 +57,18 @@ impl SimpleState for PlayState {
 
         Trans::None
     }
+}
+
+fn place_objects(world: &mut World, sprites: &SpriteResource, player_init_pos: Point2<f32>) {
+    //TODO placing barrels and other objects should be based on a map
+    place_barrel(world, &sprites, player_init_pos, 3, 3);
+    place_barrel(world, &sprites, player_init_pos, 3, 5);
+    place_barrel(world, &sprites, player_init_pos, 3, 6);
+    place_barrel(world, &sprites, player_init_pos, 3, 7);
+    place_barrel(world, &sprites, player_init_pos, 3, 8);
+    place_barrel(world, &sprites, player_init_pos, 4, 8);
+    place_barrel(world, &sprites, player_init_pos, 5, 8);
+    place_barrel(world, &sprites, player_init_pos, 5, 7);
 }
 
 fn place_barrel(world: &mut World, sprites: &SpriteResource, player_init_pos: Point2<f32>, x: u32, y: u32) {
