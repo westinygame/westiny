@@ -1,0 +1,51 @@
+#![enable(implicit_some)]
+Container(
+    transform: (
+        id: "background",
+        anchor: Middle,
+        stretch: XY( x_margin: 0., y_margin: 0., keep_aspect_ratio: false),
+        width: 200.,
+        height: 200.,
+        
+    ),
+    //background: SolidColor(0.6, 0.6, 1.0, 0.1),
+    children: [
+        Image(
+            transform: (
+                id: "logo",
+                y: 32.,
+                width: 64.,
+                height: 64.,
+                tab_order: 1,
+                anchor: BottomMiddle,
+                mouse_reactive: true,
+            ),
+            image: NineSlice(
+                x_start: 10,
+                y_start: 16,
+                tex: File("spritesheet.png", ("IMAGE", ())),
+                width: 16,
+                height: 18,
+                left_dist: 12,
+                right_dist: 10,
+                top_dist: 11,
+                bottom_dist: 9,
+                texture_dimensions: (16,18),
+                ),
+        ),
+        Container(
+            transform: (
+                id: "health",
+                anchor: BottomRight,
+                stretch: XY( x_margin: 0., y_margin: 0., keep_aspect_ratio: true),
+                x: -100.,
+                y: -100.,
+                width: 5.,
+                height: 5.,
+            ),
+            background: SolidColor(0.09, 0.02, 0.25, 0.5),
+            children: []
+        )
+    ]
+)
+

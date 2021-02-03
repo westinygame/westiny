@@ -7,6 +7,7 @@ use amethyst::{
     prelude::*,
     renderer::Camera,
     window::ScreenDimensions,
+    ui::UiCreator,
 };
 
 use crate::entities::initialize_player;
@@ -41,6 +42,9 @@ impl SimpleState for PlayState {
         initialize_tilemap(world, &sprites, Point2::new(dimensions.width() / 2.0, dimensions.height() / 2.0));
         initialize_audio(world);
         place_objects(world, &sprites, player_init_pos);
+        world.exec(|mut creator: UiCreator<'_>| {
+            creator.create("ui/hud.ron", ());
+        });
     }
 
     fn handle_event(

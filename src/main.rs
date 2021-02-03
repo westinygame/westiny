@@ -7,6 +7,8 @@ use amethyst::renderer::types::DefaultBackend;
 use amethyst::utils::application_root_dir;
 use amethyst::tiles::{RenderTiles2D, MortonEncoder};
 use amethyst::audio::AudioBundle;
+use amethyst::ui::{RenderUi, UiBundle};
+use amethyst::input::{StringBindings};
 
 use log::info;
 
@@ -42,8 +44,10 @@ fn main() -> amethyst::Result<()> {
             )
             .with_plugin(RenderFlat2D::default())
             .with_plugin(RenderTiles2D::<resources::GroundTile, MortonEncoder>::default())
+            .with_plugin(RenderUi::default())
         )?
         .with_bundle(AudioBundle::default())?
+        .with_bundle(UiBundle::<StringBindings>::new())?
         // .with(systems::InputDebugSystem::default(), "input_debug_system", &["input_system"])
         .with(systems::CameraMovementSystem, "camera_movement_system", &["input_system"])
         .with(systems::PlayerMovementSystem, "player_movement_system", &["input_system"])
