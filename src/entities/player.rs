@@ -5,6 +5,7 @@ use amethyst::core::Transform;
 use log::info;
 use crate::components::{Player, Velocity, Weapon, WeaponDetails, weapon::Shot};
 use crate::resources::{SpriteResource, SpriteId};
+use crate::components::BoundingCircle;
 use amethyst::core::math::Point2;
 
 pub fn initialize_player(world: &mut World,
@@ -34,6 +35,7 @@ pub fn initialize_player(world: &mut World,
         .with(Player)
         .with(Velocity::default())
         .with(Weapon::new(revolver))
+        .with(BoundingCircle{radius: 8.0})
         .build();
 
     info!("Player created.");

@@ -46,10 +46,14 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(AudioBundle::default())?
         // .with(systems::InputDebugSystem::default(), "input_debug_system", &["input_system"])
         .with(systems::CameraMovementSystem, "camera_movement_system", &["input_system"])
-        .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"])
         .with(systems::PlayerMovementSystem, "player_movement_system", &["input_system"])
         .with(systems::PhysicsSystem, "physics_system", &["player_movement_system"])
-        .with(systems::PlayerShooterSystem, "player_shooter_system", &["input_system"]);
+        .with(systems::CollisionSystem, "collision_system", &["physics_system"])
+        .with(systems::CollisionHandlerForObstacles, "collision_handler_for_obstacles", &["collision_system"])
+        .with(systems::ProjectileCollisionSystem, "projectile_collision_system", &["collision_system"])
+        .with(systems::ProjectileCollisionHandler, "projectile_collision_handler", &["projectile_collision_system"])
+        .with(systems::PlayerShooterSystem, "player_shooter_system", &["input_system"])
+        .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"]);
 
     let mut game = Application::new(resources_dir, state::PlayState, game_data)?;
 

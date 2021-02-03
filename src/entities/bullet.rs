@@ -6,7 +6,7 @@ use amethyst::{
     renderer::SpriteRender
 };
 
-use crate::components::{Velocity, DistanceLimit, WeaponDetails};
+use crate::components::{Velocity, DistanceLimit, WeaponDetails, Projectile};
 
 pub fn spawn_bullet(transform: Transform, direction: Vector2<f32>, weapon_details: &WeaponDetails, sprite_render: SpriteRender,
                     entities: &Entities, lazy_update: &ReadExpect<LazyUpdate>)
@@ -18,6 +18,7 @@ pub fn spawn_bullet(transform: Transform, direction: Vector2<f32>, weapon_detail
         .create_entity(entities)
         .with(transform)
         .with(velocity)
+        .with(Projectile::default())
         .with(sprite_render)
         .with(distance_limit)
         .build();
