@@ -77,23 +77,23 @@ impl<'s> System<'s> for ProjectileCollisionSystem {
         );
     fn run(&mut self, (transforms, projectiles, bounding_circles, entities, mut collision_resource): Self::SystemData) {
         collision_resource.0.clear();
-        for projectile in (&transforms, &projectiles, &entities).join()
+        for (projectile_transform, _, projectile_id) in (&transforms, &projectiles, &entities).join()
         {
-            for object in (&transforms, &bounding_circles, &entities).join()
+            for (object_transform, object_bounds, object_id) in (&transforms, &bounding_circles, &entities).join()
             {
                 // unlikely
-                if projectile.2 == object.2
+                if projectile_id == object_id
                 {
                     continue;
                 }
 
                 if let Some(collision) = check_projectile_collision(
-                    projectile.0,
-                    Collider{transform: object.0, bound: object.1})
+                    projectile_transform,
+                    Collider{transform: object_transform, bound: object_bounds})
                 {
                     collision_resource.0.push(ProjectileCollision{
-                        projectile: projectile.2,
-                        target: object.2,
+                        projectile: projectile_id,
+                        target: object_id,
                         vector: collision});
                 }
             }
@@ -113,7 +113,7 @@ impl<'s> System<'s> for ProjectileCollisionHandler {
     // to put proper entities in `collision.projectile`
     fn run(&mut self, (entities, collisions): Self::SystemData) {
         for collision in &collisions.0 {
-            entities.delete(collision.projectile).expect("JAJAJa");
+            entities.delete(collision.projectile).expect("Could not delete projectile");
         }
 
     }
