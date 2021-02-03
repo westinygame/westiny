@@ -18,6 +18,7 @@ use crate::resources::{SpriteResource, SpriteId};
 use crate::components::BoundingCircle;
 use crate::components::Projectile;
 use crate::resources::{Collisions, ProjectileCollisions};
+use crate::resources::SoundPlayer;
 
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState;
@@ -31,6 +32,7 @@ impl SimpleState for PlayState {
 
         world.insert(Collisions::default());
         world.insert(ProjectileCollisions::default());
+        world.insert(SoundPlayer::default());
         init_camera(world, &dimensions);
 
         let player_init_pos = Point2::new(

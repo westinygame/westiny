@@ -1,7 +1,7 @@
 
 use amethyst::input::InputHandler;
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Read, System, SystemData, ReadStorage, ReadExpect, Entities, WriteStorage};
+use amethyst::ecs::{Read, System, SystemData, ReadStorage, ReadExpect, Entities, WriteStorage, WriteExpect};
 use amethyst::core::{Transform, Time, math::{Vector3, Vector2}};
 use amethyst::ecs::prelude::LazyUpdate;
 use amethyst::ecs::prelude::Join;
@@ -12,6 +12,7 @@ use crate::systems::player_movement::{ActionBinding, MovementBindingTypes};
 use crate::components::{Player, Velocity, Weapon, BoundingCircle};
 use crate::entities::spawn_bullet;
 use crate::resources::{SpriteResource, SpriteId, Sounds};
+use crate::resources::{SoundId, SoundPlayer};
 
 #[derive(SystemDesc)]
 pub struct PlayerShooterSystem;
@@ -27,12 +28,10 @@ impl<'s> System<'s> for PlayerShooterSystem {
         Read<'s, Time>,
         ReadExpect<'s, SpriteResource>,
         ReadExpect<'s, LazyUpdate>,
-        Read<'s, AssetStorage<Source>>,
-        ReadExpect<'s, Sounds>,
-        Read<'s, Output>
+        WriteExpect<'s, SoundPlayer>
     );
 
-    fn run(&mut self, (entities, transforms, players, bounds, mut weapons, input, time, sprites, lazy_update, audio_storage, sounds, sound_output): Self::SystemData) {
+    fn run(&mut self, (entities, transforms, players, bounds, mut weapons, input, time, sprites, lazy_update, mut sound_player): Self::SystemData) {
         for (_player, player_transform, player_bound, mut weapon) in (&players, &transforms, &bounds, &mut weapons).join() {
             if input.action_is_down(&ActionBinding::Shoot).unwrap_or(false)
             {
@@ -51,9 +50,7 @@ impl<'s> System<'s> for PlayerShooterSystem {
                     weapon.last_shot_time = time.absolute_time_seconds();
                     weapon.input_lifted = false;
 
-                    if let Some(sound) = audio_storage.get(&sounds.single_shot) {
-                        (*sound_output).play_once(sound, 1.0);
-                    }
+                    sound_player.play_sound(SoundId::SingleShot);
                 }
             }
             else

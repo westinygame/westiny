@@ -53,7 +53,8 @@ fn main() -> amethyst::Result<()> {
         .with(systems::ProjectileCollisionSystem, "projectile_collision_system", &["collision_system"])
         .with(systems::ProjectileCollisionHandler, "projectile_collision_handler", &["projectile_collision_system"])
         .with(systems::PlayerShooterSystem, "player_shooter_system", &["input_system"])
-        .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"]);
+        .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"])
+        .with(systems::SoundPlayerSystem, "sound_player_system", &["cursor_pos_update_system"]);
 
     let mut game = Application::new(resources_dir, state::PlayState, game_data)?;
 

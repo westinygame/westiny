@@ -1,13 +1,11 @@
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Read, System, SystemData, ReadStorage, WriteStorage, ReadExpect, Entities};
+use amethyst::ecs::{Read, System, SystemData, ReadStorage, WriteStorage, ReadExpect, WriteExpect, Entities};
 use amethyst::ecs::prelude::Join;
 use amethyst::core::{Transform, Time};
 use amethyst::core::math::Vector2;
 
 use crate::components::{Velocity, DistanceLimit};
-use crate::resources::Sounds;
-use amethyst::assets::AssetStorage;
-use amethyst::audio::{Source, output::Output};
+use crate::resources::{SoundId, SoundPlayer};
 
 #[derive(SystemDesc)]
 pub struct PhysicsSystem;
@@ -19,12 +17,10 @@ impl<'s> System<'s> for PhysicsSystem {
         ReadStorage<'s, Velocity>,
         Read<'s, Time>,
         WriteStorage<'s, DistanceLimit>,
-        Read<'s, AssetStorage<Source>>,
-        ReadExpect<'s, Sounds>,
-        Read<'s, Output>
+        WriteExpect<'s, SoundPlayer>,
     );
 
-    fn run(&mut self, (entities, mut transforms, velocities, time, mut distance_limits, audio_storage, sounds, sound_output): Self::SystemData) {
+    fn run(&mut self, (entities, mut transforms, velocities, time, mut distance_limits, mut sound_player): Self::SystemData) {
         for (moving_entity, transform, velocity, maybe_distance_limit) in
             (&*entities, &mut transforms, &velocities, (&mut distance_limits).maybe()).join()
         {
@@ -34,9 +30,7 @@ impl<'s> System<'s> for PhysicsSystem {
                 distance_limit.distance_to_live -= delta_s;
                 if distance_limit.distance_to_live < 0.0 {
                     entities.delete(moving_entity).expect("Could not delete distance limited entity!");
-                    if let Some(sound) = audio_storage.get(&sounds.dirt_hit) {
-                        (*sound_output).play_once(sound, 1.0);
-                    }
+                    sound_player.play_sound(SoundId::DirtHit);
                 }
             }
         }

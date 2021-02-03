@@ -6,6 +6,8 @@ use amethyst::ecs::prelude::Join;
 use crate::components::{Velocity, BoundingCircle, Projectile};
 use crate::resources::{Collision, Collisions, ProjectileCollision, ProjectileCollisions};
 
+use crate::resources::{SoundPlayer, SoundId};
+
 use log::info;
 
 pub struct CollisionSystem;
@@ -106,14 +108,16 @@ pub struct ProjectileCollisionHandler;
 impl<'s> System<'s> for ProjectileCollisionHandler {
     type SystemData = (
         Entities<'s>,
-        ReadExpect<'s, ProjectileCollisions>
+        ReadExpect<'s, ProjectileCollisions>,
+        WriteExpect<'s, SoundPlayer>
         );
 
     // Here Projectile components are not explicitly filtered. ProjectCollisionSystem is expected
     // to put proper entities in `collision.projectile`
-    fn run(&mut self, (entities, collisions): Self::SystemData) {
+    fn run(&mut self, (entities, collisions, mut sound_player): Self::SystemData) {
         for collision in &collisions.0 {
             entities.delete(collision.projectile).expect("Could not delete projectile");
+            sound_player.play_sound(SoundId::Ricochet);
         }
 
     }

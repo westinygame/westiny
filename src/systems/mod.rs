@@ -10,6 +10,7 @@ pub use collision::{
     CollisionSystem, CollisionHandlerForObstacles,
     ProjectileCollisionSystem, ProjectileCollisionHandler
 };
+pub use sound::SoundPlayerSystem;
 
 mod input_debug;
 mod player_movement;
@@ -18,3 +19,4 @@ mod physics;
 mod cursor_pos_update;
 mod player_shooter;
 mod collision;
+mod sound;
