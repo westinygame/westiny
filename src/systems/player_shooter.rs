@@ -9,7 +9,7 @@ use amethyst::assets::AssetStorage;
 use amethyst::audio::{Source, output::Output};
 
 use crate::systems::player_movement::{ActionBinding, MovementBindingTypes};
-use crate::components::{Player, Velocity, Weapon, BoundingCircle};
+use crate::components::{Player, Weapon, BoundingCircle};
 use crate::entities::spawn_bullet;
 use crate::resources::{SpriteResource, SpriteId, Sounds};
 

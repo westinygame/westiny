@@ -7,8 +7,10 @@ pub enum Shot
     /// one shot per click (even when player holds down the button)
     Single,
     /// N shot per click
+    #[allow(dead_code)] // Please remove this allow when using Burst
     Burst(u32),
     /// constant shooting, it will shoot while mouse button held down
+    #[allow(dead_code)] // Please remove this allow when using Auto
     Auto
 }
 
@@ -58,7 +60,7 @@ impl Weapon
             bullets_left_in_magazine: details.magazine_size,
             reload_started_at: None,
             input_lifted: true,
-            details: details,
+            details,
         }
     }
 

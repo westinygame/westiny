@@ -9,7 +9,10 @@ amethyst = "0.15.3"
 amethyst_test = "0.15.3"
 array-init = "1.0.0"
 log = "0.4.11"
-serde = { version = "1", features = ["derive"] }
+serde = "1.0.120"
+bincode = "1.3.1"
+derive-new = "0.5.8"
+ron = "0.6.4"
 
 [features]
 default = ["vulkan", "tiles"]
@@ -17,3 +20,7 @@ empty = ["amethyst/empty"]
 metal = ["amethyst/metal"]
 vulkan = ["amethyst/vulkan"]
 tiles = ["amethyst/tiles"]
+
+[[bin]]
+name = "westiny_server"
+path = "src/server.rs"

@@ -49,7 +49,7 @@ mod test_integration {
     use amethyst::prelude::*;
     use amethyst_test::prelude::*;
     use crate::test_helpers as helper;
-    use crate::state::init_camera;
+    use crate::states::game_states::init_camera;
 
     #[test]
     fn simple_cursor_position_update() -> Result<(), Error> {

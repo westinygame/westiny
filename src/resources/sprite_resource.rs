@@ -12,6 +12,7 @@ pub struct SpriteResource {
 #[repr(usize)]
 pub enum SpriteId {
     Player = 3,
+    #[allow(dead_code)] // Please remove this allow when using ShootingPlayer
     ShootingPlayer = 4,
     Bullet = 5,
     Barrel = 6,
