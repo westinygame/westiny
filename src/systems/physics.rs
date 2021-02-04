@@ -1,30 +1,46 @@
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Read, System, SystemData, ReadStorage, WriteStorage};
+use amethyst::ecs::{Read, System, SystemData, ReadStorage, WriteStorage, Entities};
 use amethyst::ecs::prelude::Join;
 use amethyst::core::{Transform, Time};
+use amethyst::core::math::Vector2;
 
-use crate::components::Velocity;
+use crate::components::{Velocity, DistanceLimit};
 
 #[derive(SystemDesc)]
 pub struct PhysicsSystem;
 
 impl<'s> System<'s> for PhysicsSystem {
     type SystemData = (
+        Entities<'s>,
         WriteStorage<'s, Transform>,
         ReadStorage<'s, Velocity>,
-        Read<'s, Time>
+        Read<'s, Time>,
+        WriteStorage<'s, DistanceLimit>
     );
 
-    fn run(&mut self, (mut transforms, velocities, time): Self::SystemData) {
-        for (transform, velocity) in (&mut transforms, &velocities).join() {
-            update_position(transform, velocity, &time);
+    fn run(&mut self, (entities, mut transforms, velocities, time, mut distance_limits): Self::SystemData) {
+        for (moving_entity, transform, velocity, maybe_distance_limit) in
+            (&*entities, &mut transforms, &velocities, (&mut distance_limits).maybe()).join()
+        {
+            let delta_s = update_position(transform, velocity, &time).norm();
+
+            if let Some(distance_limit) = maybe_distance_limit {
+                distance_limit.distance_to_live -= delta_s;
+                if distance_limit.distance_to_live < 0.0 {
+                    entities.delete(moving_entity).expect("Could not delete distance limited entity!");
+                }
+            }
         }
     }
 }
 
-fn update_position(transform: &mut Transform, velocity: &Velocity, time: &Time) {
-    transform.prepend_translation_x(velocity.0.x * time.delta_seconds());
-    transform.prepend_translation_y(velocity.0.y * time.delta_seconds());
+/// Updates transform with velocity based on time
+/// Returns delta (x,y) vector
+pub fn update_position(transform: &mut Transform, velocity: &Velocity, time: &Time) -> Vector2<f32> {
+    let delta = velocity.0 * time.delta_seconds();
+    transform.prepend_translation_x(delta.x);
+    transform.prepend_translation_y(delta.y);
+    delta
 }
 
 #[cfg(test)]

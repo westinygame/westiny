@@ -1,32 +1,41 @@
 
-use amethyst::assets::Handle;
 use amethyst::prelude::*;
-use amethyst::renderer::{SpriteSheet, SpriteRender};
 use amethyst::core::Transform;
 
 use log::info;
-use crate::components::{Player, Velocity};
+use crate::components::{Player, Velocity, Weapon, WeaponDetails, weapon::Shot};
+use crate::resources::{SpriteResource, SpriteId};
+use crate::components::BoundingCircle;
 use amethyst::core::math::Point2;
 
 pub fn initialize_player(world: &mut World,
-                         sprite_sheet_handle: Handle<SpriteSheet>,
+                         sprite_resource: &SpriteResource,
                          start_pos: Point2<f32>
                          ) {
 
     let mut transform = Transform::default();
     transform.set_translation_xyz(start_pos.x, start_pos.y, 0.0);
 
-    let sprite_render = SpriteRender {
-        sprite_sheet: sprite_sheet_handle,
-        sprite_number: 3,
+    // TODO define these values in RON resource files.
+    let revolver = WeaponDetails {
+        damage: 5.0,
+        distance: 120.0,
+        fire_rate: 7.2,
+        magazine_size: 6,
+        reload_time: 1.0,
+        spread: 2.0,
+        shot: Shot::Single,
+        bullet_speed: 200.0
     };
 
     world
         .create_entity()
-        .with(sprite_render.clone())
+        .with(sprite_resource.sprite_render_for(SpriteId::Player))
         .with(transform)
         .with(Player)
         .with(Velocity::default())
+        .with(Weapon::new(revolver))
+        .with(BoundingCircle{radius: 8.0})
         .build();
 
     info!("Player created.");

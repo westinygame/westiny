@@ -1,4 +1,4 @@
-use amethyst::input::{InputHandler, StringBindings};
+use amethyst::input::InputHandler;
 use amethyst::derive::SystemDesc;
 use amethyst::ecs::{Read, System, SystemData, ReadStorage, WriteStorage};
 use amethyst::core::Transform;
@@ -7,6 +7,8 @@ use amethyst::core::math::Vector3;
 use amethyst::ecs::prelude::Join;
 use amethyst::renderer::Camera;
 use crate::components::Player;
+use crate::systems::MovementBindingTypes;
+use crate::systems::AxisBinding;
 
 
 #[derive(SystemDesc)]
@@ -20,7 +22,7 @@ impl<'s> System<'s> for CameraMovementSystem {
     type SystemData = (
         WriteStorage<'s, Transform>,
         ReadStorage<'s, Camera>,
-        Read<'s, InputHandler<StringBindings>>,
+        Read<'s, InputHandler<MovementBindingTypes>>,
         ReadStorage<'s, Player>,
     );
 
@@ -35,7 +37,7 @@ impl<'s> System<'s> for CameraMovementSystem {
             // -1 when "neg" is pressed
             //  1 when "pos" is pressed
             //  0 when neither "neg", neither "pos" is pressed
-            if let Some(zoom_direction) = input.axis_value("zoom") {
+            if let Some(zoom_direction) = input.axis_value(&AxisBinding::Zoom) {
                 // Camera's transform scale is:
                 // - 1.0  when screen-sprite pixel ratio is 1:1
                 // - 0.25 when screen-sprite pixel ratio is 4:1

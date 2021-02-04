@@ -1,3 +1,4 @@
+use amethyst::audio::AudioBundle;
 use amethyst::utils::application_root_dir;
 use amethyst::{GameDataBuilder, CoreApplication};
 use amethyst::core::TransformBundle;
@@ -29,8 +30,6 @@ fn main() -> amethyst::Result<()> {
     let resources_dir = app_root.join("resources");
     let display_config = resources_dir.join("display_config.ron");
 
-
-
     let client_port: u16 = {
         let ron_path = resources_dir.join("client_network.ron");
         read_ron(&ron_path).unwrap_or_else(|err| {
@@ -51,7 +50,7 @@ fn main() -> amethyst::Result<()> {
         conf.heartbeat_interval = Some(Duration::from_secs(3));
         conf
     };
-    let socket = LaminarSocket::bind_with_config(client_socket, laminar_config).unwrap();
+    let socket = LaminarSocket::bind_with_config(client_socket, laminar_config)?;
 
     let game_data = GameDataBuilder::default()
         .with_bundle(TransformBundle::new())?
@@ -62,7 +61,8 @@ fn main() -> amethyst::Result<()> {
             )
             .with_plugin(RenderFlat2D::default())
             .with_plugin(RenderTiles2D::<resources::GroundTile, MortonEncoder>::default()))?
-        .with_bundle(LaminarNetworkBundle::new(Some(socket)))?;
+        .with_bundle(LaminarNetworkBundle::new(Some(socket)))?
+        .with_bundle(AudioBundle::default())?;
 
     let mut game =
         CoreApplication::<_, events::WestinyEvent, events::WestinyEventReader>::build(
