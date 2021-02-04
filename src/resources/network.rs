@@ -16,7 +16,7 @@ impl Default for ServerAddress {
 }
 
 #[derive(Deserialize)]
-pub struct ClientPort(pub(crate) u16);
+pub struct ClientPort(pub u16);
 
 impl Default for ClientPort {
     fn default() -> Self {
