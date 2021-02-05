@@ -33,6 +33,7 @@ pub fn initialize_player(world: &mut World,
         .with(sprite_resource.sprite_render_for(SpriteId::Player))
         .with(transform)
         .with(Player)
+        .with(Health(100))
         .with(Velocity::default())
         .with(Weapon::new(revolver))
         .with(BoundingCircle{radius: 8.0})
