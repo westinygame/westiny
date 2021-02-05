@@ -3,7 +3,7 @@ use amethyst::prelude::*;
 use amethyst::core::Transform;
 
 use log::info;
-use crate::components::{Player, Velocity, Weapon, WeaponDetails, weapon::Shot};
+use crate::components::{Player, Health, Velocity, Weapon, WeaponDetails, weapon::Shot};
 use crate::resources::{SpriteResource, SpriteId};
 use crate::components::BoundingCircle;
 use amethyst::core::math::Point2;
@@ -28,11 +28,14 @@ pub fn initialize_player(world: &mut World,
         bullet_speed: 200.0
     };
 
+    world.register::<Health>();
+
     world
         .create_entity()
         .with(sprite_resource.sprite_render_for(SpriteId::Player))
         .with(transform)
         .with(Player)
+        .with(Health(100))
         .with(Velocity::default())
         .with(Weapon::new(revolver))
         .with(BoundingCircle{radius: 8.0})
