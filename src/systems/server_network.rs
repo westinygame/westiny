@@ -7,15 +7,14 @@ use amethyst::{
     shrev::ReaderId,
 };
 
-use crate::network;
 use amethyst::core::ecs::shrev::EventChannel;
 use amethyst::core::ecs::{Read, Write, WriteExpect};
-use amethyst::core::math::Point2;
 use anyhow::Result;
 use bincode::{deserialize, serialize};
 use std::net::SocketAddr;
 
 use westiny_server::resources::ClientRegistry;
+use crate::network;
 
 #[derive(SystemDesc)]
 #[system_desc(name(ServerNetworkSystemDesc))]
@@ -85,7 +84,7 @@ impl ServerNetworkSystem {
 
         log::info!("Message: {:?}", payload);
         match deserialize(payload)? {
-            PackageType::ConnectionRequest { player_name } => {
+            PacketType::ConnectionRequest { player_name } => {
                 log::debug!("Connection request received: {}, {}", addr, player_name);
                 // TODO response errors from registry
                 let client_id = registry.add(addr, player_name.as_str())?;
@@ -96,8 +95,8 @@ impl ServerNetworkSystem {
                     client_id
                 );
                 // TODO load last position or generate brand new
-                let response = serialize(&PackageType::ConnectionResponse(Ok(
-                    ClientInitialData::new(Point2::new(0.0, 0.0)),
+                let response = serialize(&PacketType::ConnectionResponse(Ok(
+                    ClientInitialData::new(),
                 )))?;
                 net.send_with_requirements(
                     *addr,
@@ -107,7 +106,7 @@ impl ServerNetworkSystem {
                 );
                 Ok(())
             },
-            PackageType::InputState{ input } => {
+            PacketType::InputState{ input } => {
                 log::info!("Input state received: {:?} ", input);
                 Ok(())
             },
@@ -117,5 +116,65 @@ impl ServerNetworkSystem {
                 payload
             )),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use amethyst::Error;
+    use amethyst::prelude::*;
+    use amethyst_test::prelude::*;
+    use crate::network::PacketType;
+    use amethyst::network::simulation::Message;
+
+    #[test]
+    fn send_response_on_connection_request() -> Result<(), Error>{
+        amethyst::start_logger(Default::default());
+
+        AmethystApplication::blank()
+            .with_resource(TransportResource::default())
+            .with_resource(ClientRegistry::new(1))
+            .with_effect(|world| {
+                let mut network_event_channel = world.fetch_mut::<EventChannel<NetworkSimulationEvent>>();
+                network_event_channel.single_write(
+                    NetworkSimulationEvent::Message(
+                        socket_addr(),
+                        bincode::serialize(&connection_request().clone()).unwrap().into()
+                    )
+                );
+            })
+            .with_system_desc(ServerNetworkSystemDesc::default(), "server_net_sys", &[])
+
+            .with_assertion(|world| {
+                let mut transport = world.write_resource::<TransportResource>();
+                let messages = transport.drain_messages(|_| true);
+
+                assert_eq!(messages.len(), 1, "Transport message queue contains {} messages", messages.len());
+
+                let socket_address = socket_addr();
+                let payload = serialize(&PacketType::ConnectionResponse(Ok(
+                    network::ClientInitialData::new(),
+                ))).unwrap();
+                let expected_message = Message {
+                    destination: socket_address,
+                    payload: payload.into(),
+                    delivery: DeliveryRequirement::Reliable,
+                    urgency: UrgencyRequirement::OnTick
+                };
+                assert_eq!(messages[0], expected_message)
+            })
+            .run()
+    }
+
+    #[inline]
+    fn socket_addr() -> SocketAddr {
+        SocketAddr::from(([127, 0, 0, 1], 9999))
+    }
+
+    #[inline]
+    fn connection_request() -> PacketType {
+        PacketType::ConnectionRequest { player_name: "Clint Westwood".to_string() }
     }
 }

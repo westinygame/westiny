@@ -80,7 +80,7 @@ impl<'s> System<'s> for PlayerMovementSystem {
 
     fn run(&mut self, (mut transforms, mut velocities, players, input, cursor_pos): Self::SystemData) {
 
-        for (_player, mut velocity, mut transform) in (&players, &mut velocities, &mut transforms).join() {
+        for (_player, mut velocity, transform) in (&players, &mut velocities, &mut transforms).join() {
             let angle = angle_toward_point(&transform, &cursor_pos.pos);
 
             let move_inputs: Vec<MoveDirection> = MOVE_ACTIONS.iter()

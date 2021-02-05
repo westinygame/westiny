@@ -42,7 +42,7 @@ fn main() -> amethyst::Result<()> {
                 srv_port
             })
     };
-    let socket_address = SocketAddr::new(IpAddr::from_str("127.0.0.1").unwrap(), server_port);
+    let socket_address = SocketAddr::new(IpAddr::from_str("0.0.0.0").unwrap(), server_port);
     log::info!("Start listening on {}", socket_address);
 
     let laminar_config = {

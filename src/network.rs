@@ -1,11 +1,10 @@
 use serde::{Serialize, Deserialize};
 use derive_new::new;
 use std::fmt::{Display, Debug, Formatter};
-use amethyst::core::math::Point2;
 use westiny_common::components::Input;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum PackageType {
+pub enum PacketType {
     ConnectionRequest {
         player_name: String
     },
@@ -15,12 +14,11 @@ pub enum PackageType {
     },
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, new)]
+#[derive(Clone, Debug, Serialize, Deserialize, new, Eq, PartialEq)]
 pub struct ClientInitialData {
-    pub initial_pos: Point2<f32>,
 }
 
-#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub enum ErrorKind {
     AlreadyConnected,
     Other,
@@ -37,7 +35,7 @@ impl Display for ErrorKind {
     }
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, new)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, new, Eq, PartialEq)]
 pub struct Error {
     error_kind: ErrorKind,
 }

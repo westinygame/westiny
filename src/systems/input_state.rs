@@ -45,7 +45,7 @@ impl<'s> System<'s> for InputStateSystem {
 
 fn send_to_server(net: &mut TransportResource, server: &ServerAddress, input: &Input)
 {
-    let message = serialize(&network::PackageType::InputState{input: *input})
+    let message = serialize(&network::PacketType::InputState{input: *input})
         .expect("InputState could not be serialized");
 
     log::info!("Sending inputs...");

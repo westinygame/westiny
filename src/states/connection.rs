@@ -60,8 +60,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
             match app_event {
                 AppEvent::Connection(result) => {
                     match result {
-                        Ok(init_data) => {
-                            log::info!("Initial position: {:?}", init_data.initial_pos);
+                        Ok(_) => {
                             Trans::Switch(Box::new(super::game_states::PlayState::new(&self.resource_dir)))
                         }
                         Err(refuse_cause) => {

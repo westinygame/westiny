@@ -43,7 +43,7 @@ fn main() -> amethyst::Result<()> {
             client_port
         }).0
     };
-    let client_socket = SocketAddr::new(IpAddr::from_str("127.0.0.1")?, client_port);
+    let client_socket = SocketAddr::new(IpAddr::from_str("0.0.0.0")?, client_port);
 
     let laminar_config = {
         let mut conf = LaminarConfig::default();
