@@ -10,6 +10,8 @@ use serde::{Serialize, Deserialize};
 use crate::components::{Player, Velocity};
 use crate::resources::CursorPosition;
 
+use westiny_common::MoveDirection;
+
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActionBinding {
@@ -57,24 +59,13 @@ const MOVE_ACTIONS: &'static [&'static ActionBinding] = &[
 #[derive(SystemDesc)]
 pub struct PlayerMovementSystem;
 
-/// The move direction relative to facing
-#[derive(Copy, Clone)]
-pub enum MoveDirection {
-    Forward,
-    Backward,
-    StrafeLeft,
-    StrafeRight,
-}
-
-impl MoveDirection {
-    pub fn from_binding(binding: &ActionBinding) -> Option<MoveDirection> {
-        match binding {
-            ActionBinding::Forward => Some(MoveDirection::Forward),
-            ActionBinding::Backward => Some(MoveDirection::Backward),
-            ActionBinding::StrafeLeft => Some(MoveDirection::StrafeLeft),
-            ActionBinding::StrafeRight => Some(MoveDirection::StrafeRight),
-            _ => None,
-        }
+pub fn move_direction_from_binding(binding: &ActionBinding) -> Option<MoveDirection> {
+    match binding {
+        ActionBinding::Forward => Some(MoveDirection::Forward),
+        ActionBinding::Backward => Some(MoveDirection::Backward),
+        ActionBinding::StrafeLeft => Some(MoveDirection::StrafeLeft),
+        ActionBinding::StrafeRight => Some(MoveDirection::StrafeRight),
+        _ => None,
     }
 }
 
@@ -94,7 +85,7 @@ impl<'s> System<'s> for PlayerMovementSystem {
 
             let move_inputs: Vec<MoveDirection> = MOVE_ACTIONS.iter()
                 .filter(|s| input.action_is_down(&s).unwrap_or(false))
-                .filter_map(|&s| MoveDirection::from_binding(s))
+                .filter_map(|&s| move_direction_from_binding(s))
                 .collect();
 
             update_velocity(&transform, &move_inputs, &mut velocity);
