@@ -28,6 +28,8 @@ pub fn initialize_player(world: &mut World,
         bullet_speed: 200.0
     };
 
+    world.register::<Health>();
+
     world
         .create_entity()
         .with(sprite_resource.sprite_render_for(SpriteId::Player))
