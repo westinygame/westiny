@@ -81,32 +81,34 @@ impl<'s> System<'s> for PlayerMovementSystem {
     fn run(&mut self, (mut transforms, mut velocities, players, input, cursor_pos): Self::SystemData) {
 
         for (_player, mut velocity, mut transform) in (&players, &mut velocities, &mut transforms).join() {
-            rotate_toward_mouse(&mut transform, &cursor_pos.pos);
+            let angle = angle_toward_point(&transform, &cursor_pos.pos);
 
             let move_inputs: Vec<MoveDirection> = MOVE_ACTIONS.iter()
                 .filter(|s| input.action_is_down(&s).unwrap_or(false))
                 .filter_map(|&s| move_direction_from_binding(s))
                 .collect();
 
+            transform.set_rotation_2d(angle);
             update_velocity(&transform, &move_inputs, &mut velocity);
         }
     }
 }
 
-fn rotate_toward_mouse(
-    transform: &mut Transform,
-    cursor_pos: &Point2<f32>,
-) {
+fn angle_toward_point(
+    transform: &Transform,
+    point: &Point2<f32>
+) ->  f32 {
+
     // Calculate the vector from player position to mouse cursor
-    let mouse_direction = cursor_pos.to_homogeneous() - transform.translation();
+    let direction = point.to_homogeneous() - transform.translation();
 
     let base_vector = Vector2::new(0.0, -1.0);
-    let mut angle = base_vector.angle(&mouse_direction.xy());
+    let mut angle = base_vector.angle(&direction.xy());
 
-    if mouse_direction.x < 0.0 {
+    if direction.x < 0.0 {
         angle = 2.0 * std::f32::consts::PI - angle;
     }
-    transform.set_rotation_2d(angle);
+    angle
 }
 
 const PLAYER_MAX_WALK_SPEED: f32 = 64.0;
@@ -192,7 +194,8 @@ mod test {
 
                         let cursor_pos = Point2::new($cursor_coord.0, $cursor_coord.1);
 
-                        rotate_toward_mouse(transform, &cursor_pos);
+                        let angle = angle_toward_point(transform, &cursor_pos);
+                        transform.set_rotation_2d(angle);
 
                         let angle = transform.rotation().axis().map(|vec| vec.z).unwrap_or(1.0) * transform.rotation().angle();
 
