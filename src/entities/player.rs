@@ -3,7 +3,7 @@ use amethyst::prelude::*;
 use amethyst::core::Transform;
 
 use log::info;
-use crate::components::{Player, Velocity, Weapon, WeaponDetails, weapon::Shot};
+use crate::components::{Player, Health, Velocity, Weapon, WeaponDetails, weapon::Shot};
 use crate::resources::{SpriteResource, SpriteId};
 use crate::components::BoundingCircle;
 use amethyst::core::math::Point2;

@@ -4,6 +4,7 @@ pub use velocity::Velocity;
 pub use distance_limit::DistanceLimit;
 pub use weapon::{Weapon, WeaponDetails};
 pub use projectile::Projectile;
+pub use health::Health;
 
 mod bounding_circle;
 mod player;
