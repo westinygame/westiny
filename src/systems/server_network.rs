@@ -1,15 +1,21 @@
 use amethyst::{
     derive::SystemDesc,
     ecs::{System, SystemData},
+    network::simulation::{
+        DeliveryRequirement, NetworkSimulationEvent, TransportResource, UrgencyRequirement,
+    },
     shrev::ReaderId,
-    network::simulation::NetworkSimulationEvent,
 };
-use amethyst::core::ecs::{Write, Read};
-use amethyst::core::ecs::shrev::EventChannel;
-use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
-use std::net::SocketAddr;
+
 use crate::network;
+use amethyst::core::ecs::shrev::EventChannel;
+use amethyst::core::ecs::{Read, Write, WriteExpect};
 use amethyst::core::math::Point2;
+use anyhow::Result;
+use bincode::{deserialize, serialize};
+use std::net::SocketAddr;
+
+use westiny_server::resources::ClientRegistry;
 
 #[derive(SystemDesc)]
 #[system_desc(name(ServerNetworkSystemDesc))]
@@ -27,54 +33,85 @@ impl ServerNetworkSystem {
 impl<'s> System<'s> for ServerNetworkSystem {
     type SystemData = (
         Write<'s, TransportResource>,
+        WriteExpect<'s, ClientRegistry>,
         Read<'s, EventChannel<NetworkSimulationEvent>>,
     );
 
-    fn run(&mut self, (mut net, net_event_ch): Self::SystemData) {
+    fn run(&mut self, (mut net, mut client_registry, net_event_ch): Self::SystemData) {
         for event in net_event_ch.read(&mut self.reader) {
             match event {
+                NetworkSimulationEvent::Connect(addr) => log::info!(
+                    "Client connection from {:?}, expecting initial message",
+                    addr
+                ),
+                NetworkSimulationEvent::Disconnect(addr) => {
+                    if let Err(e) = self.disconnect_client(addr, &mut client_registry) {
+                        log::error!("Error during disconnect_client: {}", e);
+                    }
+                }
                 NetworkSimulationEvent::Message(addr, payload) => {
-                    log::info!("Message: {:?}", payload);
-                    match bincode::deserialize(payload) {
-                        Ok(msg) => {
-                            if let Some(response_payload) = self.handle_message(addr, &msg) {
-                                net.send_with_requirements(*addr, &response_payload, DeliveryRequirement::Reliable, UrgencyRequirement::OnTick);
-                            }
-                        },
-                        Err(err) => {
-                            log::error!("Message from {} could not be deserialized. Cause: {}", addr, err);
+                    match self.process_payload(addr, payload, &mut net, &mut client_registry) {
+                        Ok(_) => log::debug!("Message from {} processed successfully.", addr),
+                        Err(e) => {
+                            log::error!("Could not process message! {}, payload: {:?}", e, payload)
                         }
                     }
                 }
-                _ => log::info!("Network event: {:?}", event)
-
+                _ => log::error!("Network error: {:?}", event),
             }
         }
     }
-
-
 }
 
 impl ServerNetworkSystem {
-    // TODO return result
-    // TODO should it determine the delivery & urgency requirements?
-    fn handle_message(&self, address: &SocketAddr, message: &network::PackageType) -> Option<Vec<u8>> {
+    fn disconnect_client(
+        &mut self,
+        addr: &SocketAddr,
+        registry: &mut ClientRegistry,
+    ) -> Result<()> {
+        log::info!("Disconnecting {:?}", addr);
+        registry.remove(addr)?;
+        Ok(())
+    }
+
+    fn process_payload(
+        &mut self,
+        addr: &SocketAddr,
+        payload: &[u8],
+        net: &mut TransportResource,
+        registry: &mut ClientRegistry,
+    ) -> Result<()> {
         use network::*;
 
-        match message {
-            PackageType::ConnectionRequest{ player_name } => {
-                log::debug!("Connection request received: {}, {}", address, player_name);
-                // TODO place checks here (blacklisted, already connected, different version, etc.)
-                // TODO store somewhere as connected client
+        log::info!("Message: {:?}", payload);
+        match deserialize(payload)? {
+            PackageType::ConnectionRequest { player_name } => {
+                log::debug!("Connection request received: {}, {}", addr, player_name);
+                // TODO response errors from registry
+                let client_id = registry.add(addr, player_name.as_str())?;
+                log::info!(
+                    "Client from {} as player {} connection request accepted. ClientID={:?}",
+                    addr,
+                    player_name,
+                    client_id
+                );
                 // TODO load last position or generate brand new
-                let response = PackageType::ConnectionResponse(Ok(ClientInitialData::new(Point2::new(0.0, 0.0))));
-                Some(bincode::serialize(&response).expect("Response to connection request could not be serialized"))
+                let response = serialize(&PackageType::ConnectionResponse(Ok(
+                    ClientInitialData::new(Point2::new(0.0, 0.0)),
+                )))?;
+                net.send_with_requirements(
+                    *addr,
+                    &response,
+                    DeliveryRequirement::Reliable,
+                    UrgencyRequirement::OnTick,
+                );
+                Ok(())
             }
-            unexpected_msg => {
-                log::error!("Unexpected message from {}", address);
-                log::debug!("Unexpected {}: {:?}", address, unexpected_msg);
-                None
-            }
+            _ => Err(anyhow::anyhow!(
+                "Unexpected message from {}, {:?}",
+                addr,
+                payload
+            )),
         }
     }
 }

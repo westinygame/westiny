@@ -17,6 +17,10 @@ use crate::resources::ServerAddress;
 const RUN_EVERY_N_SEC: u64 = 1;
 const PLAYER_NAME_MAGIC: &str = "Narancsos_Feco";
 
+fn get_player_name() -> String {
+    std::env::var("USER").unwrap_or(PLAYER_NAME_MAGIC.to_string())
+}
+
 #[derive(SystemDesc)]
 #[system_desc(name(ClientConnectSystemDesc))]
 pub struct ClientConnectSystem {
@@ -50,7 +54,7 @@ impl<'s> System<'s> for ClientConnectSystem {
 
         if (time_since_start-self.last_run) >= Duration::from_secs(RUN_EVERY_N_SEC) {
             self.last_run = time_since_start;
-                let msg = serialize(&network::PackageType::ConnectionRequest { player_name: PLAYER_NAME_MAGIC.to_string() })
+                let msg = serialize(&network::PackageType::ConnectionRequest { player_name: get_player_name() })
                     .expect("ConnectionRequest could not be serialized");
 
                 log::info!("Sending message. Time: {}", time_since_start.as_secs_f32());

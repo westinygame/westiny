@@ -1,0 +1,8 @@
+[package]
+name = "westiny_server"
+version = "0.1.0"
+authors = ["Marton Suranyi"]
+edition = "2018"
+
+[dependencies]
+thiserror = "1.0.23"
