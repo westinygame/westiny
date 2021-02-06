@@ -6,6 +6,7 @@ pub use camera_movement::CameraMovementSystem;
 pub use physics::PhysicsSystem;
 pub use cursor_pos_update::CursorPosUpdateSystem;
 pub use player_shooter::PlayerShooterSystem;
+pub use input_state::InputStateSystem;
 pub use collision::{
     CollisionSystem, CollisionHandlerForObstacles,
     ProjectileCollisionSystem, ProjectileCollisionHandler
@@ -19,4 +20,5 @@ mod cursor_pos_update;
 pub mod client_connect;
 pub mod server_network;
 mod player_shooter;
+mod input_state;
 mod collision;

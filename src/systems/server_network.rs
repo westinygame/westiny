@@ -106,7 +106,11 @@ impl ServerNetworkSystem {
                     UrgencyRequirement::OnTick,
                 );
                 Ok(())
-            }
+            },
+            PackageType::InputState{ input } => {
+                log::info!("Input state received: {:?} ", input);
+                Ok(())
+            },
             _ => Err(anyhow::anyhow!(
                 "Unexpected message from {}, {:?}",
                 addr,

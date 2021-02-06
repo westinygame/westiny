@@ -1,0 +1,56 @@
+use amethyst::ecs::{System, Read, Write};
+use amethyst::input::InputHandler;
+use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
+use bincode::{serialize};
+
+use westiny_common::components::Input;
+
+use crate::network;
+use crate::resources::ServerAddress;
+use crate::resources::CursorPosition;
+use crate::systems::player_movement::{MovementBindingTypes, ActionBinding};
+
+fn update_input_keys(input: &mut Input, handler: &InputHandler<MovementBindingTypes>) {
+    input.forward = handler.action_is_down(&ActionBinding::Forward).unwrap_or(false);
+    input.backward = handler.action_is_down(&ActionBinding::Backward).unwrap_or(false);
+    input.left = handler.action_is_down(&ActionBinding::StrafeLeft).unwrap_or(false);
+    input.right = handler.action_is_down(&ActionBinding::StrafeRight).unwrap_or(false);
+    input.shoot = handler.action_is_down(&ActionBinding::Shoot).unwrap_or(false);
+}
+
+fn update_input_cursor(input: &mut Input, cursor: &CursorPosition) {
+    input.cursor = cursor.pos;
+}
+
+pub struct InputStateSystem;
+
+// This system is responsible to send input data to the server.
+// TODO This should be placed in the `client` subcrate.
+impl<'s> System<'s> for InputStateSystem {
+    type SystemData = (
+       Read<'s, InputHandler<MovementBindingTypes>>,
+       Read<'s, CursorPosition>,
+       Read<'s, ServerAddress>,
+       Write<'s, TransportResource>,
+        );
+
+    fn run(&mut self, (input_handler, cursor, server, mut net): Self::SystemData) {
+        let mut input = Input::default();
+        update_input_keys(&mut input, &input_handler);
+        update_input_cursor(&mut input, &cursor);
+
+        send_to_server(&mut net, &server, &input);
+    }
+}
+
+fn send_to_server(net: &mut TransportResource, server: &ServerAddress, input: &Input)
+{
+    let message = serialize(&network::PackageType::InputState{input: *input})
+        .expect("InputState could not be serialized");
+
+    log::info!("Sending inputs...");
+    net.send_with_requirements(server.address, &message, DeliveryRequirement::Reliable, UrgencyRequirement::OnTick);
+}
+
+
+

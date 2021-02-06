@@ -75,7 +75,7 @@ impl<'s> System<'s> for PlayerMovementSystem {
         WriteStorage<'s, Velocity>,
         ReadStorage<'s, Player>,
         Read<'s, InputHandler<MovementBindingTypes>>,
-        Read<'s, CursorPosition>
+        Read<'s, CursorPosition>,
     );
 
     fn run(&mut self, (mut transforms, mut velocities, players, input, cursor_pos): Self::SystemData) {
@@ -94,7 +94,7 @@ impl<'s> System<'s> for PlayerMovementSystem {
     }
 }
 
-fn angle_toward_point(
+pub fn angle_toward_point(
     transform: &Transform,
     point: &Point2<f32>
 ) ->  f32 {

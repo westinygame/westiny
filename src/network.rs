@@ -2,6 +2,7 @@ use serde::{Serialize, Deserialize};
 use derive_new::new;
 use std::fmt::{Display, Debug, Formatter};
 use amethyst::core::math::Point2;
+use westiny_common::components::Input;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PackageType {
@@ -9,6 +10,9 @@ pub enum PackageType {
         player_name: String
     },
     ConnectionResponse(Result<ClientInitialData>),
+    InputState {
+        input: Input
+    },
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, new)]

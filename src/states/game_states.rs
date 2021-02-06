@@ -54,6 +54,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         let mut dispatcher = dispatcher_builder
             // .with(systems::InputDebugSystem::default(), "input_debug_system", &["input_system"])
+            .with(systems::InputStateSystem, "input_state_system", &["input_system"])
             .with(systems::CameraMovementSystem, "camera_movement_system", &["input_system"])
             .with(systems::PlayerMovementSystem, "player_movement_system", &["input_system"])
             .with(systems::PhysicsSystem, "physics_system", &["player_movement_system"])
