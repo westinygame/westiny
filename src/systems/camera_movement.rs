@@ -7,8 +7,7 @@ use amethyst::core::math::Vector3;
 use amethyst::ecs::prelude::Join;
 use amethyst::renderer::Camera;
 use westiny_common::components::Player;
-use crate::systems::MovementBindingTypes;
-use crate::systems::AxisBinding;
+use westiny_client::{MovementBindingTypes, AxisBinding};
 
 
 #[derive(SystemDesc)]

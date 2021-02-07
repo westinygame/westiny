@@ -1,98 +1,66 @@
-use std::fmt;
-
-use amethyst::input::{InputHandler, BindingTypes};
 use amethyst::derive::SystemDesc;
 use amethyst::ecs::{Read, System, SystemData, ReadStorage, WriteStorage, prelude::Join};
 use amethyst::core::Transform;
 use amethyst::core::math::{Vector2, Rotation2, Point2};
-use serde::{Serialize, Deserialize};
 
 use crate::resources::CursorPosition;
 
 use westiny_common::MoveDirection;
 use westiny_common::components::{Player, Velocity};
-
-
-#[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ActionBinding {
-    Forward,
-    Backward,
-    StrafeLeft,
-    StrafeRight,
-    Shoot,
-    Use,
-}
-
-#[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
-pub enum AxisBinding {
-    Zoom
-}
-
-impl fmt::Display for ActionBinding {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl fmt::Display for AxisBinding {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-
-#[derive(Debug)]
-pub struct MovementBindingTypes;
-
-impl BindingTypes for MovementBindingTypes {
-    type Axis = AxisBinding;
-    type Action = ActionBinding;
-}
-
-const MOVE_ACTIONS: &'static [&'static ActionBinding] = &[
-    &ActionBinding::Forward,
-    &ActionBinding::Backward,
-    &ActionBinding::StrafeLeft,
-    &ActionBinding::StrafeRight,
-];
+use westiny_common::components::Input;
 
 #[derive(SystemDesc)]
 pub struct PlayerMovementSystem;
-
-pub fn move_direction_from_binding(binding: &ActionBinding) -> Option<MoveDirection> {
-    match binding {
-        ActionBinding::Forward => Some(MoveDirection::Forward),
-        ActionBinding::Backward => Some(MoveDirection::Backward),
-        ActionBinding::StrafeLeft => Some(MoveDirection::StrafeLeft),
-        ActionBinding::StrafeRight => Some(MoveDirection::StrafeRight),
-        _ => None,
-    }
-}
 
 impl<'s> System<'s> for PlayerMovementSystem {
     type SystemData = (
         WriteStorage<'s, Transform>,
         WriteStorage<'s, Velocity>,
         ReadStorage<'s, Player>,
-        Read<'s, InputHandler<MovementBindingTypes>>,
+        ReadStorage<'s, Input>,
         Read<'s, CursorPosition>,
     );
 
-    fn run(&mut self, (mut transforms, mut velocities, players, input, cursor_pos): Self::SystemData) {
+    fn run(&mut self, (mut transforms, mut velocities, players, inputs, cursor_pos): Self::SystemData) {
 
-        for (_player, mut velocity, transform) in (&players, &mut velocities, &mut transforms).join() {
+        for (_player, input, mut velocity, transform) in (&players, &inputs, &mut velocities, &mut transforms).join() {
             let angle = angle_toward_point(&transform, &cursor_pos.pos);
 
-            let move_inputs: Vec<MoveDirection> = MOVE_ACTIONS.iter()
-                .filter(|s| input.action_is_down(&s).unwrap_or(false))
-                .filter_map(|&s| move_direction_from_binding(s))
-                .collect();
+            let move_inputs = move_directions_from_input(&input);
+            //let move_inputs: Vec<MoveDirection> = MOVE_ACTIONS.iter()
+            //    .filter(|s| input.action_is_down(&s).unwrap_or(false))
+            //    .filter_map(|&s| move_direction_from_binding(s))
+            //    .collect();
+            log::info!("{:?} {}", input, move_inputs.len());
 
             transform.set_rotation_2d(angle);
             update_velocity(&transform, &move_inputs, &mut velocity);
         }
     }
 }
+
+pub fn move_directions_from_input(input: &Input) -> Vec<MoveDirection>
+{
+    let mut directions = Vec::new();
+    if input.forward
+    {
+        directions.push(MoveDirection::Forward);
+    }
+    if input.backward
+    {
+        directions.push(MoveDirection::Backward);
+    }
+    if input.left
+    {
+        directions.push(MoveDirection::StrafeLeft);
+    }
+    if input.right
+    {
+        directions.push(MoveDirection::StrafeRight);
+    }
+    directions
+}
+
 
 pub fn angle_toward_point(
     transform: &Transform,

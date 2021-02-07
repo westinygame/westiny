@@ -14,6 +14,7 @@ use amethyst::{
 use std::path::PathBuf;
 
 use crate::entities::initialize_tilemap;
+use westiny_client::MovementBindingTypes;
 use crate::resources::{
     Collisions,
     ProjectileCollisions,
@@ -50,14 +51,14 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         let key_bindings = self.resource_dir.join("input.ron");
 
-        InputBundle::<systems::MovementBindingTypes>::new().with_bindings_from_file(key_bindings).unwrap()
+        InputBundle::<MovementBindingTypes>::new().with_bindings_from_file(key_bindings).unwrap()
             .build(&mut world, &mut dispatcher_builder).unwrap();
 
         let mut dispatcher = dispatcher_builder
             // .with(systems::InputDebugSystem::default(), "input_debug_system", &["input_system"])
             .with(systems::InputStateSystem, "input_state_system", &["input_system"])
             .with(systems::CameraMovementSystem, "camera_movement_system", &["input_system"])
-            .with(systems::PlayerMovementSystem, "player_movement_system", &["input_system"])
+            .with(systems::PlayerMovementSystem, "player_movement_system", &["input_state_system"])
             .with(systems::PhysicsSystem, "physics_system", &["player_movement_system"])
             .with(systems::CollisionSystem, "collision_system", &["physics_system"])
             .with(systems::CollisionHandlerForObstacles, "collision_handler_for_obstacles", &["collision_system"])

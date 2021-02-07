@@ -7,7 +7,7 @@ use bincode::{serialize};
 use westiny_common::components::Input;
 
 use crate::resources::CursorPosition;
-use crate::systems::player_movement::{MovementBindingTypes, ActionBinding};
+use westiny_client::{MovementBindingTypes, ActionBinding};
 use westiny_common::resources::ServerAddress;
 use westiny_common::network;
 
@@ -53,7 +53,7 @@ fn send_to_server(net: &mut TransportResource, server: &ServerAddress, input: &I
     let message = serialize(&network::PacketType::InputState{input: *input})
         .expect("InputState could not be serialized");
 
-    log::info!("Sending inputs...");
+    //log::info!("Sending inputs...");
     net.send_with_requirements(server.address, &message, DeliveryRequirement::Reliable, UrgencyRequirement::OnTick);
 }
 

@@ -1,0 +1,11 @@
+[package]
+name = "westiny_client"
+version = "0.1.0"
+authors = ["Abel Suranyi"]
+edition = "2018"
+
+[dependencies]
+westiny_common = { path = "../common" }
+amethyst = "0.15.3"
+amethyst_test = "0.15.3"
+serde = "1.0.120"
