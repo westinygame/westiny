@@ -1,4 +1,5 @@
 use amethyst::core::math::Point2;
+use amethyst::ecs::prelude::{Component, DenseVecStorage};
 use serde::{Serialize, Deserialize};
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
@@ -25,4 +26,8 @@ impl Default for Input
             cursor: Point2::new(0.0, 0.0),
         }
     }
+}
+
+impl Component for Input {
+    type Storage = DenseVecStorage<Self>;
 }

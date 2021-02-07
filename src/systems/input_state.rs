@@ -1,4 +1,5 @@
-use amethyst::ecs::{System, Read, Write};
+use amethyst::ecs::{System, Read, Write, WriteStorage};
+use amethyst::ecs::prelude::Join;
 use amethyst::input::InputHandler;
 use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
 use bincode::{serialize};
@@ -30,16 +31,20 @@ impl<'s> System<'s> for InputStateSystem {
     type SystemData = (
        Read<'s, InputHandler<MovementBindingTypes>>,
        Read<'s, CursorPosition>,
+       WriteStorage<'s, Input>,
        Read<'s, ServerAddress>,
        Write<'s, TransportResource>,
         );
 
-    fn run(&mut self, (input_handler, cursor, server, mut net): Self::SystemData) {
-        let mut input = Input::default();
-        update_input_keys(&mut input, &input_handler);
-        update_input_cursor(&mut input, &cursor);
+    fn run(&mut self, (input_handler, cursor, mut inputs, server, mut net): Self::SystemData) {
+        // NOTE: There is only one Input component exists on the client
+        for mut input in (&mut inputs).join()
+        {
+            update_input_keys(&mut input, &input_handler);
+            update_input_cursor(&mut input, &cursor);
 
-        send_to_server(&mut net, &server, &input);
+            send_to_server(&mut net, &server, &input);
+        }
     }
 }
 

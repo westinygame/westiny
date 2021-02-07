@@ -6,6 +6,7 @@ use log::info;
 use crate::components::{Player, Velocity, Weapon, WeaponDetails, weapon::Shot};
 use crate::resources::{SpriteResource, SpriteId};
 use crate::components::BoundingCircle;
+use westiny_common::components::Input;
 use amethyst::core::math::Point2;
 
 pub fn initialize_player(world: &mut World,
@@ -28,11 +29,14 @@ pub fn initialize_player(world: &mut World,
         bullet_speed: 200.0
     };
 
+    world.register::<Input>();
+
     world
         .create_entity()
         .with(sprite_resource.sprite_render_for(SpriteId::Player))
         .with(transform)
         .with(Player)
+        .with(Input::default())
         .with(Velocity::default())
         .with(Weapon::new(revolver))
         .with(BoundingCircle{radius: 8.0})
