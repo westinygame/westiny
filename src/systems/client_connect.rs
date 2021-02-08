@@ -11,8 +11,8 @@ use crate::events::AppEvent;
 use amethyst::core::Time;
 use std::time::Duration;
 use bincode::{deserialize, serialize};
-use crate::network;
-use crate::resources::ServerAddress;
+use westiny_common::network;
+use westiny_common::resources::ServerAddress;
 
 const RUN_EVERY_N_SEC: u64 = 1;
 const PLAYER_NAME_MAGIC: &str = "Narancsos_Feco";
@@ -96,12 +96,12 @@ mod test {
     use amethyst::shrev::ReaderId;
     use amethyst::core::ecs::shrev::EventChannel;
     use amethyst_test::prelude::*;
-    use crate::network::{self, PacketType, ClientInitialData};
+    use westiny_common::network;
     use crate::systems::client_connect::ClientConnectSystemDesc;
     use crate::events::AppEvent;
     use std::net::SocketAddr;
     use amethyst::prelude::World;
-    use crate::resources::ServerAddress;
+    use westiny_common::resources::ServerAddress;
 
     const SOCKET_ADDRESS: ([u8;4], u16) = ([127, 0, 0, 1], 9999);
 
@@ -134,17 +134,17 @@ mod test {
                 let reader_id = fetched_reader_id.as_mut().unwrap();
                 let events = app_event_channel.read(reader_id);
                 assert_eq!(events.len(), 1, "There should be exactly 1 AppEvent written");
-                let expected_response: network::Result<ClientInitialData> = Ok(ClientInitialData{});
+                let expected_response: network::Result<network::ClientInitialData> = Ok(network::ClientInitialData{});
                 assert_eq!(events.collect::<Vec<&AppEvent>>()[0], &AppEvent::Connection(expected_response))
             })
             .run()
     }
 
     #[inline]
-    fn connection_response() -> PacketType {
-        PacketType::ConnectionResponse(
+    fn connection_response() -> network::PacketType {
+        network::PacketType::ConnectionResponse(
             Ok(
-                ClientInitialData {}
+                network::ClientInitialData {}
             )
         )
     }

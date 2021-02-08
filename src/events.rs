@@ -13,7 +13,7 @@ use amethyst::core::{
     },
 };
 use amethyst::derive::EventReader;
-use crate::network;
+use westiny_common::network;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum AppEvent {

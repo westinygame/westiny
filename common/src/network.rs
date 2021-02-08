@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use derive_new::new;
 use std::fmt::{Display, Debug, Formatter};
-use westiny_common::components::Input;
+use crate::components::Input;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum PacketType {

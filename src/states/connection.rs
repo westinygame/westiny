@@ -2,12 +2,12 @@ use amethyst::prelude::*;
 use crate::{
     events::{AppEvent, WestinyEvent},
     systems,
-    resources::ServerAddress,
     utilities::*,
 };
 use amethyst::shred::{Dispatcher, DispatcherBuilder};
 use amethyst::core::ecs::WorldExt;
 use amethyst::core::ArcThreadPool;
+use westiny_common::resources::ServerAddress;
 
 pub struct ConnectState {
     dispatcher: Option<Dispatcher<'static, 'static>>,

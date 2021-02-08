@@ -1,5 +1,6 @@
 use amethyst::core::math::Point2;
 
+#[derive(Copy, Clone)]
 pub struct CursorPosition {
     pub pos: Point2<f32>
 }

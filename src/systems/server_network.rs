@@ -14,7 +14,7 @@ use bincode::{deserialize, serialize};
 use std::net::SocketAddr;
 
 use westiny_server::resources::ClientRegistry;
-use crate::network;
+use westiny_common::network::{PacketType, ClientInitialData};
 
 #[derive(SystemDesc)]
 #[system_desc(name(ServerNetworkSystemDesc))]
@@ -80,7 +80,6 @@ impl ServerNetworkSystem {
         net: &mut TransportResource,
         registry: &mut ClientRegistry,
     ) -> Result<()> {
-        use network::*;
 
         log::info!("Message: {:?}", payload);
         match deserialize(payload)? {
@@ -126,8 +125,8 @@ mod test {
     use amethyst::Error;
     use amethyst::prelude::*;
     use amethyst_test::prelude::*;
-    use crate::network::PacketType;
     use amethyst::network::simulation::Message;
+    use westiny_common::network::{self, PacketType, ClientInitialData};
 
     #[test]
     fn send_response_on_connection_request() -> Result<(), Error>{
@@ -154,7 +153,7 @@ mod test {
                 assert_eq!(messages.len(), 1, "Transport message queue contains {} messages", messages.len());
 
                 let socket_address = socket_addr();
-                let payload = serialize(&PacketType::ConnectionResponse(Ok(
+                let payload = serialize(&network::PacketType::ConnectionResponse(Ok(
                     network::ClientInitialData::new(),
                 ))).unwrap();
                 let expected_message = Message {
@@ -174,7 +173,7 @@ mod test {
     }
 
     #[inline]
-    fn connection_request() -> PacketType {
-        PacketType::ConnectionRequest { player_name: "Clint Westwood".to_string() }
+    fn connection_request() -> network::PacketType {
+        network::PacketType::ConnectionRequest { player_name: "Clint Westwood".to_string() }
     }
 }

@@ -6,10 +6,10 @@ use bincode::{serialize};
 
 use westiny_common::components::Input;
 
-use crate::network;
-use crate::resources::ServerAddress;
 use crate::resources::CursorPosition;
 use crate::systems::player_movement::{MovementBindingTypes, ActionBinding};
+use westiny_common::resources::ServerAddress;
+use westiny_common::network;
 
 fn update_input_keys(input: &mut Input, handler: &InputHandler<MovementBindingTypes>) {
     input.forward = handler.action_is_down(&ActionBinding::Forward).unwrap_or(false);

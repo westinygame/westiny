@@ -5,4 +5,7 @@ authors = ["Marton Suranyi"]
 edition = "2018"
 
 [dependencies]
+westiny_common = { path = "../common"}
 thiserror = "1.0.23"
+serde = "1.0.123"
+derive-new = "0.5.8"

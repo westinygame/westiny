@@ -6,10 +6,10 @@ use amethyst::renderer::{RenderingBundle, RenderToWindow, RenderFlat2D, types::D
 use amethyst::tiles::{RenderTiles2D, MortonEncoder};
 use amethyst::network::simulation::laminar::{LaminarSocket, LaminarNetworkBundle, LaminarConfig};
 use std::time::Duration;
-use crate::resources::ClientPort;
 use crate::utilities::read_ron;
 use std::net::{SocketAddr, IpAddr};
 use std::str::FromStr;
+use serde::Deserialize;
 
 mod systems;
 mod entities;
@@ -17,7 +17,6 @@ mod components;
 mod resources;
 mod states;
 mod events;
-mod network;
 mod utilities;
 
 #[cfg(test)]
@@ -74,4 +73,14 @@ fn main() -> amethyst::Result<()> {
     log::info!("Starting client");
     game.run();
     Ok(())
+}
+
+const DEFAULT_CLIENT_PORT: u16 = 4557;
+
+#[derive(Deserialize)]
+pub struct ClientPort(pub u16);
+impl Default for ClientPort {
+    fn default() -> Self {
+        ClientPort(DEFAULT_CLIENT_PORT)
+    }
 }

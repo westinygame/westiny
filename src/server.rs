@@ -1,14 +1,12 @@
 use amethyst::utils::application_root_dir;
 use amethyst::{GameDataBuilder, CoreApplication};
 use amethyst::network::simulation::laminar::{LaminarNetworkBundle, LaminarSocket, LaminarConfig};
-use crate::{
-    resources::ServerAddress,
-    utilities::*,
-};
+use crate::utilities::*;
 use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 use std::time::Duration;
 use amethyst::core::frame_limiter::FrameRateLimitStrategy;
+use westiny_common::resources::ServerAddress;
 
 mod systems;
 mod entities;
@@ -16,7 +14,6 @@ mod components;
 mod resources;
 mod states;
 mod events;
-mod network;
 mod utilities;
 
 #[cfg(test)]
