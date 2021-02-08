@@ -4,7 +4,7 @@ use amethyst::core::ecs::{Component, VecStorage};
 
 #[derive(new, Copy, Clone, Debug)]
 pub struct Client {
-    id: ClientID
+    pub id: ClientID
 }
 
 impl Component for Client {
