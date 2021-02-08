@@ -13,14 +13,13 @@ use amethyst::{
 };
 use std::path::PathBuf;
 
-use crate::entities::{initialize_player, initialize_tilemap};
+use crate::entities::initialize_tilemap;
 use crate::resources::{
     Collisions,
     ProjectileCollisions,
     SpriteResource,
     SpriteId,
     initialize_audio,
-    initialize_sprite_resource
 };
 use westiny_common::components::BoundingCircle;
 use crate::events::WestinyEvent;
@@ -30,13 +29,15 @@ use crate::systems;
 pub struct PlayState {
     dispatcher: Option<Dispatcher<'static, 'static>>,
     resource_dir: PathBuf,
+    sprite_resource: SpriteResource,
 }
 
 impl PlayState {
-    pub fn new(resource_dir: &std::path::Path) -> Self {
+    pub fn new(resource_dir: &std::path::Path, sprite_resource: SpriteResource) -> Self {
         PlayState {
             dispatcher: Default::default(),
             resource_dir: resource_dir.to_path_buf(),
+            sprite_resource
         }
     }
 }
@@ -73,20 +74,17 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         let dimensions = (*world.read_resource::<ScreenDimensions>()).clone();
 
-        let sprites = initialize_sprite_resource(world);
-
         world.insert(Collisions::default());
         world.insert(ProjectileCollisions::default());
         init_camera(world, &dimensions);
 
-        let player_init_pos = Point2::new(
+        let objects_reference_pos = Point2::new(
             dimensions.width() * 0.5,
             dimensions.height() * 0.5
         );
-        initialize_player(world, &sprites, player_init_pos.clone());
-        initialize_tilemap(world, &sprites, Point2::new(dimensions.width() / 2.0, dimensions.height() / 2.0));
+        initialize_tilemap(world, &self.sprite_resource, Point2::new(dimensions.width() / 2.0, dimensions.height() / 2.0));
         initialize_audio(world);
-        place_objects(world, &sprites, &player_init_pos);
+        place_objects(world, &self.sprite_resource, &objects_reference_pos);
     }
 
     fn handle_event(
@@ -112,22 +110,22 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
     }
 }
 
-fn place_objects(world: &mut World, sprites: &SpriteResource, player_init_pos: &Point2<f32>) {
+fn place_objects(world: &mut World, sprites: &SpriteResource, objects_reference_pos: &Point2<f32>) {
     //TODO placing barrels and other objects should be based on a map
-    place_barrel(world, &sprites, player_init_pos, 3, 3);
-    place_barrel(world, &sprites, player_init_pos, 3, 5);
-    place_barrel(world, &sprites, player_init_pos, 3, 6);
-    place_barrel(world, &sprites, player_init_pos, 3, 7);
-    place_barrel(world, &sprites, player_init_pos, 3, 8);
-    place_barrel(world, &sprites, player_init_pos, 4, 8);
-    place_barrel(world, &sprites, player_init_pos, 5, 8);
-    place_barrel(world, &sprites, player_init_pos, 5, 7);
+    place_barrel(world, &sprites, objects_reference_pos, 3, 3);
+    place_barrel(world, &sprites, objects_reference_pos, 3, 5);
+    place_barrel(world, &sprites, objects_reference_pos, 3, 6);
+    place_barrel(world, &sprites, objects_reference_pos, 3, 7);
+    place_barrel(world, &sprites, objects_reference_pos, 3, 8);
+    place_barrel(world, &sprites, objects_reference_pos, 4, 8);
+    place_barrel(world, &sprites, objects_reference_pos, 5, 8);
+    place_barrel(world, &sprites, objects_reference_pos, 5, 7);
 }
 
-fn place_barrel(world: &mut World, sprites: &SpriteResource, player_init_pos: &Point2<f32>, x: u32, y: u32) {
+fn place_barrel(world: &mut World, sprites: &SpriteResource, objects_reference_pos: &Point2<f32>, x: u32, y: u32) {
 
     let mut transform = Transform::default();
-    transform.set_translation_xyz(player_init_pos.x + (x as f32) * 16.0, player_init_pos.y + (y as f32) * 16.0, 0.0);
+    transform.set_translation_xyz(objects_reference_pos.x + (x as f32) * 16.0, objects_reference_pos.y + (y as f32) * 16.0, 0.0);
 
     world
         .create_entity()

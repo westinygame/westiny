@@ -67,8 +67,8 @@ impl<'s> System<'s> for ClientConnectSystem {
                     log::debug!("Message: [{}], {:?}", addr, msg);
                     if &server.address == addr {
                         match deserialize(&msg) as bincode::Result<network::PacketType> {
-                            Ok(package) => {
-                                match package {
+                            Ok(packet) => {
+                                match packet {
                                     network::PacketType::ConnectionResponse(result) => {
                                        // push event
                                         app_event.single_write(AppEvent::Connection(result));

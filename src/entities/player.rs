@@ -3,12 +3,12 @@ use amethyst::core::Transform;
 use amethyst::prelude::*;
 use log::info;
 
-
-use westiny_common::components::{BoundingCircle, Input, Player, Velocity, weapon::*};
+use westiny_common::components::{BoundingCircle, Input, Player, Velocity, weapon::*, NetworkId};
 use crate::resources::{SpriteId, SpriteResource};
 
 pub fn initialize_player(world: &mut World,
                          sprite_resource: &SpriteResource,
+                         network_id: NetworkId,
                          start_pos: Point2<f32>
                          ) {
 
@@ -31,6 +31,7 @@ pub fn initialize_player(world: &mut World,
 
     world
         .create_entity()
+        .with(network_id)
         .with(sprite_resource.sprite_render_for(SpriteId::Player))
         .with(transform)
         .with(Player)
