@@ -60,6 +60,10 @@ impl ClientRegistry {
         self.clients.iter().find(|&handle| handle.id == client_id)
     }
 
+    pub fn find_by_addr(&self, addr: &SocketAddr) -> Option<&ClientHandle> {
+        self.clients.iter().find(|&handle| &handle.addr == addr)
+    }
+
     pub fn remove(&mut self, addr: &SocketAddr) -> Result<ClientID, RemoveError> {
         if let Some(index) = self.clients.iter().position(|handle| &handle.addr == addr) {
             let removed_id = self.clients[index].id;
@@ -128,6 +132,11 @@ mod test {
         let handle = reg.find_client(result.unwrap()).expect("client not found");
         assert_eq!(handle.addr, address);
         assert_eq!(handle.player_name, "NariFeco");
+
+        let handle_by_addr = reg.find_by_addr(&address).expect("client by address is not found");
+        assert_eq!(handle.player_name, handle_by_addr.player_name);
+        assert_eq!(handle.id, handle_by_addr.id);
+        assert_eq!(handle.addr, handle_by_addr.addr);
     }
 
     #[test]
@@ -159,6 +168,13 @@ mod test {
     fn test_querying_non_registered_client_should_return_none() {
         let reg = ClientRegistry::new(4);
         let maybe_handle = reg.find_client(ClientID(42));
+        assert!(maybe_handle.is_none());
+    }
+
+    #[test]
+    fn test_querying_non_registered_client_by_address_should_return_none() {
+        let reg = ClientRegistry::new(4);
+        let maybe_handle = reg.find_by_addr(&make_addr("1.1.1.1", 42));
         assert!(maybe_handle.is_none());
     }
 

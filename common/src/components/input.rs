@@ -2,7 +2,7 @@ use amethyst::core::math::Point2;
 use amethyst::ecs::prelude::{Component, DenseVecStorage};
 use serde::{Serialize, Deserialize};
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Input
 {
     // bool means is_down? should we use enum bits?

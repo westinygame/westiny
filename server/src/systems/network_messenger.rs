@@ -11,7 +11,7 @@ use std::net::SocketAddr;
 use derive_new::new;
 
 use westiny_common::network::PacketType;
-use crate::resources::{ClientRegistry, ClientNetworkEvent};
+use crate::resources::{ClientRegistry, ClientNetworkEvent, NetworkCommand};
 
 
 #[derive(SystemDesc, new)]
@@ -26,9 +26,10 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
         WriteExpect<'s, ClientRegistry>,
         Read<'s, EventChannel<NetworkSimulationEvent>>,
         Write<'s, EventChannel<ClientNetworkEvent>>,
+        Write<'s, EventChannel<NetworkCommand>>,
     );
 
-    fn run(&mut self, (mut client_registry, net_event_ch, mut client_net_ec): Self::SystemData) {
+    fn run(&mut self, (mut client_registry, net_event_ch, mut client_net_ec, mut command_channel): Self::SystemData) {
         for event in net_event_ch.read(&mut self.reader) {
             match event {
                 NetworkSimulationEvent::Connect(addr) => log::info!(
@@ -41,7 +42,7 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
                     }
                 }
                 NetworkSimulationEvent::Message(addr, payload) => {
-                    match self.process_payload(addr, payload, &mut client_registry, &mut client_net_ec) {
+                    match self.process_payload(addr, payload, &mut client_registry, &mut client_net_ec, &mut command_channel) {
                         Ok(_) => log::debug!("Message from {} processed successfully.", addr),
                         Err(e) => {
                             log::error!("Could not process message! {}, payload: {:?}", e, payload)
@@ -73,9 +74,10 @@ impl NetworkMessageReceiverSystem {
         payload: &[u8],
         registry: &mut ClientRegistry,
         client_net_event_channel: &mut EventChannel<ClientNetworkEvent>,
+        command_channel: &mut EventChannel<NetworkCommand>,
     ) -> Result<()> {
 
-        log::info!("Message: {:?}", payload);
+        log::debug!("Message: {:02x?}", payload);
         match deserialize(payload)? {
             PacketType::ConnectionRequest { player_name } => {
                 log::debug!("Connection request received: {}, {}", addr, player_name);
@@ -92,11 +94,13 @@ impl NetworkMessageReceiverSystem {
                 Ok(())
             },
             PacketType::InputState{ input } => {
-                log::info!("Input state received: {:?} ", input);
-                Ok(())
+                registry
+                    .find_by_addr(addr)
+                    .map(|handle| command_channel.single_write(NetworkCommand::Input { id: handle.id, input }))
+                    .ok_or(anyhow::anyhow!("Valid input command from unregistered client! Address: {:?}", addr))
             },
             _ => Err(anyhow::anyhow!(
-                "Unexpected message from {}, {:?}",
+                "Unexpected message from {}, payload={:02x?}",
                 addr,
                 payload
             )),
@@ -108,22 +112,23 @@ impl NetworkMessageReceiverSystem {
 mod test {
     use super::*;
 
-    use amethyst::Error;
+    use amethyst::{Error, StateEventReader, core::math::Point2};
     use amethyst::prelude::*;
     use amethyst_test::prelude::*;
-    use westiny_common::network;
+    use westiny_common::{network, components::Input};
 
-    type ClientNetworkEventReaderResource = Option<ReaderId<ClientNetworkEvent>>;
-    #[test]
-    fn receiver_registers_client_on_connection_request() -> Result<(), Error> {
+    fn create_testapp() -> AmethystApplication<GameData<'static, 'static>, StateEvent, StateEventReader>
+    {
         amethyst::start_logger(Default::default());
-
         AmethystApplication::blank()
             .with_resource(EventChannel::<ClientNetworkEvent>::new())
-            .with_resource(ClientNetworkEventReaderResource::None)
+            .with_resource(EventChannel::<NetworkCommand>::new())
             .with_setup(move |world: &mut World| {
-                let mut reader_id = world.fetch_mut::<ClientNetworkEventReaderResource>();
-                *reader_id = Some(world.fetch_mut::<EventChannel<ClientNetworkEvent>>().register_reader());
+                let client_net_channel = world.fetch_mut::<EventChannel<ClientNetworkEvent>>().register_reader();
+                world.insert(client_net_channel);
+
+                let command_channel = world.fetch_mut::<EventChannel<NetworkCommand>>().register_reader();
+                world.insert(command_channel);
             })
             .with_resource(ClientRegistry::new(1))
             .with_effect(|world| {
@@ -139,31 +144,84 @@ mod test {
             .with_system_desc(NetworkMessageReceiverSystemDesc::default(), "receiver", &[])
             .with_assertion(|world: &mut World| {
                 let client_net_ec = world.fetch_mut::<EventChannel<ClientNetworkEvent>>();
-                let mut reader_id = world.write_resource::<ClientNetworkEventReaderResource>();
+                let mut reader_id = world.write_resource::<ReaderId<ClientNetworkEvent>>();
 
-                let events: Vec<&ClientNetworkEvent> = client_net_ec.read(reader_id.as_mut().unwrap()).collect();
+                let events: Vec<&ClientNetworkEvent> = client_net_ec.read(&mut reader_id).collect();
                 assert_eq!(1, events.len(), "There should be exactly 1 ClientNetworkEvent on channel");
-                if let ClientNetworkEvent::ClientConnected(_) = events[0] {
-                    log::info!("Connect event confirmed")
-                } else {
-                    panic!("There's no connect event on event channel")
-                }
+                assert!(matches!(events[0], ClientNetworkEvent::ClientConnected(_)));
             })
+    }
+
+
+    #[test]
+    fn receiver_registers_client_on_connection_request() -> Result<(), Error> {
+        create_testapp()
             .with_effect(|world| {
                 let mut network_event_channel = world.fetch_mut::<EventChannel<NetworkSimulationEvent>>();
                 network_event_channel.single_write(NetworkSimulationEvent::Disconnect(socket_addr()));
             })
             .with_assertion(|world| {
                 let client_net_ec = world.fetch_mut::<EventChannel<ClientNetworkEvent>>();
-                let mut reader_id = world.write_resource::<ClientNetworkEventReaderResource>();
+                let mut reader_id = world.write_resource::<ReaderId<ClientNetworkEvent>>();
 
-                let events: Vec<&ClientNetworkEvent> = client_net_ec.read(reader_id.as_mut().unwrap()).collect();
+                let events: Vec<&ClientNetworkEvent> = client_net_ec.read(&mut reader_id).collect();
                 assert_eq!(1, events.len(), "There should be exactly 1 ClientNetworkEvent on channel");
-                if let ClientNetworkEvent::ClientDisconnected(_) = events[0] {
-                    log::info!("Disconnect event confirmed");
-                } else {
-                    panic!("There's no disconnect event on event channel")
-                }
+                assert!(matches!(events[0], ClientNetworkEvent::ClientDisconnected(_)));
+            })
+            .run()
+    }
+
+    fn make_input() -> Input {
+        let mut inp = Input::default();
+        inp.forward = true;
+        inp.cursor = Point2::new(42.0, 99.99);
+        inp
+    }
+
+    #[test]
+    fn client_input_should_be_forwarded() -> Result<(), Error> {
+        create_testapp()
+            .with_effect(|world| {
+                let mut network_event_channel = world.fetch_mut::<EventChannel<NetworkSimulationEvent>>();
+                network_event_channel.single_write(
+                    NetworkSimulationEvent::Message(
+                        socket_addr(),
+                        bincode::serialize(&PacketType::InputState { input: make_input() }).unwrap().into()
+                    )
+                );
+            })
+            .with_assertion(|world| {
+                let registry = world.read_resource::<ClientRegistry>();
+                let handle = registry.find_by_addr(&socket_addr()).expect("Client is not registered yet!?");
+
+                let command_channel = world.fetch_mut::<EventChannel<NetworkCommand>>();
+                let mut reader_id = world.write_resource::<ReaderId<NetworkCommand>>();
+
+                let commands: Vec<&NetworkCommand> = command_channel.read(&mut reader_id).collect();
+                assert_eq!(1, commands.len());
+                assert!(matches!(commands[0], NetworkCommand::Input { id, input } if input == &make_input() && &handle.id == id ));
+            })
+            .run()
+    }
+
+    #[test]
+    fn not_connected_client_input_should_not_be_forwarded() -> Result<(), Error> {
+        create_testapp()
+            .with_effect(|world| {
+                let mut network_event_channel = world.fetch_mut::<EventChannel<NetworkSimulationEvent>>();
+                network_event_channel.single_write(
+                    NetworkSimulationEvent::Message(
+                        SocketAddr::from(([1,2,3,4], 55555)),
+                        bincode::serialize(&PacketType::InputState { input: make_input() }).unwrap().into()
+                    )
+                );
+            })
+            .with_assertion(|world| {
+                let command_channel = world.fetch_mut::<EventChannel<NetworkCommand>>();
+                let mut reader_id = world.write_resource::<ReaderId<NetworkCommand>>();
+
+                let commands: Vec<&NetworkCommand> = command_channel.read(&mut reader_id).collect();
+                assert_eq!(0, commands.len(), "Command channel should be empty, but it has: {:?}", commands[0]);
             })
             .run()
     }
