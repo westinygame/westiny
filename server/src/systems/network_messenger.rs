@@ -1,6 +1,6 @@
 use amethyst::{
     derive::SystemDesc,
-    ecs::{System, SystemData, Read, WriteExpect},
+    ecs::{System, SystemData, Read, Write, WriteExpect},
     network::simulation::NetworkSimulationEvent,
     shrev::{ReaderId, EventChannel},
 };
@@ -11,7 +11,7 @@ use std::net::SocketAddr;
 use derive_new::new;
 
 use westiny_common::network::PacketType;
-use crate::resources::ClientRegistry;
+use crate::resources::{ClientRegistry, ClientNetworkEvent};
 
 
 #[derive(SystemDesc, new)]
@@ -25,9 +25,10 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
     type SystemData = (
         WriteExpect<'s, ClientRegistry>,
         Read<'s, EventChannel<NetworkSimulationEvent>>,
+        Write<'s, EventChannel<ClientNetworkEvent>>,
     );
 
-    fn run(&mut self, (mut client_registry, net_event_ch): Self::SystemData) {
+    fn run(&mut self, (mut client_registry, net_event_ch, mut client_net_ec): Self::SystemData) {
         for event in net_event_ch.read(&mut self.reader) {
             match event {
                 NetworkSimulationEvent::Connect(addr) => log::info!(
@@ -35,12 +36,12 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
                     addr
                 ),
                 NetworkSimulationEvent::Disconnect(addr) => {
-                    if let Err(e) = self.disconnect_client(addr, &mut client_registry) {
+                    if let Err(e) = self.disconnect_client(addr, &mut client_registry, &mut client_net_ec) {
                         log::error!("Error during disconnect_client: {}", e);
                     }
                 }
                 NetworkSimulationEvent::Message(addr, payload) => {
-                    match self.process_payload(addr, payload, &mut client_registry) {
+                    match self.process_payload(addr, payload, &mut client_registry, &mut client_net_ec) {
                         Ok(_) => log::debug!("Message from {} processed successfully.", addr),
                         Err(e) => {
                             log::error!("Could not process message! {}, payload: {:?}", e, payload)
@@ -55,21 +56,23 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
 
 impl NetworkMessageReceiverSystem {
     fn disconnect_client(
-        &mut self,
+        &self,
         addr: &SocketAddr,
         registry: &mut ClientRegistry,
+        client_event_channel: &mut EventChannel<ClientNetworkEvent>,
     ) -> Result<()> {
         log::info!("Disconnecting {:?}", addr);
-        registry.remove(addr)?;
-        // TODO put event on eventchannel
+        let id = registry.remove(addr)?;
+        client_event_channel.single_write(ClientNetworkEvent::ClientDisconnected(id));
         Ok(())
     }
 
     fn process_payload(
-        &mut self,
+        &self,
         addr: &SocketAddr,
         payload: &[u8],
         registry: &mut ClientRegistry,
+        client_net_event_channel: &mut EventChannel<ClientNetworkEvent>,
     ) -> Result<()> {
 
         log::info!("Message: {:?}", payload);
@@ -84,7 +87,9 @@ impl NetworkMessageReceiverSystem {
                     player_name,
                     client_id
                 );
-                // TODO move to NetworkMessageTransmitterSystem. Just write an event here
+
+                client_net_event_channel.single_write(ClientNetworkEvent::ClientConnected(client_id));
+                // TODO move to NetworkMessageTransmitterSystem.
                 // let response = serialize(&PacketType::ConnectionResponse(Ok(
                 //     ClientInitialData::new(),
                 // )))?;
@@ -109,62 +114,77 @@ impl NetworkMessageReceiverSystem {
     }
 }
 
-// #[cfg(test)]
-// mod test {
-//     use super::*;
-//
-//     use amethyst::Error;
-//     use amethyst::prelude::*;
-//     use amethyst_test::prelude::*;
-//     use amethyst::network::simulation::Message;
-//     use westiny_common::network::{self, PacketType, ClientInitialData};
-//
-//     #[test]
-//     fn send_response_on_connection_request() -> Result<(), Error>{
-//         amethyst::start_logger(Default::default());
-//
-//         AmethystApplication::blank()
-//             // .with_resource(TransportResource::default())
-//             .with_resource(ClientRegistry::new(1))
-//             .with_effect(|world| {
-//                 let mut network_event_channel = world.fetch_mut::<EventChannel<NetworkSimulationEvent>>();
-//                 network_event_channel.single_write(
-//                     NetworkSimulationEvent::Message(
-//                         socket_addr(),
-//                         bincode::serialize(&connection_request().clone()).unwrap().into()
-//                     )
-//                 );
-//             })
-//             .with_system_desc(ServerNetworkSystemDesc::default(), "server_net_sys", &[])
-//
-//             .with_assertion(|world| {
-//                 let mut transport = world.write_resource::<TransportResource>();
-//                 let messages = transport.drain_messages(|_| true);
-//
-//                 assert_eq!(messages.len(), 1, "Transport message queue contains {} messages", messages.len());
-//
-//                 let socket_address = socket_addr();
-//                 let payload = serialize(&network::PacketType::ConnectionResponse(Ok(
-//                     network::ClientInitialData::new(),
-//                 ))).unwrap();
-//                 let expected_message = Message {
-//                     destination: socket_address,
-//                     payload: payload.into(),
-//                     delivery: DeliveryRequirement::Reliable,
-//                     urgency: UrgencyRequirement::OnTick
-//                 };
-//                 assert_eq!(messages[0], expected_message)
-//             })
-//             .run()
-//     }
-//
-//     #[inline]
-//     fn socket_addr() -> SocketAddr {
-//         SocketAddr::from(([127, 0, 0, 1], 9999))
-//     }
-//
-//     #[inline]
-//     fn connection_request() -> network::PacketType {
-//         network::PacketType::ConnectionRequest { player_name: "Clint Westwood".to_string() }
-//     }
-// }
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use amethyst::Error;
+    use amethyst::prelude::*;
+    use amethyst_test::prelude::*;
+    use westiny_common::network;
+
+    type ClientNetworkEventReaderResource = Option<ReaderId<ClientNetworkEvent>>;
+    #[test]
+    fn receiver_registers_client_on_connection_request() -> Result<(), Error> {
+        amethyst::start_logger(Default::default());
+
+        AmethystApplication::blank()
+            .with_resource(EventChannel::<ClientNetworkEvent>::new())
+            .with_resource(ClientNetworkEventReaderResource::None)
+            .with_setup(move |world: &mut World| {
+                let mut reader_id = world.fetch_mut::<ClientNetworkEventReaderResource>();
+                *reader_id = Some(world.fetch_mut::<EventChannel<ClientNetworkEvent>>().register_reader());
+            })
+            .with_resource(ClientRegistry::new(1))
+            .with_effect(|world| {
+                let mut network_event_channel = world.fetch_mut::<EventChannel<NetworkSimulationEvent>>();
+                let req = connection_request();
+                network_event_channel.single_write(
+                    NetworkSimulationEvent::Message(
+                        socket_addr(),
+                        bincode::serialize(&req).unwrap().into()
+                    )
+                );
+            })
+            .with_system_desc(NetworkMessageReceiverSystemDesc::default(), "receiver", &[])
+            .with_assertion(|world: &mut World| {
+                let client_net_ec = world.fetch_mut::<EventChannel<ClientNetworkEvent>>();
+                let mut reader_id = world.write_resource::<ClientNetworkEventReaderResource>();
+
+                let events: Vec<&ClientNetworkEvent> = client_net_ec.read(reader_id.as_mut().unwrap()).collect();
+                assert_eq!(1, events.len(), "There should be exactly 1 ClientNetworkEvent on channel");
+                if let ClientNetworkEvent::ClientConnected(_) = events[0] {
+                    log::info!("Connect event confirmed")
+                } else {
+                    panic!("There's no connect event on event channel")
+                }
+            })
+            .with_effect(|world| {
+                let mut network_event_channel = world.fetch_mut::<EventChannel<NetworkSimulationEvent>>();
+                network_event_channel.single_write(NetworkSimulationEvent::Disconnect(socket_addr()));
+            })
+            .with_assertion(|world| {
+                let client_net_ec = world.fetch_mut::<EventChannel<ClientNetworkEvent>>();
+                let mut reader_id = world.write_resource::<ClientNetworkEventReaderResource>();
+
+                let events: Vec<&ClientNetworkEvent> = client_net_ec.read(reader_id.as_mut().unwrap()).collect();
+                assert_eq!(1, events.len(), "There should be exactly 1 ClientNetworkEvent on channel");
+                if let ClientNetworkEvent::ClientDisconnected(_) = events[0] {
+                    log::info!("Disconnect event confirmed");
+                } else {
+                    panic!("There's no disconnect event on event channel")
+                }
+            })
+            .run()
+    }
+
+    #[inline]
+    fn socket_addr() -> SocketAddr {
+        SocketAddr::from(([127, 0, 0, 1], 9999))
+    }
+
+    #[inline]
+    fn connection_request() -> network::PacketType {
+        network::PacketType::ConnectionRequest { player_name: "Clint Westwood".to_string() }
+    }
+}
