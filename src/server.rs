@@ -7,6 +7,7 @@ use std::str::FromStr;
 use std::time::Duration;
 use amethyst::core::frame_limiter::FrameRateLimitStrategy;
 use westiny_common::resources::ServerAddress;
+use westiny_server::systems as srv_system;
 
 mod systems;
 mod entities;
@@ -52,7 +53,7 @@ fn main() -> amethyst::Result<()> {
 
     let game_data = GameDataBuilder::default()
         .with_bundle(LaminarNetworkBundle::new(Some(socket)))?
-        .with_system_desc(systems::server_network::ServerNetworkSystemDesc::default(), "game_network", &["network_recv"]);
+        .with_system_desc(srv_system::NetworkMessageReceiverSystemDesc::default(), "msg_receiver", &[]);
 
     let frame_limit = 60;
 

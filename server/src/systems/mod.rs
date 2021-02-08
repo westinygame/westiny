@@ -1,0 +1,2 @@
+pub use network_messenger::NetworkMessageReceiverSystemDesc;
+mod network_messenger;
