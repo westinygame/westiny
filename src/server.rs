@@ -53,7 +53,8 @@ fn main() -> amethyst::Result<()> {
 
     let game_data = GameDataBuilder::default()
         .with_bundle(LaminarNetworkBundle::new(Some(socket)))?
-        .with_system_desc(srv_system::NetworkMessageReceiverSystemDesc::default(), "msg_receiver", &[]);
+        .with_system_desc(srv_system::NetworkMessageReceiverSystemDesc::default(), "msg_receiver", &[])
+        .with_system_desc(srv_system::PlayerSpawnSystemDesc::default(), "player_spawn", &["msg_receiver"]);
 
     let frame_limit = 60;
 

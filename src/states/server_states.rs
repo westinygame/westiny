@@ -1,7 +1,7 @@
 use crate::events::WestinyEvent;
 use amethyst::prelude::*;
 use amethyst::core::Time;
-use westiny_server::resources::ClientRegistry;
+use westiny_server::resources::{ClientRegistry, NetworkIdSupplier};
 
 use log::info;
 
@@ -27,6 +27,7 @@ fn log_clients(time: &Time, registry: &ClientRegistry) {
 impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
     fn on_start(&mut self, data: StateData<'_, GameData<'static, 'static>>) {
         data.world.insert(ClientRegistry::new(16));
+        data.world.insert(NetworkIdSupplier::new());
     }
 
     fn update(&mut self, data: StateData<'_, GameData<'static, 'static>>) -> Trans<GameData<'static, 'static>, WestinyEvent> {
