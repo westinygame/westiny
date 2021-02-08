@@ -8,10 +8,10 @@ use thiserror::Error;
 pub struct ClientID(u32);
 
 pub struct ClientHandle {
-    id: ClientID,
-    addr: SocketAddr,
+    pub id: ClientID,
+    pub addr: SocketAddr,
     /// Right now it is used as a user_name, but no further authentication done.
-    player_name: String,
+    pub player_name: String,
 }
 
 pub struct ClientRegistry {

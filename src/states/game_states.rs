@@ -22,7 +22,7 @@ use crate::resources::{
     initialize_audio,
     initialize_sprite_resource
 };
-use crate::components::BoundingCircle;
+use westiny_common::components::BoundingCircle;
 use crate::events::WestinyEvent;
 use crate::systems;
 

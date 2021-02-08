@@ -7,10 +7,9 @@ use amethyst::ecs::prelude::Join;
 use amethyst::assets::AssetStorage;
 use amethyst::audio::{Source, output::Output};
 
-use crate::components::{Player, Weapon, BoundingCircle};
+use westiny_common::components::{Input, Player, weapon::Weapon, BoundingCircle};
 use crate::entities::spawn_bullet;
 use crate::resources::{SpriteResource, SpriteId, Sounds};
-use westiny_common::components::Input;
 
 #[derive(SystemDesc)]
 pub struct PlayerShooterSystem;

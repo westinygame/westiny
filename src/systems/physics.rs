@@ -4,7 +4,8 @@ use amethyst::ecs::prelude::Join;
 use amethyst::core::{Transform, Time};
 use amethyst::core::math::Vector2;
 
-use crate::components::{Velocity, DistanceLimit};
+use crate::components::DistanceLimit;
+use westiny_common::components::Velocity;
 
 #[derive(SystemDesc)]
 pub struct PhysicsSystem;

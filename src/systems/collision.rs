@@ -3,8 +3,9 @@ use amethyst::core::{Transform};
 use amethyst::core::math::{Vector2, Vector3};
 use amethyst::ecs::prelude::Join;
 
-use crate::components::{Velocity, BoundingCircle, Projectile};
+use westiny_common::components::{Velocity, BoundingCircle};
 use crate::resources::{Collision, Collisions, ProjectileCollision, ProjectileCollisions};
+use crate::components::Projectile;
 
 use log::info;
 

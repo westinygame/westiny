@@ -7,10 +7,10 @@ use amethyst::core::Transform;
 use amethyst::core::math::{Vector2, Rotation2, Point2};
 use serde::{Serialize, Deserialize};
 
-use crate::components::{Player, Velocity};
 use crate::resources::CursorPosition;
 
 use westiny_common::MoveDirection;
+use westiny_common::components::{Player, Velocity};
 
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]

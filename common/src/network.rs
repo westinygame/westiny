@@ -14,8 +14,9 @@ pub enum PacketType {
     },
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, new, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
 pub struct ClientInitialData {
+    pub player_network_id: u64,
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]

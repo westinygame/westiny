@@ -1,7 +1,12 @@
 use std::ops::Deref;
+use amethyst::core::ecs::{Component, DenseVecStorage};
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct NetworkId(u64);
+
+impl Component for NetworkId {
+    type Storage = DenseVecStorage<Self>;
+}
 
 impl NetworkId {
     pub fn new(id: u64) -> Self {

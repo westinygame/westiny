@@ -89,16 +89,6 @@ impl NetworkMessageReceiverSystem {
                 );
 
                 client_net_event_channel.single_write(ClientNetworkEvent::ClientConnected(client_id));
-                // TODO move to NetworkMessageTransmitterSystem.
-                // let response = serialize(&PacketType::ConnectionResponse(Ok(
-                //     ClientInitialData::new(),
-                // )))?;
-                // net.send_with_requirements(
-                //     *addr,
-                //     &response,
-                //     DeliveryRequirement::Reliable,
-                //     UrgencyRequirement::OnTick,
-                // );
                 Ok(())
             },
             PacketType::InputState{ input } => {

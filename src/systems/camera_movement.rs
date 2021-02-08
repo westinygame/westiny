@@ -6,7 +6,7 @@ use amethyst::core::math::Vector3;
 
 use amethyst::ecs::prelude::Join;
 use amethyst::renderer::Camera;
-use crate::components::Player;
+use westiny_common::components::Player;
 use crate::systems::MovementBindingTypes;
 use crate::systems::AxisBinding;
 

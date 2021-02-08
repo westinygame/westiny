@@ -1,13 +1,11 @@
-
-use amethyst::prelude::*;
-use amethyst::core::Transform;
-
-use log::info;
-use crate::components::{Player, Velocity, Weapon, WeaponDetails, weapon::Shot};
-use crate::resources::{SpriteResource, SpriteId};
-use crate::components::BoundingCircle;
-use westiny_common::components::Input;
 use amethyst::core::math::Point2;
+use amethyst::core::Transform;
+use amethyst::prelude::*;
+use log::info;
+
+
+use westiny_common::components::{BoundingCircle, Input, Player, Velocity, weapon::*};
+use crate::resources::{SpriteId, SpriteResource};
 
 pub fn initialize_player(world: &mut World,
                          sprite_resource: &SpriteResource,
