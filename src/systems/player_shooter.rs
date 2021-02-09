@@ -1,15 +1,14 @@
 
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Read, System, SystemData, ReadStorage, ReadExpect, Entities, WriteStorage};
+use amethyst::ecs::{Read, System, SystemData, ReadStorage, ReadExpect, WriteExpect, Entities, WriteStorage};
 use amethyst::core::{Transform, Time, math::{Vector3, Vector2}};
 use amethyst::ecs::prelude::LazyUpdate;
 use amethyst::ecs::prelude::Join;
-use amethyst::assets::AssetStorage;
-use amethyst::audio::{Source, output::Output};
 
+use westiny_common::resources::{SoundId, AudioQueue};
 use westiny_common::components::{InputFlags, Input, Player, weapon::Weapon, BoundingCircle};
 use crate::entities::spawn_bullet;
-use crate::resources::{SpriteResource, SpriteId, Sounds};
+use crate::resources::{SpriteResource, SpriteId};
 
 #[derive(SystemDesc)]
 pub struct PlayerShooterSystem;
@@ -25,12 +24,10 @@ impl<'s> System<'s> for PlayerShooterSystem {
         Read<'s, Time>,
         ReadExpect<'s, SpriteResource>,
         ReadExpect<'s, LazyUpdate>,
-        Read<'s, AssetStorage<Source>>,
-        ReadExpect<'s, Sounds>,
-        Read<'s, Output>
+        WriteExpect<'s, AudioQueue>
     );
 
-    fn run(&mut self, (entities, transforms, players, inputs, bounds, mut weapons, time, sprites, lazy_update, audio_storage, sounds, sound_output): Self::SystemData) {
+    fn run(&mut self, (entities, transforms, players, inputs, bounds, mut weapons, time, sprites, lazy_update, mut audio): Self::SystemData) {
         for (_player, input, player_transform, player_bound, mut weapon) in (&players, &inputs, &transforms, &bounds, &mut weapons).join() {
             if input.flags.intersects(InputFlags::SHOOT)
             {
@@ -49,9 +46,7 @@ impl<'s> System<'s> for PlayerShooterSystem {
                     weapon.last_shot_time = time.absolute_time_seconds();
                     weapon.input_lifted = false;
 
-                    if let Some(sound) = audio_storage.get(&sounds.single_shot) {
-                        (*sound_output).play_once(sound, 1.0);
-                    }
+                    audio.play(SoundId::SingleShot, 1.0);
                 }
             }
             else

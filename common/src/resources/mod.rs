@@ -1,3 +1,7 @@
+pub use audio::{SoundId, AudioQueue};
+
+mod audio;
+
 use std::net::SocketAddr;
 use serde::Deserialize;
 

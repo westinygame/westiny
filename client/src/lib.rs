@@ -1,3 +1,6 @@
+pub mod systems;
+pub mod resources;
+
 use std::fmt;
 use ::serde::{Serialize, Deserialize};
 use amethyst::input::BindingTypes;

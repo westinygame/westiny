@@ -20,9 +20,11 @@ use crate::resources::{
     ProjectileCollisions,
     SpriteResource,
     SpriteId,
-    initialize_audio,
 };
 use westiny_common::components::BoundingCircle;
+use westiny_common::resources::AudioQueue;
+use westiny_client::systems::{AudioPlayerSystem};
+use westiny_client::resources::initialize_audio;
 use crate::events::WestinyEvent;
 use crate::systems;
 
@@ -66,6 +68,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
             .with(systems::ProjectileCollisionHandler, "projectile_collision_handler", &["projectile_collision_system"])
             .with(systems::PlayerShooterSystem, "player_shooter_system", &["input_system"])
             .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"])
+            .with(AudioPlayerSystem, "audio_player_system", &["cursor_pos_update_system"])
 
             .with_pool((*world.read_resource::<ArcThreadPool>()).clone())
             .build();
@@ -77,6 +80,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         world.insert(Collisions::default());
         world.insert(ProjectileCollisions::default());
+        world.insert(AudioQueue::default());
         init_camera(world, &dimensions);
 
         let objects_reference_pos = Point2::new(
