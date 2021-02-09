@@ -14,7 +14,7 @@ use amethyst::winit::dpi::LogicalPosition;
 use amethyst::ecs::Component;
 use amethyst::input::InputHandler;
 
-use crate::systems::MovementBindingTypes;
+use westiny_client::MovementBindingTypes;
 
 pub fn make_window_event(win_event: WindowEvent) -> Event {
     Event::WindowEvent {

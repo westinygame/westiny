@@ -115,7 +115,7 @@ mod test {
     use amethyst::{Error, StateEventReader, core::math::Point2};
     use amethyst::prelude::*;
     use amethyst_test::prelude::*;
-    use westiny_common::{network, components::Input};
+    use westiny_common::{network, components::{InputFlags, Input}};
 
     fn create_testapp() -> AmethystApplication<GameData<'static, 'static>, StateEvent, StateEventReader>
     {
@@ -173,7 +173,7 @@ mod test {
 
     fn make_input() -> Input {
         let mut inp = Input::default();
-        inp.forward = true;
+        inp.flags |= InputFlags::FORWARD;
         inp.cursor = Point2::new(42.0, 99.99);
         inp
     }
