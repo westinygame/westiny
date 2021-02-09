@@ -7,7 +7,7 @@ use amethyst::ecs::prelude::Join;
 use amethyst::assets::AssetStorage;
 use amethyst::audio::{Source, output::Output};
 
-use westiny_common::components::{Input, Player, weapon::Weapon, BoundingCircle};
+use westiny_common::components::{InputFlags, Input, Player, weapon::Weapon, BoundingCircle};
 use crate::entities::spawn_bullet;
 use crate::resources::{SpriteResource, SpriteId, Sounds};
 
@@ -32,7 +32,7 @@ impl<'s> System<'s> for PlayerShooterSystem {
 
     fn run(&mut self, (entities, transforms, players, inputs, bounds, mut weapons, time, sprites, lazy_update, audio_storage, sounds, sound_output): Self::SystemData) {
         for (_player, input, player_transform, player_bound, mut weapon) in (&players, &inputs, &transforms, &bounds, &mut weapons).join() {
-            if input.shoot
+            if input.flags.intersects(InputFlags::SHOOT)
             {
                 if weapon.is_allowed_to_shoot(time.absolute_time_seconds())
                 {

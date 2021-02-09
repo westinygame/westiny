@@ -7,7 +7,7 @@ use crate::resources::CursorPosition;
 
 use westiny_common::MoveDirection;
 use westiny_common::components::{Player, Velocity};
-use westiny_common::components::Input;
+use westiny_common::components::{InputFlags, Input};
 
 #[derive(SystemDesc)]
 pub struct PlayerMovementSystem;
@@ -27,10 +27,6 @@ impl<'s> System<'s> for PlayerMovementSystem {
             let angle = angle_toward_point(&transform, &cursor_pos.pos);
 
             let move_inputs = move_directions_from_input(&input);
-            //let move_inputs: Vec<MoveDirection> = MOVE_ACTIONS.iter()
-            //    .filter(|s| input.action_is_down(&s).unwrap_or(false))
-            //    .filter_map(|&s| move_direction_from_binding(s))
-            //    .collect();
             log::info!("{:?} {}", input, move_inputs.len());
 
             transform.set_rotation_2d(angle);
@@ -42,19 +38,19 @@ impl<'s> System<'s> for PlayerMovementSystem {
 pub fn move_directions_from_input(input: &Input) -> Vec<MoveDirection>
 {
     let mut directions = Vec::new();
-    if input.forward
+    if input.flags.intersects(InputFlags::FORWARD)
     {
         directions.push(MoveDirection::Forward);
     }
-    if input.backward
+    if input.flags.intersects(InputFlags::BACKWARD)
     {
         directions.push(MoveDirection::Backward);
     }
-    if input.left
+    if input.flags.intersects(InputFlags::LEFT)
     {
         directions.push(MoveDirection::StrafeLeft);
     }
-    if input.right
+    if input.flags.intersects(InputFlags::RIGHT)
     {
         directions.push(MoveDirection::StrafeRight);
     }

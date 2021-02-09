@@ -1,4 +1,4 @@
-pub use input::Input;
+pub use input::{InputFlags, Input};
 pub use network_id::NetworkId;
 pub use player::Player;
 pub use bounding_circle::BoundingCircle;

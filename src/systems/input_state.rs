@@ -4,7 +4,7 @@ use amethyst::input::InputHandler;
 use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
 use bincode::{serialize};
 
-use westiny_common::components::Input;
+use westiny_common::components::{InputFlags, Input};
 
 use crate::resources::CursorPosition;
 use westiny_client::{MovementBindingTypes, ActionBinding};
@@ -12,11 +12,11 @@ use westiny_common::resources::ServerAddress;
 use westiny_common::network;
 
 fn update_input_keys(input: &mut Input, handler: &InputHandler<MovementBindingTypes>) {
-    input.forward = handler.action_is_down(&ActionBinding::Forward).unwrap_or(false);
-    input.backward = handler.action_is_down(&ActionBinding::Backward).unwrap_or(false);
-    input.left = handler.action_is_down(&ActionBinding::StrafeLeft).unwrap_or(false);
-    input.right = handler.action_is_down(&ActionBinding::StrafeRight).unwrap_or(false);
-    input.shoot = handler.action_is_down(&ActionBinding::Shoot).unwrap_or(false);
+    input.flags.set(InputFlags::FORWARD, handler.action_is_down(&ActionBinding::Forward).unwrap_or(false));
+    input.flags.set(InputFlags::BACKWARD, handler.action_is_down(&ActionBinding::Backward).unwrap_or(false));
+    input.flags.set(InputFlags::LEFT, handler.action_is_down(&ActionBinding::StrafeLeft).unwrap_or(false));
+    input.flags.set(InputFlags::RIGHT, handler.action_is_down(&ActionBinding::StrafeRight).unwrap_or(false));
+    input.flags.set(InputFlags::SHOOT, handler.action_is_down(&ActionBinding::Shoot).unwrap_or(false));
 }
 
 fn update_input_cursor(input: &mut Input, cursor: &CursorPosition) {
