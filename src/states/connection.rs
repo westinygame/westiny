@@ -41,7 +41,6 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
         };
         world.insert(server_address);
 
-
         let mut dispatcher_builder = DispatcherBuilder::new();
 
         dispatcher_builder.add(

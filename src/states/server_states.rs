@@ -1,9 +1,10 @@
 use crate::events::WestinyEvent;
 use amethyst::prelude::*;
-use amethyst::core::Time;
+use amethyst::core::{Time, Transform};
 use westiny_server::resources::{ClientRegistry, NetworkIdSupplier};
 
 use log::info;
+use crate::components;
 
 #[derive(Default)]
 pub struct ServerState;
@@ -28,6 +29,13 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
     fn on_start(&mut self, data: StateData<'_, GameData<'static, 'static>>) {
         data.world.insert(ClientRegistry::new(16));
         data.world.insert(NetworkIdSupplier::new());
+
+        data.world.register::<components::NetworkId>();
+        data.world.register::<components::Player>();
+        data.world.register::<components::Velocity>();
+        data.world.register::<components::BoundingCircle>();
+        data.world.register::<components::weapon::Weapon>();
+        data.world.register::<Transform>();
     }
 
     fn update(&mut self, data: StateData<'_, GameData<'static, 'static>>) -> Trans<GameData<'static, 'static>, WestinyEvent> {

@@ -1,10 +1,19 @@
 
 use amethyst::{
     derive::SystemDesc,
-    ecs::{System, SystemData, Read, WriteExpect, ReadExpect, Entities, WriteStorage, Join},
+    ecs::{
+        System,
+        SystemData,
+        Read,
+        WriteExpect,
+        ReadExpect,
+        Entities,
+        ReadStorage,
+        LazyUpdate,
+        Join
+    },
     shrev::{ReaderId, EventChannel},
 };
-
 
 use derive_new::new;
 use anyhow::Result;
@@ -15,6 +24,7 @@ use amethyst::network::simulation::{TransportResource, DeliveryRequirement, Urge
 use amethyst::core::Transform;
 use amethyst::core::math::Point2;
 use crate::components;
+use amethyst::prelude::Builder;
 
 
 #[derive(SystemDesc, new)]
@@ -31,16 +41,8 @@ impl<'s> System<'s> for PlayerSpawnSystem {
         WriteExpect<'s, TransportResource>,
         ReadExpect<'s, ClientRegistry>,
         WriteExpect<'s, NetworkIdSupplier>,
-
-        // storages required for player creation
-        WriteStorage<'s, components::Client>,
-        WriteStorage<'s, components::NetworkId>,
-        WriteStorage<'s, components::Player>,
-        WriteStorage<'s, Transform>,
-        WriteStorage<'s, components::Input>,
-        WriteStorage<'s, components::Velocity>,
-        WriteStorage<'s, components::weapon::Weapon>,
-        WriteStorage<'s, components::BoundingCircle>,
+        ReadExpect<'s, LazyUpdate>,
+        ReadStorage<'s, components::Client>,
     );
 
     fn run(
@@ -51,14 +53,8 @@ impl<'s> System<'s> for PlayerSpawnSystem {
             mut net,
             client_registry,
             mut net_id_supplier,
-            mut client,
-            mut net_id,
-            mut player,
-            mut transform,
-            mut input,
-            mut velocity,
-            mut weapon,
-            mut bounding_circle
+            lazy_update,
+            client,
         ): Self::SystemData) {
 
         for client_network_event in client_net_ec.read(&mut self.reader) {
@@ -71,14 +67,7 @@ impl<'s> System<'s> for PlayerSpawnSystem {
                         &entities,
                         client_id,
                         &mut net_id_supplier,
-                        &mut client,
-                        &mut net_id,
-                        &mut player,
-                        &mut transform,
-                        &mut input,
-                        &mut velocity,
-                        &mut weapon,
-                        &mut bounding_circle
+                        &lazy_update,
                     );
                     log::debug!("Player created for {}", client_handle.player_name);
 
@@ -98,7 +87,7 @@ impl<'s> System<'s> for PlayerSpawnSystem {
 
                 }
                 ClientNetworkEvent::ClientDisconnected(client_id) => {
-                    match Self::despawn_player(&entities, &mut client, client_id) {
+                    match Self::despawn_player(&entities, &client, client_id) {
                         Ok(()) => log::debug!("Disconnecting client's player entity [client_id: {:?}], has been removed", client_id),
                         Err(err) => log::error!("{}", err)
                     }
@@ -113,14 +102,7 @@ impl PlayerSpawnSystem {
         entities: &Entities<'_>,
         client_id: &ClientID,
         net_id_supplier: &mut NetworkIdSupplier,
-        client_storage: &mut WriteStorage<'_, components::Client>,
-        net_id_storage: &mut WriteStorage<'_, components::NetworkId>,
-        player_storage: &mut WriteStorage<'_, components::Player>,
-        transform_storage: &mut WriteStorage<'_, Transform>,
-        input_storage: &mut WriteStorage<'_, components::Input>,
-        velocity_storage: &mut WriteStorage<'_, components::Velocity>,
-        weapon_storage: &mut WriteStorage<'_, components::weapon::Weapon>,
-        bounding_circle_storage: &mut WriteStorage<'_, components::BoundingCircle>,
+        lazy_update: &LazyUpdate,
     ) -> components::NetworkId {
         use components::weapon;
 
@@ -145,15 +127,15 @@ impl PlayerSpawnSystem {
         let client = components::Client::new(*client_id);
         let network_id = net_id_supplier.next();
 
-        entities.build_entity()
-            .with(client, client_storage)
-            .with(network_id, net_id_storage)
-            .with(components::Player, player_storage)
-            .with(transform, transform_storage)
-            .with(components::Input::default(), input_storage)
-            .with(components::Velocity::default(), velocity_storage)
-            .with(components::weapon::Weapon::new(revolver), weapon_storage)
-            .with(components::BoundingCircle{radius: 8.0}, bounding_circle_storage)
+        lazy_update.create_entity(entities)
+            .with(client)
+            .with(network_id)
+            .with(components::Player)
+            .with(transform)
+            .with(components::Input::default())
+            .with(components::Velocity::default())
+            .with(components::weapon::Weapon::new(revolver))
+            .with(components::BoundingCircle{radius: 8.0})
             .build();
 
         network_id
@@ -161,7 +143,7 @@ impl PlayerSpawnSystem {
 
     fn despawn_player(
         entities: &Entities<'_>,
-        client_storage: &mut WriteStorage<'_, components::Client>,
+        client_storage: &ReadStorage<'_, components::Client>,
         client_id: &ClientID,
     ) -> Result<()>{
         for (entity, client) in (&*entities, client_storage).join() {
