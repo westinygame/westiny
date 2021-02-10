@@ -8,15 +8,10 @@ use amethyst::shred::{Dispatcher, DispatcherBuilder};
 use amethyst::core::ecs::WorldExt;
 use amethyst::core::ArcThreadPool;
 use westiny_common::resources::ServerAddress;
-use crate::resources;
-use westiny_common::components::{NetworkId, Player, Velocity, BoundingCircle};
-use amethyst::core::math::Point2;
-use westiny_common::components::weapon::Weapon;
 
 pub struct ConnectState {
     dispatcher: Option<Dispatcher<'static, 'static>>,
     resource_dir: std::path::PathBuf,
-    sprite_resource: Option<resources::SpriteResource>,
 }
 
 impl ConnectState {
@@ -24,7 +19,6 @@ impl ConnectState {
         ConnectState {
             dispatcher: Default::default(),
             resource_dir: resource_dir.to_path_buf(),
-            sprite_resource: None,
         }
     }
 }
@@ -47,14 +41,6 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
         };
         world.insert(server_address);
 
-        // Must be registered here because no system uses them in this dispathcer
-        world.register::<NetworkId>();
-        world.register::<Player>();
-        world.register::<Velocity>();
-        world.register::<BoundingCircle>();
-        world.register::<Weapon>();
-
-        self.sprite_resource = Some(resources::initialize_sprite_resource(&mut world));
 
         let mut dispatcher_builder = DispatcherBuilder::new();
 
@@ -76,12 +62,9 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
                 AppEvent::Connection(result) => {
                     match result {
                         Ok(init_data) => {
-                            crate::entities::initialize_player(
-                                data.world,
-                                &self.sprite_resource.as_ref().unwrap(),
-                                init_data.player_network_id,
-                                Point2::from([0.0, 0.0]));
-                            Trans::Switch(Box::new(super::game_states::PlayState::new(&self.resource_dir, self.sprite_resource.clone().unwrap())))
+                            // Put init data here thus PlayState will be able to fetch it
+                            data.world.insert(init_data);
+                            Trans::Switch(Box::new(super::game_states::PlayState::new(&self.resource_dir, )))
                         }
                         Err(refuse_cause) => {
                             log::error!("Connection refused. Cause: {}", refuse_cause);

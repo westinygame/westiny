@@ -7,8 +7,6 @@ use westiny_common::components::{Velocity, BoundingCircle};
 use crate::resources::{Collision, Collisions, ProjectileCollision, ProjectileCollisions};
 use crate::components::Projectile;
 
-use log::info;
-
 pub struct CollisionSystem;
 
 impl<'s> System<'s> for CollisionSystem {
@@ -37,7 +35,7 @@ impl<'s> System<'s> for CollisionSystem {
                     Collider{transform: moving_transform, bound: moving_bounds},
                     Collider{transform: standing_transform, bound: standing_bounds})
                 {
-                    info!("Collision {}", collision);
+                    log::debug!("Collision {}", collision);
 
                     collision_resource.0.push(Collision{collider: moving_id, collidee: standing_id, vector: collision});
                 }

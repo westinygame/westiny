@@ -3,7 +3,6 @@ use derive_new::new;
 use std::fmt::{Display, Debug, Formatter};
 use crate::components::{Input, NetworkId};
 use amethyst::core::math::Point2;
-use crate::components::weapon::Weapon;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub enum PacketType {
@@ -22,9 +21,7 @@ pub struct ClientInitialData {
     pub initial_pos: Point2<f32>,
 }
 
-impl Eq for ClientInitialData {
-
-}
+impl Eq for ClientInitialData {}
 
 #[derive(Copy, Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub enum ErrorKind {

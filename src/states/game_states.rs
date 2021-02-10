@@ -13,34 +13,28 @@ use amethyst::{
 };
 use std::path::PathBuf;
 
-use crate::entities::initialize_tilemap;
+use crate::entities::{initialize_tilemap, initialize_player};
 use westiny_client::MovementBindingTypes;
-use crate::resources::{
-    Collisions,
-    ProjectileCollisions,
-    SpriteResource,
-    SpriteId,
-};
-use westiny_common::components::BoundingCircle;
+use crate::resources::{Collisions, ProjectileCollisions, SpriteResource, SpriteId, initialize_sprite_resource};
+use westiny_common::components::{BoundingCircle, NetworkId};
 use westiny_common::resources::AudioQueue;
 use westiny_client::systems::{AudioPlayerSystem};
 use westiny_client::resources::initialize_audio;
 use crate::events::WestinyEvent;
 use crate::systems;
+use westiny_common::network::ClientInitialData;
 
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState {
     dispatcher: Option<Dispatcher<'static, 'static>>,
     resource_dir: PathBuf,
-    sprite_resource: SpriteResource,
 }
 
 impl PlayState {
-    pub fn new(resource_dir: &std::path::Path, sprite_resource: SpriteResource) -> Self {
+    pub fn new(resource_dir: &std::path::Path) -> Self {
         PlayState {
             dispatcher: Default::default(),
             resource_dir: resource_dir.to_path_buf(),
-            sprite_resource
         }
     }
 }
@@ -48,6 +42,8 @@ impl PlayState {
 impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         let mut world = data.world;
+
+        let sprite_resource = initialize_sprite_resource(&mut world);
 
         let mut dispatcher_builder = DispatcherBuilder::new();
 
@@ -81,15 +77,17 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         world.insert(Collisions::default());
         world.insert(ProjectileCollisions::default());
         world.insert(AudioQueue::default());
+
         init_camera(world, &dimensions);
 
-        let objects_reference_pos = Point2::new(
-            dimensions.width() * 0.5,
-            dimensions.height() * 0.5
-        );
-        initialize_tilemap(world, &self.sprite_resource, Point2::new(dimensions.width() / 2.0, dimensions.height() / 2.0));
+        world.register::<NetworkId>(); // TODO remove if used by a system
+        let init_data = (*world.read_resource::<ClientInitialData>()).clone();
+        initialize_player(&mut world, &sprite_resource, init_data.player_network_id, init_data.initial_pos);
+
+        let objects_reference_pos = Point2::new(0.0, 0.0);
+        initialize_tilemap(world, &sprite_resource, Point2::new(0.0, 0.0));
         initialize_audio(world);
-        place_objects(world, &self.sprite_resource, &objects_reference_pos);
+        place_objects(world, &sprite_resource, &objects_reference_pos);
     }
 
     fn handle_event(

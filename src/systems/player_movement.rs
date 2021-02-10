@@ -27,8 +27,8 @@ impl<'s> System<'s> for PlayerMovementSystem {
             let angle = angle_toward_point(&transform, &cursor_pos.pos);
 
             let move_inputs = move_directions_from_input(&input);
-            log::info!("{:?} {}", input, move_inputs.len());
-
+            log::debug!("{:?} {}", input, move_inputs.len());
+            log::info!("{}", transform.translation());
             transform.set_rotation_2d(angle);
             update_velocity(&transform, &move_inputs, &mut velocity);
         }
