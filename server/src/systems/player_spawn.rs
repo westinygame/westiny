@@ -5,6 +5,7 @@ use amethyst::{
     shrev::{ReaderId, EventChannel},
 };
 
+
 use derive_new::new;
 use anyhow::Result;
 
@@ -12,6 +13,7 @@ use westiny_common::network::{PacketType, ClientInitialData};
 use crate::resources::{ClientRegistry, ClientNetworkEvent, NetworkIdSupplier, ClientID};
 use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
 use amethyst::core::Transform;
+use amethyst::core::math::Point2;
 use crate::components;
 
 
@@ -83,7 +85,8 @@ impl<'s> System<'s> for PlayerSpawnSystem {
                     // Send response to client
                     let connection_response = PacketType::ConnectionResponse(
                         Ok(ClientInitialData{
-                            player_network_id: *entity_network_id
+                            player_network_id: entity_network_id,
+                            initial_pos: Point2::from([0.0, 0.0]),
                         })
                     );
                     net.send_with_requirements(

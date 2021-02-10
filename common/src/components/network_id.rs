@@ -1,7 +1,8 @@
 use std::ops::Deref;
 use amethyst::core::ecs::{Component, DenseVecStorage};
+use serde::{Serialize, Deserialize};
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub struct NetworkId(u64);
 
 impl Component for NetworkId {

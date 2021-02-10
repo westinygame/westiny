@@ -102,6 +102,8 @@ mod test {
     use std::net::SocketAddr;
     use amethyst::prelude::World;
     use westiny_common::resources::ServerAddress;
+    use westiny_common::components::NetworkId;
+    use amethyst::core::math::Point2;
 
     const SOCKET_ADDRESS: ([u8;4], u16) = ([127, 0, 0, 1], 9999);
 
@@ -122,7 +124,7 @@ mod test {
                 network_event_channel.single_write(
                     NetworkSimulationEvent::Message(
                         SocketAddr::from(SOCKET_ADDRESS),
-                        bincode::serialize(&connection_response().clone()).unwrap().into()
+                        bincode::serialize(&connection_response()).unwrap().into()
                     )
                 );
             })
@@ -134,7 +136,11 @@ mod test {
                 let reader_id = fetched_reader_id.as_mut().unwrap();
                 let events = app_event_channel.read(reader_id);
                 assert_eq!(events.len(), 1, "There should be exactly 1 AppEvent written");
-                let expected_response: network::Result<network::ClientInitialData> = Ok(network::ClientInitialData{player_network_id: 0});
+                let expected_response: network::Result<network::ClientInitialData> = Ok(
+                    network::ClientInitialData{
+                        player_network_id: NetworkId::new(0),
+                        initial_pos: Point2::from([0.0, 0.0]),
+                    });
                 assert_eq!(events.collect::<Vec<&AppEvent>>()[0], &AppEvent::Connection(expected_response))
             })
             .run()
@@ -145,7 +151,8 @@ mod test {
         network::PacketType::ConnectionResponse(
             Ok(
                 network::ClientInitialData {
-                    player_network_id: 0
+                    player_network_id: NetworkId::new(0),
+                    initial_pos: Point2::from([0.0, 0.0])
                 }
             )
         )

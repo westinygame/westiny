@@ -1,9 +1,11 @@
 use serde::{Serialize, Deserialize};
 use derive_new::new;
 use std::fmt::{Display, Debug, Formatter};
-use crate::components::Input;
+use crate::components::{Input, NetworkId};
+use amethyst::core::math::Point2;
+use crate::components::weapon::Weapon;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum PacketType {
     ConnectionRequest {
         player_name: String
@@ -14,9 +16,14 @@ pub enum PacketType {
     },
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ClientInitialData {
-    pub player_network_id: u64,
+    pub player_network_id: NetworkId,
+    pub initial_pos: Point2<f32>,
+}
+
+impl Eq for ClientInitialData {
+
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]

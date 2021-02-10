@@ -79,7 +79,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
                             crate::entities::initialize_player(
                                 data.world,
                                 &self.sprite_resource.as_ref().unwrap(),
-                                NetworkId::new(init_data.player_network_id),
+                                init_data.player_network_id,
                                 Point2::from([0.0, 0.0]));
                             Trans::Switch(Box::new(super::game_states::PlayState::new(&self.resource_dir, self.sprite_resource.clone().unwrap())))
                         }
