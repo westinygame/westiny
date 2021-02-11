@@ -13,6 +13,7 @@ pub enum PacketType {
     InputState {
         input: Input
     },
+    EntityStateUpdate(EntityStateUpdate),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -22,6 +23,13 @@ pub struct ClientInitialData {
 }
 
 impl Eq for ClientInitialData {}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct EntityStateUpdate {
+    pub network_id: NetworkId,
+    pub position: Point2<f32>,
+    pub rotation: f32,
+}
 
 #[derive(Copy, Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub enum ErrorKind {

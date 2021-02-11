@@ -56,6 +56,10 @@ impl ClientRegistry {
         }
     }
 
+    pub fn get_clients(&self) -> Vec<&ClientHandle> {
+        self.clients.iter().collect()
+    }
+
     pub fn find_client(&self, client_id: ClientID) -> Option<&ClientHandle> {
         self.clients.iter().find(|&handle| handle.id == client_id)
     }

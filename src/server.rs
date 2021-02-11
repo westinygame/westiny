@@ -7,7 +7,7 @@ use std::str::FromStr;
 use std::time::Duration;
 use amethyst::core::frame_limiter::FrameRateLimitStrategy;
 use westiny_common::resources::ServerAddress;
-use westiny_server::systems as srv_system;
+use westiny_server::systems as srv_systems;
 
 mod systems;
 mod entities;
@@ -53,9 +53,10 @@ fn main() -> amethyst::Result<()> {
 
     let game_data = GameDataBuilder::default()
         .with_bundle(LaminarNetworkBundle::new(Some(socket)))?
-        .with_system_desc(srv_system::NetworkMessageReceiverSystemDesc::default(), "msg_receiver", &[])
-        .with_system_desc(srv_system::PlayerSpawnSystemDesc::default(), "player_spawn", &["msg_receiver"])
-        .with_system_desc(srv_system::CommandTransformerSystemDesc::default(), "command_transformer", &["msg_receiver"])
+        .with(srv_systems::EntityStateBroadcasterSystem, "entity_state_broadcaster", &[])
+        .with_system_desc(srv_systems::NetworkMessageReceiverSystemDesc::default(), "msg_receiver", &[])
+        .with_system_desc(srv_systems::PlayerSpawnSystemDesc::default(), "player_spawn", &["msg_receiver"])
+        .with_system_desc(srv_systems::CommandTransformerSystemDesc::default(), "command_transformer", &["msg_receiver"])
         .with(systems::PlayerMovementSystem, "player_movement", &["command_transformer"])
         .with(systems::PhysicsSystem, "physics", &["player_movement"]);
 
