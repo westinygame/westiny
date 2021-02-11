@@ -3,7 +3,7 @@ use amethyst::core::Transform;
 use amethyst::prelude::*;
 use log::info;
 
-use westiny_common::components::{BoundingCircle, Input, Player, Velocity, weapon::*, NetworkId};
+use westiny_common::components::{BoundingCircle, Input, Health, Player, Velocity, weapon::*, NetworkId};
 use crate::resources::{SpriteId, SpriteResource};
 
 pub fn initialize_player(world: &mut World,
@@ -28,6 +28,7 @@ pub fn initialize_player(world: &mut World,
     };
 
     world.register::<Input>();
+    world.register::<Health>();
 
     world
         .create_entity()
@@ -35,6 +36,7 @@ pub fn initialize_player(world: &mut World,
         .with(sprite_resource.sprite_render_for(SpriteId::Player))
         .with(transform)
         .with(Player)
+        .with(Health(100))
         .with(Input::default())
         .with(Velocity::default())
         .with(Weapon::new(revolver))
