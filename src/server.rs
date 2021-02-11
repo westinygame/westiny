@@ -56,7 +56,8 @@ fn main() -> amethyst::Result<()> {
         .with_system_desc(srv_system::NetworkMessageReceiverSystemDesc::default(), "msg_receiver", &[])
         .with_system_desc(srv_system::PlayerSpawnSystemDesc::default(), "player_spawn", &["msg_receiver"])
         .with_system_desc(srv_system::CommandTransformerSystemDesc::default(), "command_transformer", &["msg_receiver"])
-        .with(systems::PlayerMovementSystem, "player_movement", &["command_transformer"]);
+        .with(systems::PlayerMovementSystem, "player_movement", &["command_transformer"])
+        .with(systems::PhysicsSystem, "physics", &["player_movement"]);
 
     let frame_limit = 60;
 

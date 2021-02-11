@@ -25,6 +25,7 @@ impl<'s> System<'s> for PhysicsSystem {
         {
             let delta_s = update_position(transform, velocity, &time).norm();
 
+            log::info!("{}", transform.translation());
             if let Some(distance_limit) = maybe_distance_limit {
                 distance_limit.distance_to_live -= delta_s;
                 if distance_limit.distance_to_live < 0.0 {
