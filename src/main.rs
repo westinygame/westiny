@@ -3,6 +3,7 @@ use amethyst::utils::application_root_dir;
 use amethyst::{GameDataBuilder, CoreApplication};
 use amethyst::core::TransformBundle;
 use amethyst::renderer::{RenderingBundle, RenderToWindow, RenderFlat2D, types::DefaultBackend};
+use amethyst::ui::{RenderUi, UiBundle};
 use amethyst::tiles::{RenderTiles2D, MortonEncoder};
 use amethyst::network::simulation::laminar::{LaminarSocket, LaminarNetworkBundle, LaminarConfig};
 use std::time::Duration;
@@ -10,6 +11,9 @@ use crate::utilities::read_ron;
 use std::net::{SocketAddr, IpAddr};
 use std::str::FromStr;
 use serde::Deserialize;
+use amethyst::input::InputBundle;
+
+use westiny_client::MovementBindingTypes;
 
 mod systems;
 mod entities;
@@ -51,18 +55,25 @@ fn main() -> amethyst::Result<()> {
         conf
     };
     let socket = LaminarSocket::bind_with_config(client_socket, laminar_config)?;
+    let key_bindings = resources_dir.join("input.ron");
+    let input_bundle = InputBundle::<MovementBindingTypes>::new().with_bindings_from_file(key_bindings)?;
 
     let game_data = GameDataBuilder::default()
         .with_bundle(TransformBundle::new())?
+        .with_bundle(input_bundle)?
+        .with_bundle(UiBundle::<MovementBindingTypes>::new())?
         .with_bundle(RenderingBundle::<DefaultBackend>::new()
             .with_plugin(
                 RenderToWindow::from_config_path(display_config)?
                     .with_clear([0.0, 0.0, 0.0, 1.0])
             )
             .with_plugin(RenderFlat2D::default())
-            .with_plugin(RenderTiles2D::<resources::GroundTile, MortonEncoder>::default()))?
+            .with_plugin(RenderTiles2D::<resources::GroundTile, MortonEncoder>::default())
+            .with_plugin(RenderUi::default())
+            )?
         .with_bundle(LaminarNetworkBundle::new(Some(socket)))?
-        .with_bundle(AudioBundle::default())?;
+        .with_bundle(AudioBundle::default())?
+        ;
 
     let mut game =
         CoreApplication::<_, events::WestinyEvent, events::WestinyEventReader>::build(

@@ -18,8 +18,13 @@ use westiny_client::MovementBindingTypes;
 use crate::resources::{Collisions, ProjectileCollisions, SpriteResource, SpriteId, initialize_sprite_resource};
 use westiny_common::components::{BoundingCircle, NetworkId};
 use westiny_common::resources::AudioQueue;
-use westiny_client::systems::{AudioPlayerSystem, NetworkMessageReceiverSystemDesc, NetworkEntityStateUpdateSystemDesc};
-use westiny_client::resources::initialize_audio;
+use westiny_client::systems::{
+    AudioPlayerSystem,
+    NetworkMessageReceiverSystemDesc,
+    NetworkEntityStateUpdateSystemDesc,
+    HudUpdateSystem
+};
+use westiny_client::resources::{initialize_audio, initialize_hud};
 use crate::events::WestinyEvent;
 use crate::systems;
 use westiny_common::network::ClientInitialData;
@@ -70,6 +75,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
             .with(systems::PlayerShooterSystem, "player_shooter_system", &["input_system"])
             .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"])
             .with(AudioPlayerSystem, "audio_player_system", &["cursor_pos_update_system"])
+            .with(HudUpdateSystem, "hud_update_system", &["cursor_pos_update_system"])
 
             .with_pool((*world.read_resource::<ArcThreadPool>()).clone())
             .build();
@@ -93,6 +99,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         initialize_tilemap(world, &sprite_resource, Point2::new(0.0, 0.0));
         initialize_audio(world);
         place_objects(world, &sprite_resource, &objects_reference_pos);
+        initialize_hud(world);
     }
 
     fn handle_event(
