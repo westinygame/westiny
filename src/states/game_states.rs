@@ -18,7 +18,7 @@ use westiny_client::MovementBindingTypes;
 use crate::resources::{Collisions, ProjectileCollisions, SpriteResource, SpriteId, initialize_sprite_resource};
 use westiny_common::components::{BoundingCircle, NetworkId};
 use westiny_common::resources::AudioQueue;
-use westiny_client::systems::{AudioPlayerSystem, NetworkMessageReceiverSystemDesc};
+use westiny_client::systems::{AudioPlayerSystem, NetworkMessageReceiverSystemDesc, NetworkEntityStateUpdateSystemDesc};
 use westiny_client::resources::initialize_audio;
 use crate::events::WestinyEvent;
 use crate::systems;
@@ -53,10 +53,12 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
             .build(&mut world, &mut dispatcher_builder).unwrap();
 
         let network_message_receiver_sys = NetworkMessageReceiverSystemDesc::default().build(&mut world);
+        let network_entity_update_sys = NetworkEntityStateUpdateSystemDesc::default().build(&mut world);
 
         let mut dispatcher = dispatcher_builder
             // .with(systems::InputDebugSystem::default(), "input_debug_system", &["input_system"])
             .with(network_message_receiver_sys, "network_message_receiver", &[])
+            .with(network_entity_update_sys, "network_entity_update", &[])
             .with(systems::InputStateSystem, "input_state_system", &["input_system"])
             .with(systems::CameraMovementSystem, "camera_movement_system", &["input_system"])
             .with(systems::PlayerMovementSystem, "player_movement_system", &["input_state_system"])

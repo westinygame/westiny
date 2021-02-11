@@ -20,6 +20,7 @@ impl<'s> System<'s> for EntityStateBroadcasterSystem {
     );
 
     fn run(&mut self, (client_registry, mut net, network_ids, transforms): Self::SystemData) {
+        // TODO these should be sent in 1 message per client
         for (network_id, transform) in (&network_ids, &transforms).join() {
             let entity_state = network::EntityState {
                 network_id: *network_id,
