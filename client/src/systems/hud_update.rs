@@ -1,23 +1,29 @@
 use amethyst::
 {
     derive::SystemDesc,
-    ecs::{System, ReadExpect, WriteStorage},
+    ecs::{System, ReadExpect, WriteStorage, ReadStorage, Join},
     ui::UiText,
 };
 use crate::resources::{Hud, format_health};
+use westiny_common::components::{Player, Health};
 
 pub struct HudUpdateSystem;
 
 impl<'s> System<'s> for HudUpdateSystem {
     type SystemData = (
         ReadExpect<'s, Hud>,
-        WriteStorage<'s, UiText>
+        WriteStorage<'s, UiText>,
+        ReadStorage<'s, Player>,
+        ReadStorage<'s, Health>,
         );
 
-    fn run(&mut self, (hud, mut ui_texts): Self::SystemData)
+    fn run(&mut self, (hud, mut ui_texts, players, healths): Self::SystemData)
     {
-        if let Some(text) = ui_texts.get_mut(hud.health) {
-            text.text = format_health(100);
+        for (_player, health) in (&players, &healths).join()
+        {
+            if let Some(text) = ui_texts.get_mut(hud.health) {
+                text.text = format_health(health.0);
+            }
         }
     }
 }
