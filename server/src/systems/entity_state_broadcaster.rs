@@ -7,6 +7,8 @@ use amethyst::network::simulation::{TransportResource, DeliveryRequirement, Urge
 use westiny_common::network;
 use amethyst::core::math::Point2;
 
+/// This system is responsible for sending the transform of all the entities that has NetworkID
+/// to every connected clients
 pub struct EntityStateBroadcasterSystem;
 
 impl<'s> System<'s> for EntityStateBroadcasterSystem {
@@ -19,7 +21,7 @@ impl<'s> System<'s> for EntityStateBroadcasterSystem {
 
     fn run(&mut self, (client_registry, mut net, network_ids, transforms): Self::SystemData) {
         for (network_id, transform) in (&network_ids, &transforms).join() {
-            let entity_state = network::EntityStateUpdate {
+            let entity_state = network::EntityState {
                 network_id: *network_id,
                 position: Point2::new(transform.translation().x, transform.translation().y),
                 rotation: transform.rotation().angle(),
