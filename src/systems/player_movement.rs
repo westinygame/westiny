@@ -1,9 +1,7 @@
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Read, System, SystemData, ReadStorage, WriteStorage, prelude::Join};
+use amethyst::ecs::{System, SystemData, ReadStorage, WriteStorage, Join};
 use amethyst::core::Transform;
 use amethyst::core::math::{Vector2, Rotation2, Point2};
-
-use crate::resources::CursorPosition;
 
 use westiny_common::MoveDirection;
 use westiny_common::components::{Player, Velocity};
@@ -18,17 +16,15 @@ impl<'s> System<'s> for PlayerMovementSystem {
         WriteStorage<'s, Velocity>,
         ReadStorage<'s, Player>,
         ReadStorage<'s, Input>,
-        Read<'s, CursorPosition>,
     );
 
-    fn run(&mut self, (mut transforms, mut velocities, players, inputs, cursor_pos): Self::SystemData) {
-
+    fn run(&mut self, (mut transforms, mut velocities, players, inputs): Self::SystemData) {
         for (_player, input, mut velocity, transform) in (&players, &inputs, &mut velocities, &mut transforms).join() {
-            let angle = angle_toward_point(&transform, &cursor_pos.pos);
+            let angle = angle_toward_point(&transform, &input.cursor);
 
             let move_inputs = move_directions_from_input(&input);
             log::debug!("{:?} {}", input, move_inputs.len());
-            log::info!("{}", transform.translation());
+
             transform.set_rotation_2d(angle);
             update_velocity(&transform, &move_inputs, &mut velocity);
         }
