@@ -25,6 +25,7 @@ use amethyst::core::Transform;
 use amethyst::core::math::Point2;
 use crate::components;
 use amethyst::prelude::Builder;
+use crate::components::EntityType;
 
 
 #[derive(SystemDesc, new)]
@@ -125,7 +126,7 @@ impl PlayerSpawnSystem {
         };
 
         let client = components::Client::new(*client_id);
-        let network_id = net_id_supplier.next();
+        let network_id = net_id_supplier.next(EntityType::Player);
 
         lazy_update.create_entity(entities)
             .with(client)

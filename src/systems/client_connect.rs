@@ -104,6 +104,7 @@ mod test {
     use westiny_common::resources::ServerAddress;
     use westiny_common::components::NetworkId;
     use amethyst::core::math::Point2;
+    use crate::components::EntityType;
 
     const SOCKET_ADDRESS: ([u8;4], u16) = ([127, 0, 0, 1], 9999);
 
@@ -138,7 +139,7 @@ mod test {
                 assert_eq!(events.len(), 1, "There should be exactly 1 AppEvent written");
                 let expected_response: network::Result<network::ClientInitialData> = Ok(
                     network::ClientInitialData{
-                        player_network_id: NetworkId::new(0),
+                        player_network_id: NetworkId::new(EntityType::Player, 0),
                         initial_pos: Point2::from([0.0, 0.0]),
                     });
                 assert_eq!(events.collect::<Vec<&AppEvent>>()[0], &AppEvent::Connection(expected_response))
@@ -151,7 +152,7 @@ mod test {
         network::PacketType::ConnectionResponse(
             Ok(
                 network::ClientInitialData {
-                    player_network_id: NetworkId::new(0),
+                    player_network_id: NetworkId::new(EntityType::Player, 0),
                     initial_pos: Point2::from([0.0, 0.0])
                 }
             )

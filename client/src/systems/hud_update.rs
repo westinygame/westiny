@@ -1,6 +1,5 @@
 use amethyst::
 {
-    derive::SystemDesc,
     ecs::{System, ReadExpect, WriteStorage, ReadStorage, Join},
     ui::UiText,
 };

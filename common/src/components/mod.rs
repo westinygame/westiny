@@ -1,5 +1,5 @@
 pub use input::{InputFlags, Input};
-pub use network_id::NetworkId;
+pub use network_id::{NetworkId, EntityType};
 pub use player::Player;
 pub use bounding_circle::BoundingCircle;
 pub use velocity::Velocity;
