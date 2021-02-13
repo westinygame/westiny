@@ -8,7 +8,7 @@ use amethyst::ecs::prelude::Join;
 use westiny_common::resources::{SoundId, AudioQueue};
 use westiny_common::components::{InputFlags, Input, Player, weapon::Weapon, BoundingCircle};
 use crate::entities::spawn_bullet;
-use crate::resources::{SpriteResource, SpriteId};
+use westiny_client::resources::{SpriteResource, SpriteId};
 
 #[derive(SystemDesc)]
 pub struct PlayerShooterSystem;

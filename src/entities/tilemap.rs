@@ -3,7 +3,8 @@ use amethyst::core::math::{Point2, Vector3};
 use amethyst::core::Transform;
 use amethyst::tiles::{TileMap, MortonEncoder};
 
-use crate::resources::{GroundTile, SpriteResource};
+use westiny_client::resources::SpriteResource;
+use crate::resources::GroundTile;
 
 const TILE_SIZE: u32 = 16;
 const CHUNK_SIZE: u32 = 64;

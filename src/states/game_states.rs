@@ -15,7 +15,7 @@ use std::path::PathBuf;
 
 use crate::entities::{initialize_tilemap, initialize_player};
 use westiny_client::MovementBindingTypes;
-use crate::resources::{Collisions, ProjectileCollisions, SpriteResource, SpriteId, initialize_sprite_resource};
+use crate::resources::{Collisions, ProjectileCollisions};
 use westiny_common::components::{BoundingCircle, NetworkId};
 use westiny_common::resources::AudioQueue;
 use westiny_client::systems::{
@@ -24,7 +24,7 @@ use westiny_client::systems::{
     NetworkEntityStateUpdateSystemDesc,
     HudUpdateSystem
 };
-use westiny_client::resources::{initialize_audio, initialize_hud};
+use westiny_client::resources::{initialize_audio, initialize_hud, initialize_sprite_resource, SpriteId, SpriteResource};
 use crate::events::WestinyEvent;
 use crate::systems;
 use westiny_common::network::ClientInitialData;
