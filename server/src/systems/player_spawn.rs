@@ -1,5 +1,9 @@
 
 use amethyst::{
+    core::{
+        Transform,
+        math::Point2,
+    },
     derive::SystemDesc,
     ecs::{
         System,
@@ -12,21 +16,36 @@ use amethyst::{
         LazyUpdate,
         Join
     },
+    network::simulation::{
+        TransportResource,
+        DeliveryRequirement,
+        UrgencyRequirement,
+    },
     shrev::{ReaderId, EventChannel},
+    prelude::Builder,
 };
 
 use derive_new::new;
 use anyhow::Result;
 
-use westiny_common::network::{PacketType, ClientInitialData};
-use crate::resources::{ClientRegistry, ClientNetworkEvent, NetworkIdSupplier, ClientID};
-use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
-use amethyst::core::Transform;
-use amethyst::core::math::Point2;
-use crate::components;
-use amethyst::prelude::Builder;
-use crate::components::EntityType;
+use westiny_common::{
+    network::{
+        PacketType,
+        ClientInitialData
+    },
+    serialize
+};
 
+use crate::{
+    components,
+    components::EntityType,
+    resources::{
+        ClientRegistry,
+        ClientNetworkEvent,
+        NetworkIdSupplier,
+        ClientID
+    },
+};
 
 #[derive(SystemDesc, new)]
 #[system_desc(name(PlayerSpawnSystemDesc))]
@@ -81,7 +100,7 @@ impl<'s> System<'s> for PlayerSpawnSystem {
                     );
                     net.send_with_requirements(
                         client_handle.addr,
-                        &bincode::serialize(&connection_response).unwrap(),
+                        &serialize(&connection_response).unwrap(),
                         DeliveryRequirement::Reliable,
                         UrgencyRequirement::OnTick
                     )

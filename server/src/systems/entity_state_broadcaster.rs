@@ -1,11 +1,11 @@
+use amethyst::core::Transform;
 use amethyst::core::ecs::{System, ReadStorage, WriteExpect, Join};
+use amethyst::core::math::{Point2, UnitQuaternion};
 use amethyst::shred::ReadExpect;
+use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
 use crate::resources::ClientRegistry;
 use crate::components;
-use amethyst::core::Transform;
-use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
-use westiny_common::network;
-use amethyst::core::math::{Point2, UnitQuaternion};
+use westiny_common::{network, serialize};
 
 /// This system is responsible for sending the transform of all the entities that has NetworkID
 /// to every connected clients
@@ -28,7 +28,7 @@ impl<'s> System<'s> for EntityStateBroadcasterSystem {
                 rotation: get_angle(transform.rotation()),
             };
 
-            let msg = bincode::serialize(&network::PacketType::EntityStateUpdate(entity_state)).expect("entity state update could not be serialized");
+            let msg = serialize(&network::PacketType::EntityStateUpdate(entity_state)).expect("entity state update could not be serialized");
             client_registry.get_clients().iter().for_each(|&handle|{
                 net.send_with_requirements(
                     handle.addr,

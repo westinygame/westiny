@@ -2,14 +2,13 @@ use amethyst::ecs::{System, Read, Write, WriteStorage};
 use amethyst::ecs::prelude::Join;
 use amethyst::input::InputHandler;
 use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
-use bincode::{serialize};
 
 use westiny_common::components::{InputFlags, Input};
 
 use crate::resources::CursorPosition;
 use westiny_client::{MovementBindingTypes, ActionBinding};
 use westiny_common::resources::ServerAddress;
-use westiny_common::network;
+use westiny_common::{network, serialize};
 
 fn update_input_keys(input: &mut Input, handler: &InputHandler<MovementBindingTypes>) {
     input.flags.set(InputFlags::FORWARD, handler.action_is_down(&ActionBinding::Forward).unwrap_or(false));
@@ -53,7 +52,6 @@ fn send_to_server(net: &mut TransportResource, server: &ServerAddress, input: &I
     let message = serialize(&network::PacketType::InputState{input: *input})
         .expect("InputState could not be serialized");
 
-    //log::info!("Sending inputs...");
     net.send_with_requirements(server.address, &message, DeliveryRequirement::Reliable, UrgencyRequirement::OnTick);
 }
 

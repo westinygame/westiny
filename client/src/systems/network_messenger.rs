@@ -6,11 +6,13 @@ use amethyst::{
 };
 
 use anyhow::Result;
-use bincode::deserialize;
 use std::net::SocketAddr;
 use derive_new::new;
 
-use westiny_common::network::{PacketType, EntityState};
+use westiny_common::{
+    network::{PacketType, EntityState},
+    deserialize,
+};
 
 
 #[derive(SystemDesc, new)]
@@ -41,7 +43,7 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
                     match self.process_payload(addr, payload, &mut entity_state_update_channel) {
                         Ok(_) => log::debug!("Message from {} processed successfully.", addr),
                         Err(e) => {
-                            log::error!("Could not process message! {}, payload: {:?}", e, payload)
+                            log::error!("Could not process message! {:?}, payload: {:02x?}", e, payload)
                         }
                     }
                 }

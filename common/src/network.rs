@@ -5,6 +5,7 @@ use crate::components::{Input, NetworkId};
 use amethyst::core::math::Point2;
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(test, derive(Clone, PartialEq))]
 pub enum PacketType {
     ConnectionRequest {
         player_name: String
@@ -25,6 +26,7 @@ pub struct ClientInitialData {
 impl Eq for ClientInitialData {}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct EntityState {
     pub network_id: NetworkId,
     pub position: Point2<f32>,

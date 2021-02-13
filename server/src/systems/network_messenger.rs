@@ -6,11 +6,14 @@ use amethyst::{
 };
 
 use anyhow::Result;
-use bincode::deserialize;
 use std::net::SocketAddr;
 use derive_new::new;
 
-use westiny_common::network::PacketType;
+use westiny_common::{
+    network::PacketType,
+    deserialize
+};
+
 use crate::resources::{ClientRegistry, ClientNetworkEvent, NetworkCommand};
 
 
@@ -115,7 +118,7 @@ mod test {
     use amethyst::{Error, StateEventReader, core::math::Point2};
     use amethyst::prelude::*;
     use amethyst_test::prelude::*;
-    use westiny_common::{network, components::{InputFlags, Input}};
+    use westiny_common::{network, components::{InputFlags, Input}, serialize};
 
     fn create_testapp() -> AmethystApplication<GameData<'static, 'static>, StateEvent, StateEventReader>
     {
@@ -137,7 +140,7 @@ mod test {
                 network_event_channel.single_write(
                     NetworkSimulationEvent::Message(
                         socket_addr(),
-                        bincode::serialize(&req).unwrap().into()
+                        serialize(&req).unwrap().into()
                     )
                 );
             })
@@ -186,7 +189,7 @@ mod test {
                 network_event_channel.single_write(
                     NetworkSimulationEvent::Message(
                         socket_addr(),
-                        bincode::serialize(&PacketType::InputState { input: make_input() }).unwrap().into()
+                        serialize(&PacketType::InputState { input: make_input() }).unwrap().into()
                     )
                 );
             })
@@ -212,7 +215,7 @@ mod test {
                 network_event_channel.single_write(
                     NetworkSimulationEvent::Message(
                         SocketAddr::from(([1,2,3,4], 55555)),
-                        bincode::serialize(&PacketType::InputState { input: make_input() }).unwrap().into()
+                        serialize(&PacketType::InputState { input: make_input() }).unwrap().into()
                     )
                 );
             })

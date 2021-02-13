@@ -10,3 +10,9 @@ amethyst_test = "0.15.3"
 serde = "1.0.120"
 derive-new = "0.5.8"
 bitflags = "1.2.1"
+rmp-serde = "0.15.4"
+anyhow = "1.0.38"
+thiserror = "1.0.23"
+
+[dev-dependencies]
+proptest = "0.10.1"

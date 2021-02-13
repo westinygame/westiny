@@ -10,8 +10,7 @@ use amethyst::network::simulation::{TransportResource, DeliveryRequirement, Urge
 use crate::events::AppEvent;
 use amethyst::core::Time;
 use std::time::Duration;
-use bincode::{deserialize, serialize};
-use westiny_common::network;
+use westiny_common::{network, deserialize, serialize};
 use westiny_common::resources::ServerAddress;
 
 const RUN_EVERY_N_SEC: u64 = 1;
@@ -66,14 +65,13 @@ impl<'s> System<'s> for ClientConnectSystem {
                 NetworkSimulationEvent::Message(addr, msg) => {
                     log::debug!("Message: [{}], {:?}", addr, msg);
                     if &server.address == addr {
-                        match deserialize(&msg) as bincode::Result<network::PacketType> {
+                        match deserialize(&msg) {
                             Ok(packet) => {
                                 match packet {
                                     network::PacketType::ConnectionResponse(result) => {
-                                       // push event
                                         app_event.single_write(AppEvent::Connection(result));
                                     }
-                                    _ => log::error!("Unexpected package from server")
+                                    _ => log::error!("Unexpected package from server: {:?}", packet)
                                 }
                             }
                             Err(err) => log::error!("Connection response could not be deserialized. Cause: {}", err)
@@ -91,19 +89,13 @@ impl<'s> System<'s> for ClientConnectSystem {
 
 #[cfg(test)]
 mod test {
-    use amethyst::Error;
-    use amethyst::network::simulation::NetworkSimulationEvent;
-    use amethyst::shrev::ReaderId;
-    use amethyst::core::ecs::shrev::EventChannel;
-    use amethyst_test::prelude::*;
-    use westiny_common::network;
-    use crate::systems::client_connect::ClientConnectSystemDesc;
-    use crate::events::AppEvent;
+    use super::*;
     use std::net::SocketAddr;
-    use amethyst::prelude::World;
-    use westiny_common::resources::ServerAddress;
-    use westiny_common::components::NetworkId;
+    use amethyst::Error;
+    use amethyst::prelude::*;
     use amethyst::core::math::Point2;
+    use amethyst_test::prelude::*;
+    use westiny_common::components::NetworkId;
     use crate::components::EntityType;
 
     const SOCKET_ADDRESS: ([u8;4], u16) = ([127, 0, 0, 1], 9999);
@@ -114,18 +106,17 @@ mod test {
 
         AmethystApplication::blank()
             .with_resource(EventChannel::<AppEvent>::new())
-            .with_resource(None::<ReaderId<AppEvent>>)
             .with_resource(ServerAddress { address: SocketAddr::from(SOCKET_ADDRESS) })
             .with_setup(move |world: &mut World| {
-                let mut reader_id = world.fetch_mut::<Option<ReaderId<AppEvent>>>();
-                *reader_id = Some(world.fetch_mut::<EventChannel<AppEvent>>().register_reader());
+                let reader_id = world.fetch_mut::<EventChannel<AppEvent>>().register_reader();
+                world.insert(reader_id);
             })
             .with_effect(|world| {
                 let mut network_event_channel = world.fetch_mut::<EventChannel<NetworkSimulationEvent>>();
                 network_event_channel.single_write(
                     NetworkSimulationEvent::Message(
                         SocketAddr::from(SOCKET_ADDRESS),
-                        bincode::serialize(&connection_response()).unwrap().into()
+                        serialize(&connection_response()).unwrap().into()
                     )
                 );
             })
@@ -133,9 +124,9 @@ mod test {
 
             .with_assertion(move |world: &mut World| {
                 let app_event_channel = world.fetch_mut::<EventChannel<AppEvent>>();
-                let mut fetched_reader_id = world.fetch_mut::<Option<ReaderId<AppEvent>>>();
-                let reader_id = fetched_reader_id.as_mut().unwrap();
-                let events = app_event_channel.read(reader_id);
+                let mut reader_id = world.write_resource::<ReaderId<AppEvent>>();
+
+                let events = app_event_channel.read(&mut reader_id);
                 assert_eq!(events.len(), 1, "There should be exactly 1 AppEvent written");
                 let expected_response: network::Result<network::ClientInitialData> = Ok(
                     network::ClientInitialData{
