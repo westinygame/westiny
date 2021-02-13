@@ -36,10 +36,7 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
 
         for (net_id, transform) in (&network_ids, &mut transforms).join() {
             if let Some(state) = entity_states.get(net_id) {
-                transform.set_translation_x(state.position.x);
-                transform.set_translation_y(state.position.y);
-                transform.set_rotation_2d(state.rotation);
-
+                update_transform(transform, &state);
                 entity_states.remove(&net_id);
             }
         }
@@ -49,13 +46,13 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
                 EntityType::Player => resources::SpriteId::Player,
                 EntityType::Bullet => resources::SpriteId::Bullet,
             };
+
             let transform = {
                 let mut transform = Transform::default();
-                transform.set_translation_x(entity_state.position.x);
-                transform.set_translation_y(entity_state.position.y);
-                transform.set_rotation_2d(entity_state.rotation);
+                update_transform(&mut transform, &entity_state);
                 transform
             };
+
             entities.build_entity()
                 .with(net_id, &mut network_ids)
                 .with(transform, &mut transforms)
@@ -63,4 +60,10 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
                 .build();
         }
     }
+}
+
+fn update_transform(transform: &mut Transform, entity_state: &EntityState) {
+    transform.set_translation_x(entity_state.position.x);
+    transform.set_translation_y(entity_state.position.y);
+    transform.set_rotation_2d(entity_state.rotation);
 }

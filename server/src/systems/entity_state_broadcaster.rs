@@ -5,7 +5,7 @@ use crate::components;
 use amethyst::core::Transform;
 use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
 use westiny_common::network;
-use amethyst::core::math::Point2;
+use amethyst::core::math::{Point2, UnitQuaternion};
 
 /// This system is responsible for sending the transform of all the entities that has NetworkID
 /// to every connected clients
@@ -25,7 +25,7 @@ impl<'s> System<'s> for EntityStateBroadcasterSystem {
             let entity_state = network::EntityState {
                 network_id: *network_id,
                 position: Point2::new(transform.translation().x, transform.translation().y),
-                rotation: transform.rotation().angle(),
+                rotation: get_angle(transform.rotation()),
             };
 
             let msg = bincode::serialize(&network::PacketType::EntityStateUpdate(entity_state)).expect("entity state update could not be serialized");
@@ -38,5 +38,13 @@ impl<'s> System<'s> for EntityStateBroadcasterSystem {
                 )
             })
         }
+    }
+}
+
+fn get_angle(rotation: &UnitQuaternion<f32>) -> f32 {
+    if rotation.coords.w < 0.0 {
+        2.0 * std::f32::consts::PI - rotation.angle()
+    } else {
+        rotation.angle()
     }
 }
