@@ -3,6 +3,7 @@ use amethyst::prelude::*;
 use amethyst::core::{Time, Transform};
 use westiny_server::resources::{ClientRegistry, NetworkIdSupplier};
 use westiny_common::components::{BoundingCircle};
+use crate::resources::Collisions;
 
 use log::info;
 use crate::components;
@@ -30,6 +31,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
     fn on_start(&mut self, data: StateData<'_, GameData<'static, 'static>>) {
         data.world.insert(ClientRegistry::new(16));
         data.world.insert(NetworkIdSupplier::new());
+        data.world.insert(Collisions::default());
 
         data.world.register::<components::NetworkId>();
         data.world.register::<components::Player>();
