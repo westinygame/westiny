@@ -95,10 +95,9 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         let init_data = (*world.read_resource::<ClientInitialData>()).clone();
         initialize_player(&mut world, &sprite_resource, init_data.player_network_id, init_data.initial_pos);
 
-        let objects_reference_pos = Point2::new(0.0, 0.0);
         initialize_tilemap(world, &sprite_resource, Point2::new(0.0, 0.0));
         initialize_audio(world);
-        place_objects(world, &sprite_resource, &objects_reference_pos);
+        place_objects(world, &sprite_resource);
         initialize_hud(world);
     }
 
@@ -125,22 +124,22 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
     }
 }
 
-fn place_objects(world: &mut World, sprites: &SpriteResource, objects_reference_pos: &Point2<f32>) {
+fn place_objects(world: &mut World, sprites: &SpriteResource) {
     //TODO placing barrels and other objects should be based on a map
-    place_barrel(world, &sprites, objects_reference_pos, 3, 3);
-    place_barrel(world, &sprites, objects_reference_pos, 3, 5);
-    place_barrel(world, &sprites, objects_reference_pos, 3, 6);
-    place_barrel(world, &sprites, objects_reference_pos, 3, 7);
-    place_barrel(world, &sprites, objects_reference_pos, 3, 8);
-    place_barrel(world, &sprites, objects_reference_pos, 4, 8);
-    place_barrel(world, &sprites, objects_reference_pos, 5, 8);
-    place_barrel(world, &sprites, objects_reference_pos, 5, 7);
+    place_barrel(world, &sprites, 3, 3);
+    place_barrel(world, &sprites, 3, 5);
+    place_barrel(world, &sprites, 3, 6);
+    place_barrel(world, &sprites, 3, 7);
+    place_barrel(world, &sprites, 3, 8);
+    place_barrel(world, &sprites, 4, 8);
+    place_barrel(world, &sprites, 5, 8);
+    place_barrel(world, &sprites, 5, 7);
 }
 
-fn place_barrel(world: &mut World, sprites: &SpriteResource, objects_reference_pos: &Point2<f32>, x: u32, y: u32) {
+fn place_barrel(world: &mut World, sprites: &SpriteResource, x: u32, y: u32) {
 
     let mut transform = Transform::default();
-    transform.set_translation_xyz(objects_reference_pos.x + (x as f32) * 16.0, objects_reference_pos.y + (y as f32) * 16.0, 0.0);
+    transform.set_translation_xyz((x as f32) * 16.0, (y as f32) * 16.0, 0.0);
 
     world
         .create_entity()
