@@ -141,7 +141,7 @@ impl PlayerSpawnSystem {
             reload_time: 1.0,
             spread: 2.0,
             shot: weapon::Shot::Single,
-            bullet_speed: 200.0
+            bullet_speed: 20.0
         };
 
         let client = components::Client::new(*client_id);

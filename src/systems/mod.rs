@@ -9,6 +9,7 @@ pub use collision::{
     CollisionSystem, CollisionHandlerForObstacles,
     ProjectileCollisionSystem, ProjectileCollisionHandler
 };
+pub use damage::DamageSystem;
 
 mod input_debug;
 mod player_movement;
@@ -19,3 +20,4 @@ pub mod client_connect;
 mod player_shooter;
 mod input_state;
 mod collision;
+mod damage;

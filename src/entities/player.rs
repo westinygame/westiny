@@ -24,7 +24,7 @@ pub fn initialize_player(world: &mut World,
         reload_time: 1.0,
         spread: 2.0,
         shot: Shot::Single,
-        bullet_speed: 200.0
+        bullet_speed: 20.0
     };
 
     world.register::<Input>();

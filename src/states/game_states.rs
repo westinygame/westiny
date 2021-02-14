@@ -73,6 +73,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
             .with(systems::ProjectileCollisionSystem, "projectile_collision_system", &["collision_system"])
             .with(systems::ProjectileCollisionHandler, "projectile_collision_handler", &["projectile_collision_system"])
             .with(systems::PlayerShooterSystem, "player_shooter_system", &["input_system"])
+            .with(systems::DamageSystem, "damage_system", &[])
             .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"])
             .with(AudioPlayerSystem, "audio_player_system", &["cursor_pos_update_system"])
             .with(HudUpdateSystem, "hud_update_system", &["cursor_pos_update_system"])
