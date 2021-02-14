@@ -2,6 +2,7 @@ use crate::events::WestinyEvent;
 use amethyst::prelude::*;
 use amethyst::core::{Time, Transform};
 use westiny_server::resources::{ClientRegistry, NetworkIdSupplier};
+use westiny_common::components::{BoundingCircle};
 
 use log::info;
 use crate::components;
@@ -36,6 +37,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
         data.world.register::<components::BoundingCircle>();
         data.world.register::<components::weapon::Weapon>();
         data.world.register::<Transform>();
+        place_objects(data.world);
     }
 
     fn update(&mut self, data: StateData<'_, GameData<'static, 'static>>) -> Trans<GameData<'static, 'static>, WestinyEvent> {
@@ -45,4 +47,28 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
         log_clients(&time, &data.world.fetch::<ClientRegistry>());
         Trans::None
     }
+}
+
+fn place_objects(world: &mut World) {
+    //TODO placing barrels and other objects should be based on a map
+    place_barrel(world, 3, 3);
+    place_barrel(world, 3, 5);
+    place_barrel(world, 3, 6);
+    place_barrel(world, 3, 7);
+    place_barrel(world, 3, 8);
+    place_barrel(world, 4, 8);
+    place_barrel(world, 5, 8);
+    place_barrel(world, 5, 7);
+}
+
+fn place_barrel(world: &mut World, x: u32, y: u32) {
+
+    let mut transform = Transform::default();
+    transform.set_translation_xyz((x as f32) * 16.0, (y as f32) * 16.0, 0.0);
+
+    world
+        .create_entity()
+        .with(transform)
+        .with(BoundingCircle{radius: 8.0})
+        .build();
 }
