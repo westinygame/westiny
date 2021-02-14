@@ -4,6 +4,8 @@ use amethyst::core::{Time, Transform};
 use westiny_server::resources::{ClientRegistry, NetworkIdSupplier};
 use westiny_common::components::{BoundingCircle};
 use crate::resources::Collisions;
+use amethyst::core::math::Point2;
+use crate::states::game_states::barrel_positions;
 
 use log::info;
 use crate::components;
@@ -52,21 +54,17 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
 }
 
 fn place_objects(world: &mut World) {
+
     //TODO placing barrels and other objects should be based on a map
-    place_barrel(world, 3, 3);
-    place_barrel(world, 3, 5);
-    place_barrel(world, 3, 6);
-    place_barrel(world, 3, 7);
-    place_barrel(world, 3, 8);
-    place_barrel(world, 4, 8);
-    place_barrel(world, 5, 8);
-    place_barrel(world, 5, 7);
+    for pos in barrel_positions() {
+        place_barrel(world, pos);
+    }
 }
 
-fn place_barrel(world: &mut World, x: u32, y: u32) {
+fn place_barrel(world: &mut World, pos: Point2<u32>) {
 
     let mut transform = Transform::default();
-    transform.set_translation_xyz((x as f32) * 16.0, (y as f32) * 16.0, 0.0);
+    transform.set_translation_xyz((pos.x as f32) * 16.0, (pos.y as f32) * 16.0, 0.0);
 
     world
         .create_entity()

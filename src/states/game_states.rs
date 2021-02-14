@@ -124,22 +124,29 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
     }
 }
 
-fn place_objects(world: &mut World, sprites: &SpriteResource) {
-    //TODO placing barrels and other objects should be based on a map
-    place_barrel(world, &sprites, 3, 3);
-    place_barrel(world, &sprites, 3, 5);
-    place_barrel(world, &sprites, 3, 6);
-    place_barrel(world, &sprites, 3, 7);
-    place_barrel(world, &sprites, 3, 8);
-    place_barrel(world, &sprites, 4, 8);
-    place_barrel(world, &sprites, 5, 8);
-    place_barrel(world, &sprites, 5, 7);
+pub fn barrel_positions() -> Vec<Point2<u32>> {
+    vec![
+        Point2::new(3, 3),
+        Point2::new(3, 5),
+        Point2::new(3, 6),
+        Point2::new(3, 7),
+        Point2::new(3, 8),
+        Point2::new(4, 8),
+        Point2::new(5, 8),
+        Point2::new(5, 7),
+    ]
 }
 
-fn place_barrel(world: &mut World, sprites: &SpriteResource, x: u32, y: u32) {
+fn place_objects(world: &mut World, sprites: &SpriteResource) {
+    for pos in barrel_positions() {
+        place_barrel(world, &sprites, pos);
+    }
+}
+
+fn place_barrel(world: &mut World, sprites: &SpriteResource, pos: Point2<u32>) {
 
     let mut transform = Transform::default();
-    transform.set_translation_xyz((x as f32) * 16.0, (y as f32) * 16.0, 0.0);
+    transform.set_translation_xyz((pos.x as f32) * 16.0, (pos.y as f32) * 16.0, 0.0);
 
     world
         .create_entity()
