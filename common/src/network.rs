@@ -15,6 +15,7 @@ pub enum PacketType {
         input: Input
     },
     EntityStateUpdate(EntityState),
+    EntityDelete(NetworkEntityDelete),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -31,6 +32,12 @@ pub struct EntityState {
     pub network_id: NetworkId,
     pub position: Point2<f32>,
     pub rotation: f32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct NetworkEntityDelete
+{
+    pub network_id: NetworkId,
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]

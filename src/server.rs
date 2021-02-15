@@ -61,6 +61,7 @@ fn main() -> amethyst::Result<()> {
         .with(systems::PhysicsSystem, "physics", &["player_movement"])
         .with(systems::CollisionSystem, "collision", &["physics"])
         .with(systems::CollisionHandlerForObstacles, "collision_handler", &["collision"])
+        .with_system_desc(srv_systems::EntityDeleteBroadcasterSystemDesc::default(), "delete_broadcaster", &["collision_handler"])
         ;
 
     let frame_limit = 60;

@@ -17,7 +17,7 @@ impl<'s> System<'s> for EntityDeleteSystem {
         Read<'s, EventChannel<EntityDelete>>,
         Entities<'s>);
 
-    fn run (&mut self, (id_channel, entities): Self::SystemData) {
+    fn run(&mut self, (id_channel, entities): Self::SystemData) {
         for EntityDelete{entity_id} in id_channel.read(&mut self.reader) {
             entities.delete(*entity_id).expect("Could not delete entity!");
         }
