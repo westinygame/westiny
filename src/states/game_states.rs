@@ -24,6 +24,7 @@ use westiny_client::systems::{
     NetworkEntityStateUpdateSystemDesc,
     HudUpdateSystem
 };
+use westiny_common::systems::{EntityDeleteSystemDesc};
 use westiny_client::resources::{initialize_audio, initialize_hud, initialize_sprite_resource, SpriteId, SpriteResource};
 use crate::events::WestinyEvent;
 use crate::systems;
@@ -59,6 +60,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         let network_message_receiver_sys = NetworkMessageReceiverSystemDesc::default().build(&mut world);
         let network_entity_update_sys = NetworkEntityStateUpdateSystemDesc::default().build(&mut world);
+        let entity_delete_system = EntityDeleteSystemDesc::default().build(&mut world);
 
         let mut dispatcher = dispatcher_builder
             // .with(systems::InputDebugSystem::default(), "input_debug_system", &["input_system"])
@@ -74,9 +76,9 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
             .with(systems::ProjectileCollisionHandler, "projectile_collision_handler", &["projectile_collision_system"])
             .with(systems::PlayerShooterSystem, "player_shooter_system", &["input_system"])
             .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"])
+            .with(entity_delete_system, "entity_delete", &["player_shooter_system"])
             .with(AudioPlayerSystem, "audio_player_system", &["cursor_pos_update_system"])
             .with(HudUpdateSystem, "hud_update_system", &["cursor_pos_update_system"])
-
             .with_pool((*world.read_resource::<ArcThreadPool>()).clone())
             .build();
         dispatcher.setup(world);

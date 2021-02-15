@@ -1,4 +1,4 @@
-use amethyst::ecs::{System, ReadStorage, WriteStorage, Entities, WriteExpect, ReadExpect};
+use amethyst::ecs::{System, ReadStorage, WriteStorage, Entities, Write, WriteExpect, ReadExpect};
 use amethyst::core::{Transform};
 use amethyst::core::math::{Vector2, Vector3};
 use amethyst::ecs::prelude::Join;
@@ -6,6 +6,8 @@ use amethyst::ecs::prelude::Join;
 use westiny_common::components::{Velocity, BoundingCircle};
 use crate::resources::{Collision, Collisions, ProjectileCollision, ProjectileCollisions};
 use crate::components::Projectile;
+use westiny_common::resources::EntityDelete;
+use amethyst::shrev::EventChannel;
 
 pub struct CollisionSystem;
 
@@ -104,15 +106,15 @@ pub struct ProjectileCollisionHandler;
 
 impl<'s> System<'s> for ProjectileCollisionHandler {
     type SystemData = (
-        Entities<'s>,
-        ReadExpect<'s, ProjectileCollisions>
+        ReadExpect<'s, ProjectileCollisions>,
+        Write<'s, EventChannel<EntityDelete>>
         );
 
     // Here Projectile components are not explicitly filtered. ProjectCollisionSystem is expected
     // to put proper entities in `collision.projectile`
-    fn run(&mut self, (entities, collisions): Self::SystemData) {
+    fn run(&mut self, (collisions, mut entity_delete_channel): Self::SystemData) {
         for collision in &collisions.0 {
-            entities.delete(collision.projectile).expect("Could not delete projectile");
+            entity_delete_channel.single_write(EntityDelete{entity_id: collision.projectile})
         }
 
     }

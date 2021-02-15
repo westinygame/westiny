@@ -2,6 +2,7 @@ use serde::{Serialize, Deserialize};
 
 pub mod components;
 pub mod resources;
+pub mod systems;
 pub mod network;
 pub mod serialization;
 

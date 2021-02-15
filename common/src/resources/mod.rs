@@ -1,6 +1,8 @@
 pub use audio::{SoundId, AudioQueue};
+pub use entity_delete::EntityDelete;
 
 mod audio;
+mod entity_delete;
 
 use std::net::SocketAddr;
 use serde::Deserialize;
