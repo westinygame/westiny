@@ -31,8 +31,9 @@ impl<'s> System<'s> for EntityDeleteBroadcasterSystem {
 
     fn run(&mut self, (id_channel, entities, clients, mut net, network_ids): Self::SystemData) {
         for EntityDelete{entity_id} in id_channel.read(&mut self.reader) {
-
+            log::debug!("Delete entity: {:?}", entity_id);
             if let Some(network_id) = network_ids.get(*entity_id) {
+                log::debug!("Notify client about entity deletion: {:?}, network_id:{:?}", entity_id, network_id);
                 send_to_clients(&clients, &mut net, network::NetworkEntityDelete{network_id: *network_id});
             }
             entities.delete(*entity_id).expect("Could not delete entity!");
