@@ -11,7 +11,6 @@ use westiny_server::systems as srv_systems;
 
 mod systems;
 mod entities;
-mod components;
 mod resources;
 mod states;
 mod events;

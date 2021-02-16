@@ -5,8 +5,7 @@ use amethyst::ecs::prelude::Join;
 use amethyst::core::{Transform, Time};
 use amethyst::core::math::Vector2;
 
-use crate::components::DistanceLimit;
-use westiny_common::components::Velocity;
+use westiny_common::components::{Velocity, DistanceLimit};
 use westiny_common::resources::EntityDelete;
 
 #[derive(SystemDesc)]

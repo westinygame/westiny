@@ -6,8 +6,7 @@ use amethyst::{
     renderer::SpriteRender
 };
 
-use westiny_common::components::{Velocity, weapon::WeaponDetails};
-use crate::components::{Projectile, DistanceLimit};
+use westiny_common::components::{Velocity, weapon::WeaponDetails, Projectile, DistanceLimit};
 
 pub fn spawn_bullet(transform: Transform, direction: Vector2<f32>, weapon_details: &WeaponDetails, sprite_render: SpriteRender,
                     entities: &Entities, lazy_update: &ReadExpect<LazyUpdate>)

@@ -3,9 +3,8 @@ use amethyst::core::{Transform};
 use amethyst::core::math::{Vector2, Vector3};
 use amethyst::ecs::prelude::Join;
 
-use westiny_common::components::{Velocity, BoundingCircle};
+use westiny_common::components::{Velocity, BoundingCircle, Projectile};
 use crate::resources::{Collision, Collisions, ProjectileCollision, ProjectileCollisions};
-use crate::components::Projectile;
 use westiny_common::resources::EntityDelete;
 use amethyst::shrev::EventChannel;
 

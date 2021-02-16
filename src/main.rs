@@ -17,7 +17,6 @@ use westiny_client::MovementBindingTypes;
 
 mod systems;
 mod entities;
-mod components;
 mod resources;
 mod states;
 mod events;

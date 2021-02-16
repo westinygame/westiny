@@ -5,10 +5,10 @@ use westiny_server::resources::{ClientRegistry, NetworkIdSupplier};
 use crate::resources::Collisions;
 
 use log::info;
-use crate::components;
 use std::path::PathBuf;
 use derive_new::new;
 use westiny_common::resources::map::build_map;
+use westiny_common::components::{NetworkId, Player, Velocity, BoundingCircle, weapon::Weapon};
 
 #[derive(new)]
 pub struct ServerState {
@@ -46,11 +46,11 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
         data.world.insert(NetworkIdSupplier::new());
         data.world.insert(Collisions::default());
 
-        data.world.register::<components::NetworkId>();
-        data.world.register::<components::Player>();
-        data.world.register::<components::Velocity>();
-        data.world.register::<components::BoundingCircle>();
-        data.world.register::<components::weapon::Weapon>();
+        data.world.register::<NetworkId>();
+        data.world.register::<Player>();
+        data.world.register::<Velocity>();
+        data.world.register::<BoundingCircle>();
+        data.world.register::<Weapon>();
         data.world.register::<Transform>();
         self.place_objects(data.world);
     }
