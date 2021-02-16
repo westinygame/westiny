@@ -1,6 +1,6 @@
 pub use audio::{initialize_audio, Sounds};
 pub use hud::{format_health, Hud, initialize_hud};
-pub use sprite_resource::{initialize_sprite_resource, SpriteResource, SpriteId};
+pub use sprite_resource::{initialize_sprite_resource, SpriteResource};
 
 mod audio;
 mod hud;

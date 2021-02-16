@@ -68,8 +68,8 @@ fn main() -> amethyst::Result<()> {
 
     let mut game =
         CoreApplication::<_, events::WestinyEvent, events::WestinyEventReader>::build(
-            resources_dir,
-            states::server_states::ServerState::default(),
+            resources_dir.clone(),
+            states::server_states::ServerState::new(resources_dir),
         )?
         .with_frame_limit(
             FrameRateLimitStrategy::SleepAndYield(Duration::from_millis(2)),

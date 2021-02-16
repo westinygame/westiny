@@ -2,16 +2,27 @@ use crate::events::WestinyEvent;
 use amethyst::prelude::*;
 use amethyst::core::{Time, Transform};
 use westiny_server::resources::{ClientRegistry, NetworkIdSupplier};
-use westiny_common::components::{BoundingCircle};
 use crate::resources::Collisions;
-use amethyst::core::math::Point2;
-use crate::states::game_states::barrel_positions;
 
 use log::info;
 use crate::components;
+use std::path::PathBuf;
+use derive_new::new;
+use westiny_common::resources::map::build_map;
 
-#[derive(Default)]
-pub struct ServerState;
+#[derive(new)]
+pub struct ServerState {
+    resources: PathBuf,
+}
+
+impl ServerState {
+    fn place_objects(&self, world: &mut World) {
+        const ONLY_VALID_SEED: u64 = 0;
+
+        build_map(world, ONLY_VALID_SEED, &self.resources.join("map"))
+            .expect("Map could not be created");
+    }
+}
 
 fn log_fps(time: &Time) {
     if time.frame_number() % 60 == 0 {
@@ -41,7 +52,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
         data.world.register::<components::BoundingCircle>();
         data.world.register::<components::weapon::Weapon>();
         data.world.register::<Transform>();
-        place_objects(data.world);
+        self.place_objects(data.world);
     }
 
     fn update(&mut self, data: StateData<'_, GameData<'static, 'static>>) -> Trans<GameData<'static, 'static>, WestinyEvent> {
@@ -51,24 +62,4 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
         log_clients(&time, &data.world.fetch::<ClientRegistry>());
         Trans::None
     }
-}
-
-fn place_objects(world: &mut World) {
-
-    //TODO placing barrels and other objects should be based on a map
-    for pos in barrel_positions() {
-        place_barrel(world, pos);
-    }
-}
-
-fn place_barrel(world: &mut World, pos: Point2<u32>) {
-
-    let mut transform = Transform::default();
-    transform.set_translation_xyz((pos.x as f32) * 16.0, (pos.y as f32) * 16.0, 0.0);
-
-    world
-        .create_entity()
-        .with(transform)
-        .with(BoundingCircle{radius: 8.0})
-        .build();
 }

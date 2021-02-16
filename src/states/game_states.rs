@@ -16,7 +16,7 @@ use std::path::PathBuf;
 use crate::entities::{initialize_tilemap, initialize_player};
 use westiny_client::MovementBindingTypes;
 use crate::resources::{Collisions, ProjectileCollisions};
-use westiny_common::components::{BoundingCircle, NetworkId};
+use westiny_common::components::NetworkId;
 use westiny_common::resources::AudioQueue;
 use westiny_client::systems::{
     AudioPlayerSystem,
@@ -25,10 +25,12 @@ use westiny_client::systems::{
     HudUpdateSystem
 };
 use westiny_common::systems::{EntityDeleteSystemDesc};
-use westiny_client::resources::{initialize_audio, initialize_hud, initialize_sprite_resource, SpriteId, SpriteResource};
+use westiny_client::resources::{initialize_audio, initialize_hud, initialize_sprite_resource, SpriteResource};
 use crate::events::WestinyEvent;
 use crate::systems;
 use westiny_common::network::ClientInitialData;
+use amethyst::renderer::SpriteRender;
+use westiny_common::resources::map::build_map;
 
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState {
@@ -42,6 +44,23 @@ impl PlayState {
             dispatcher: Default::default(),
             resource_dir: resource_dir.to_path_buf(),
         }
+    }
+
+    fn place_objects(&self, world: &mut World) {
+
+        const ONLY_VALID_SEED: u64 = 0;
+        let entities = build_map(world,
+                  ONLY_VALID_SEED,
+                  &self.resource_dir.join("map"))
+            .expect("Map could not be created");
+
+        let sprite_resource = world.fetch_mut::<SpriteResource>();
+        let mut sprite_storage = world.write_storage::<SpriteRender>();
+
+        entities.iter().for_each(|(entity, sprite_id)| {
+            let sprite_render = sprite_resource.sprite_render_for(*sprite_id);
+            sprite_storage.insert(*entity, sprite_render).expect("Unable to add sprite to entity during map build");
+        })
     }
 }
 
@@ -99,7 +118,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         initialize_tilemap(world, &sprite_resource, Point2::new(0.0, 0.0));
         initialize_audio(world);
-        place_objects(world, &sprite_resource);
+        self.place_objects(&mut world);
         initialize_hud(world);
     }
 
@@ -124,38 +143,6 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         data.data.update(&data.world);
         Trans::None
     }
-}
-
-pub fn barrel_positions() -> Vec<Point2<u32>> {
-    vec![
-        Point2::new(3, 3),
-        Point2::new(3, 5),
-        Point2::new(3, 6),
-        Point2::new(3, 7),
-        Point2::new(3, 8),
-        Point2::new(4, 8),
-        Point2::new(5, 8),
-        Point2::new(5, 7),
-    ]
-}
-
-fn place_objects(world: &mut World, sprites: &SpriteResource) {
-    for pos in barrel_positions() {
-        place_barrel(world, &sprites, pos);
-    }
-}
-
-fn place_barrel(world: &mut World, sprites: &SpriteResource, pos: Point2<u32>) {
-
-    let mut transform = Transform::default();
-    transform.set_translation_xyz((pos.x as f32) * 16.0, (pos.y as f32) * 16.0, 0.0);
-
-    world
-        .create_entity()
-        .with(sprites.sprite_render_for(SpriteId::Barrel))
-        .with(transform)
-        .with(BoundingCircle{radius: 8.0})
-        .build();
 }
 
 pub fn init_camera(world: &mut World, dimensions: &ScreenDimensions) {

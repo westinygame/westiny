@@ -7,6 +7,7 @@ use derive_new::new;
 use westiny_common::network::EntityState;
 use amethyst::core::ecs::{WriteStorage, Join, Entities};
 use westiny_common::components::{NetworkId, EntityType};
+use westiny_common::resources::SpriteId;
 use amethyst::core::Transform;
 use std::collections::HashMap;
 use amethyst::shred::ReadExpect;
@@ -43,8 +44,8 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
 
         for (net_id, entity_state) in entity_states {
             let sprite_id = match net_id.entity_type {
-                EntityType::Player => resources::SpriteId::Player,
-                EntityType::Bullet => resources::SpriteId::Bullet,
+                EntityType::Player => SpriteId::Player,
+                EntityType::Bullet => SpriteId::Bullet,
             };
 
             let transform = {

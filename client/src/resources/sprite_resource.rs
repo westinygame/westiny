@@ -1,22 +1,14 @@
-
 use amethyst::prelude::*;
 use amethyst::renderer::{ImageFormat, SpriteSheet, SpriteSheetFormat, SpriteRender, Texture};
 use amethyst::assets::{Handle, Loader, AssetStorage};
+use westiny_common::resources::SpriteId;
 
 #[derive(Clone)]
 pub struct SpriteResource {
     pub sheet: Handle<SpriteSheet>
 }
 
-#[derive(Copy, Clone)]
-#[repr(usize)]
-pub enum SpriteId {
-    Player = 3,
-    #[allow(dead_code)] // Please remove this allow when using ShootingPlayer
-    ShootingPlayer = 4,
-    Bullet = 5,
-    Barrel = 6,
-}
+
 
 impl SpriteResource {
     pub fn sprite_render_for(&self, id: SpriteId) -> SpriteRender {

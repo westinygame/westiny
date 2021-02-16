@@ -4,7 +4,8 @@ use amethyst::prelude::*;
 use log::info;
 
 use westiny_common::components::{BoundingCircle, Input, Health, Player, Velocity, weapon::*, NetworkId};
-use westiny_client::resources::{SpriteId, SpriteResource};
+use westiny_client::resources::SpriteResource;
+use westiny_common::resources::SpriteId;
 
 pub fn initialize_player(world: &mut World,
                          sprite_resource: &SpriteResource,

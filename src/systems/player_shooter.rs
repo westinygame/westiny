@@ -5,10 +5,10 @@ use amethyst::core::{Transform, Time, math::{Vector3, Vector2}};
 use amethyst::ecs::prelude::LazyUpdate;
 use amethyst::ecs::prelude::Join;
 
-use westiny_common::resources::{SoundId, AudioQueue};
+use westiny_common::resources::{SoundId, AudioQueue, SpriteId};
 use westiny_common::components::{InputFlags, Input, Player, weapon::Weapon, BoundingCircle};
 use crate::entities::spawn_bullet;
-use westiny_client::resources::{SpriteResource, SpriteId};
+use westiny_client::resources::SpriteResource;
 
 #[derive(SystemDesc)]
 pub struct PlayerShooterSystem;
