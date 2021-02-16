@@ -8,7 +8,7 @@ use log::info;
 use std::path::PathBuf;
 use derive_new::new;
 use westiny_common::resources::map::build_map;
-use westiny_common::components::{NetworkId, Player, Velocity, BoundingCircle, weapon::Weapon};
+use westiny_common::components::{NetworkId, Player, Velocity, BoundingCircle, weapon::Weapon, Projectile};
 
 #[derive(new)]
 pub struct ServerState {
@@ -52,6 +52,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
         data.world.register::<BoundingCircle>();
         data.world.register::<Weapon>();
         data.world.register::<Transform>();
+        data.world.register::<Projectile>();
         self.place_objects(data.world);
     }
 

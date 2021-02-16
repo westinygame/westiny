@@ -1,19 +1,18 @@
-
 use amethyst::derive::SystemDesc;
 use amethyst::ecs::{Read, System, SystemData, ReadStorage, ReadExpect, WriteExpect, Entities, WriteStorage};
 use amethyst::core::{Transform, Time, math::{Vector3, Vector2}};
-use amethyst::ecs::prelude::LazyUpdate;
-use amethyst::ecs::prelude::Join;
+use amethyst::ecs::prelude::{LazyUpdate, Join};
 
-use westiny_common::resources::{SoundId, AudioQueue, SpriteId};
-use westiny_common::components::{InputFlags, Input, Player, weapon::Weapon, BoundingCircle};
+use westiny_common::components::{weapon::Weapon, Player, Input, InputFlags, BoundingCircle};
+use crate::components::EntityType;
+use crate::resources::NetworkIdSupplier;
 use crate::entities::spawn_bullet;
-use westiny_client::resources::SpriteResource;
 
 #[derive(SystemDesc)]
-pub struct PlayerShooterSystem;
+pub struct ShooterSystem;
 
-impl<'s> System<'s> for PlayerShooterSystem {
+/// Shooter system has some code duplication with PlayerShooterSystem.
+impl<'s> System<'s> for ShooterSystem {
     type SystemData = (
         Entities<'s>,
         ReadStorage<'s, Transform>,
@@ -22,18 +21,16 @@ impl<'s> System<'s> for PlayerShooterSystem {
         ReadStorage<'s, BoundingCircle>,
         WriteStorage<'s, Weapon>,
         Read<'s, Time>,
-        ReadExpect<'s, SpriteResource>,
+        WriteExpect<'s, NetworkIdSupplier>,
         ReadExpect<'s, LazyUpdate>,
-        WriteExpect<'s, AudioQueue>
     );
 
-    fn run(&mut self, (entities, transforms, players, inputs, bounds, mut weapons, time, sprites, lazy_update, mut audio): Self::SystemData) {
+    fn run(&mut self, (entities, transforms, players, inputs, bounds, mut weapons, time, mut net_id_supplier, lazy_update): Self::SystemData) {
         for (_player, input, player_transform, player_bound, mut weapon) in (&players, &inputs, &transforms, &bounds, &mut weapons).join() {
             if input.flags.intersects(InputFlags::SHOOT)
             {
                 if weapon.is_allowed_to_shoot(time.absolute_time_seconds())
                 {
-                    log::info!("Shooting!");
                     let mut bullet_transform = Transform::default();
                     bullet_transform.set_translation(*player_transform.translation());
                     bullet_transform.set_rotation(*player_transform.rotation());
@@ -43,11 +40,10 @@ impl<'s> System<'s> for PlayerShooterSystem {
 
                     *bullet_transform.translation_mut() -= direction3d * player_bound.radius;
 
-                    spawn_bullet(bullet_transform, direction2d, &weapon.details, sprites.sprite_render_for(SpriteId::Bullet), &entities, &lazy_update);
+                    let network_id = net_id_supplier.next(EntityType::Bullet);
+                    spawn_bullet(network_id, bullet_transform, direction2d, &weapon.details, &entities, &lazy_update);
                     weapon.last_shot_time = time.absolute_time_seconds();
                     weapon.input_lifted = false;
-
-                    audio.play(SoundId::SingleShot, 1.0);
                 }
             }
             else

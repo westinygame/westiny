@@ -32,6 +32,8 @@ use westiny_common::network::ClientInitialData;
 use amethyst::renderer::SpriteRender;
 use westiny_common::resources::map::build_map;
 
+use westiny_common::components::weapon::Weapon;
+
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState {
     dispatcher: Option<Dispatcher<'static, 'static>>,
@@ -93,9 +95,10 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
             .with(systems::CollisionHandlerForObstacles, "collision_handler_for_obstacles", &["collision_system"])
             .with(systems::ProjectileCollisionSystem, "projectile_collision_system", &["collision_system"])
             .with(systems::ProjectileCollisionHandler, "projectile_collision_handler", &["projectile_collision_system"])
-            .with(systems::PlayerShooterSystem, "player_shooter_system", &["input_system"])
+            //.with(systems::PlayerShooterSystem, "player_shooter_system", &["input_system"])
             .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"])
-            .with(entity_delete_system, "entity_delete", &["player_shooter_system"])
+            //.with(entity_delete_system, "entity_delete", &["player_shooter_system"])
+            .with(entity_delete_system, "entity_delete", &["projectile_collision_system"])
             .with(AudioPlayerSystem, "audio_player_system", &["cursor_pos_update_system"])
             .with(HudUpdateSystem, "hud_update_system", &["cursor_pos_update_system"])
             .with_pool((*world.read_resource::<ArcThreadPool>()).clone())
@@ -113,6 +116,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         init_camera(world, &dimensions);
 
         world.register::<NetworkId>(); // TODO remove if used by a system
+        world.register::<Weapon>();
         let init_data = (*world.read_resource::<ClientInitialData>()).clone();
         initialize_player(&mut world, &sprite_resource, init_data.player_network_id, init_data.initial_pos);
 
