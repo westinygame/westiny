@@ -5,9 +5,9 @@ use amethyst::{
 };
 use derive_new::new;
 use westiny_common::network::EntityState;
-use amethyst::core::ecs::{WriteStorage, Join, Entities};
+use amethyst::core::ecs::{WriteStorage, Join, Entities, WriteExpect};
 use westiny_common::components::{NetworkId, EntityType};
-use westiny_common::resources::SpriteId;
+use westiny_common::resources::{AudioQueue, SpriteId, SoundId};
 use amethyst::core::Transform;
 use std::collections::HashMap;
 use amethyst::shred::ReadExpect;
@@ -30,9 +30,10 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
         WriteStorage<'s, SpriteRender>,
         Entities<'s>,
         ReadExpect<'s, resources::SpriteResource>,
+        WriteExpect<'s, AudioQueue>
     );
 
-    fn run(&mut self, (events, mut network_ids, mut transforms, mut sprite_renders, entities, sprite_resource): Self::SystemData) {
+    fn run(&mut self, (events, mut network_ids, mut transforms, mut sprite_renders, entities, sprite_resource, mut audio): Self::SystemData) {
         let mut entity_states: HashMap<_, _> = events.read(&mut self.reader).map(|entity_state| (entity_state.network_id, entity_state)).collect();
 
         for (net_id, transform) in (&network_ids, &mut transforms).join() {
@@ -45,7 +46,7 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
         for (net_id, entity_state) in entity_states {
             let sprite_id = match net_id.entity_type {
                 EntityType::Player => SpriteId::Player,
-                EntityType::Bullet => SpriteId::Bullet,
+                EntityType::Bullet => {audio.play(SoundId::SingleShot, 1.0); SpriteId::Bullet},
             };
 
             let transform = {
