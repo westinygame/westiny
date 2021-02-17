@@ -2,7 +2,7 @@ use crate::events::WestinyEvent;
 use amethyst::prelude::*;
 use amethyst::core::{Time, Transform};
 use westiny_server::resources::{ClientRegistry, NetworkIdSupplier};
-use crate::resources::Collisions;
+use crate::resources::{ProjectileCollisions, Collisions};
 
 use log::info;
 use std::path::PathBuf;
@@ -45,6 +45,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
         data.world.insert(ClientRegistry::new(16));
         data.world.insert(NetworkIdSupplier::new());
         data.world.insert(Collisions::default());
+        data.world.insert(ProjectileCollisions::default());
 
         data.world.register::<NetworkId>();
         data.world.register::<Player>();

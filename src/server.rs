@@ -59,6 +59,8 @@ fn main() -> amethyst::Result<()> {
         .with(systems::PlayerMovementSystem, "player_movement", &["command_transformer"])
         .with(systems::PhysicsSystem, "physics", &["player_movement"])
         .with(systems::CollisionSystem, "collision", &["physics"])
+        .with(systems::ProjectileCollisionSystem, "projectile_collision", &["physics"])
+        .with(systems::ProjectileCollisionHandler, "projectile_collision_handler", &["projectile_collision"])
         .with(systems::CollisionHandlerForObstacles, "collision_handler", &["collision"])
         .with(srv_systems::ShooterSystem, "shooter", &["command_transformer"])
         .with_system_desc(srv_systems::EntityDeleteBroadcasterSystemDesc::default(), "delete_broadcaster", &["collision_handler"])

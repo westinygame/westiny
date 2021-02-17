@@ -67,6 +67,10 @@ impl NetworkMessageReceiverSystem {
                 entity_update_channel.single_write(state);
                 Ok(())
             }
+            PacketType::EntityDelete(delete) => {
+                log::debug!("Network entity delete, entity_id={:?}", delete.network_id);
+                Ok(())
+            }
             _ => Err(anyhow::anyhow!(
                 "Unexpected message from {}, payload={:02x?}",
                 addr,
