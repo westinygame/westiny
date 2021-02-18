@@ -25,8 +25,6 @@ pub struct ClientInitialData {
     pub initial_pos: Point2<f32>,
 }
 
-impl Eq for ClientInitialData {}
-
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct EntityState {
@@ -50,7 +48,7 @@ pub struct EntityHealth
     pub health: u16,
 }
 
-#[derive(Copy, Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub enum ErrorKind {
     AlreadyConnected,
     Other,
@@ -67,7 +65,7 @@ impl Display for ErrorKind {
     }
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, new, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, new, PartialEq)]
 pub struct Error {
     error_kind: ErrorKind,
 }

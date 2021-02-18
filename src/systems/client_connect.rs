@@ -74,7 +74,7 @@ impl<'s> System<'s> for ClientConnectSystem {
                                     _ => log::error!("Unexpected package from server: {:?}", packet)
                                 }
                             }
-                            Err(err) => log::error!("Connection response could not be deserialized. Cause: {}", err)
+                            Err(err) => log::error!("Connection response could not be deserialized. Cause: {:?}", err)
                         }
                     } else {
                         log::warn!("Unexpected message arrived from {} while waiting for connection response", addr);

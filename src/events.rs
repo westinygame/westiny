@@ -15,7 +15,8 @@ use amethyst::core::{
 use amethyst::derive::EventReader;
 use westiny_common::network;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug)]
+#[cfg_attr(test, derive(PartialEq))]
 pub enum AppEvent {
     Connection(network::Result<network::ClientInitialData>),
 }
