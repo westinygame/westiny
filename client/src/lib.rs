@@ -43,13 +43,6 @@ impl BindingTypes for MovementBindingTypes {
     type Action = ActionBinding;
 }
 
-const MOVE_ACTIONS: &'static [&'static ActionBinding] = &[
-    &ActionBinding::Forward,
-    &ActionBinding::Backward,
-    &ActionBinding::StrafeLeft,
-    &ActionBinding::StrafeRight,
-];
-
 pub fn move_direction_from_binding(binding: &ActionBinding) -> Option<MoveDirection> {
     match binding {
         ActionBinding::Forward => Some(MoveDirection::Forward),
