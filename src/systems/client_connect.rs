@@ -95,8 +95,7 @@ mod test {
     use amethyst::prelude::*;
     use amethyst::core::math::Point2;
     use amethyst_test::prelude::*;
-    use westiny_common::components::NetworkId;
-    use crate::components::EntityType;
+    use westiny_common::components::{NetworkId, EntityType};
 
     const SOCKET_ADDRESS: ([u8;4], u16) = ([127, 0, 0, 1], 9999);
 

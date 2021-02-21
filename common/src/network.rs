@@ -43,6 +43,7 @@ pub struct NetworkEntityDelete
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct EntityHealth
 {
     pub network_id: NetworkId,
