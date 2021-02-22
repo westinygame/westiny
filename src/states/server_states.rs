@@ -50,12 +50,6 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
         data.world.insert(ProjectileCollisions::default());
         data.world.insert(seed);
 
-        // data.world.register::<NetworkId>();
-        // data.world.register::<Player>();
-        // data.world.register::<Velocity>();
-        // data.world.register::<BoundingCircle>();
-        // data.world.register::<Weapon>();
-        // data.world.register::<Transform>();
         data.world.register::<Projectile>();
 
         self.place_objects(data.world, seed);
