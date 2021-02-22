@@ -54,7 +54,7 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(LaminarNetworkBundle::new(Some(socket)))?
         .with(srv_systems::EntityStateBroadcasterSystem, "entity_state_broadcaster", &[])
         .with_system_desc(srv_systems::NetworkMessageReceiverSystemDesc::default(), "msg_receiver", &[])
-        .with_system_desc(srv_systems::PlayerSpawnSystemDesc::default(), "player_spawn", &["msg_receiver"])
+        .with_system_desc(srv_systems::ClientIntroductionSystemDesc::default(), "player_spawn", &["msg_receiver"])
         .with_system_desc(srv_systems::CommandTransformerSystemDesc::default(), "command_transformer", &["msg_receiver"])
         .with(systems::PlayerMovementSystem, "player_movement", &["command_transformer"])
         .with(systems::PhysicsSystem, "physics", &["player_movement"])

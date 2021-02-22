@@ -8,7 +8,12 @@ use log::info;
 use std::path::PathBuf;
 use derive_new::new;
 use westiny_common::resources::map::build_map;
+<<<<<<< HEAD
 use westiny_common::components::{NetworkId, Player, Velocity, BoundingCircle, weapon::Weapon, Projectile};
+=======
+use westiny_common::components::{NetworkId, Player, Velocity, BoundingCircle, weapon::Weapon};
+use westiny_common::resources::Seed;
+>>>>>>> f2a707f (Server sends seed to client at connect)
 
 #[derive(new)]
 pub struct ServerState {
@@ -16,10 +21,8 @@ pub struct ServerState {
 }
 
 impl ServerState {
-    fn place_objects(&self, world: &mut World) {
-        const ONLY_VALID_SEED: u64 = 0;
-
-        build_map(world, ONLY_VALID_SEED, &self.resources.join("map"))
+    fn place_objects(&self, world: &mut World, seed: Seed) {
+        build_map(world, seed, &self.resources.join("map"))
             .expect("Map could not be created");
     }
 }
@@ -42,10 +45,14 @@ fn log_clients(time: &Time, registry: &ClientRegistry) {
 
 impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
     fn on_start(&mut self, data: StateData<'_, GameData<'static, 'static>>) {
+        const MAGIC_SEED: u64 = 0;
+
+        let seed = Seed(MAGIC_SEED);
         data.world.insert(ClientRegistry::new(16));
         data.world.insert(NetworkIdSupplier::new());
         data.world.insert(Collisions::default());
         data.world.insert(ProjectileCollisions::default());
+        data.world.insert(seed);
 
         data.world.register::<NetworkId>();
         data.world.register::<Player>();
@@ -54,7 +61,8 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
         data.world.register::<Weapon>();
         data.world.register::<Transform>();
         data.world.register::<Projectile>();
-        self.place_objects(data.world);
+
+        self.place_objects(data.world, seed);
     }
 
     fn update(&mut self, data: StateData<'_, GameData<'static, 'static>>) -> Trans<GameData<'static, 'static>, WestinyEvent> {

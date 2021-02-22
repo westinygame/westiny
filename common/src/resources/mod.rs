@@ -5,8 +5,9 @@ mod audio;
 mod entity_delete;
 pub mod map;
 
+use std::fmt::{Display, Formatter};
 use std::net::SocketAddr;
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 
 const DEFAULT_SERVER_PORT: u16 = 5745;
 
@@ -29,4 +30,13 @@ pub enum SpriteId {
     ShootingPlayer = 4,
     Bullet = 5,
     Barrel = 6,
+}
+
+#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Debug)]
+pub struct Seed(pub u64);
+
+impl Display for Seed {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
 }

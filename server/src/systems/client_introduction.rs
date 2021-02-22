@@ -1,4 +1,3 @@
-
 use amethyst::{
     core::{
         Transform,
@@ -46,20 +45,22 @@ use crate::{
         ClientID
     },
 };
+use westiny_common::resources::Seed;
 
 #[derive(SystemDesc, new)]
-#[system_desc(name(PlayerSpawnSystemDesc))]
-pub struct PlayerSpawnSystem {
+#[system_desc(name(ClientIntroductionSystemDesc))]
+pub struct ClientIntroductionSystem {
     #[system_desc(event_channel_reader)]
     reader: ReaderId<ClientNetworkEvent>,
 }
 
-impl<'s> System<'s> for PlayerSpawnSystem {
+impl<'s> System<'s> for ClientIntroductionSystem {
     type SystemData = (
         Read<'s, EventChannel<ClientNetworkEvent>>,
         Entities<'s>,
         WriteExpect<'s, TransportResource>,
         ReadExpect<'s, ClientRegistry>,
+        ReadExpect<'s, Seed>,
         WriteExpect<'s, NetworkIdSupplier>,
         ReadExpect<'s, LazyUpdate>,
         ReadStorage<'s, components::Client>,
@@ -72,6 +73,7 @@ impl<'s> System<'s> for PlayerSpawnSystem {
             entities,
             mut net,
             client_registry,
+            seed,
             mut net_id_supplier,
             lazy_update,
             client,
@@ -96,6 +98,7 @@ impl<'s> System<'s> for PlayerSpawnSystem {
                         Ok(ClientInitialData{
                             player_network_id: entity_network_id,
                             initial_pos: Point2::from([0.0, 0.0]),
+                            seed: *seed
                         })
                     );
                     net.send_with_requirements(
@@ -117,7 +120,7 @@ impl<'s> System<'s> for PlayerSpawnSystem {
     }
 }
 
-impl PlayerSpawnSystem {
+impl ClientIntroductionSystem {
     fn spawn_player(
         entities: &Entities<'_>,
         client_id: &ClientID,

@@ -3,6 +3,7 @@ use derive_new::new;
 use std::fmt::{Display, Debug, Formatter};
 use crate::components::{Input, NetworkId};
 use amethyst::core::math::Point2;
+use crate::resources::Seed;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(test, derive(Clone, PartialEq))]
@@ -23,6 +24,7 @@ pub enum PacketType {
 pub struct ClientInitialData {
     pub player_network_id: NetworkId,
     pub initial_pos: Point2<f32>,
+    pub seed: Seed,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

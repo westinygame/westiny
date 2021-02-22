@@ -5,7 +5,7 @@ use std::fmt::{Display, Formatter};
 use std::path::Path;
 use std::io::{BufReader, Read};
 use crate::resources::map::MapError::{InvalidMapCharacter, SeedError};
-use crate::resources::SpriteId;
+use crate::resources::{SpriteId, Seed};
 use amethyst::core::math::Point2;
 
 const BARREL_CHAR: char = 'x';
@@ -14,10 +14,10 @@ const EMPTY_CHAR: char = ' ';
 const MAP_OFFSET: (i32, i32) = (-32, -32);
 
 pub fn build_map(world: &mut World,
-                 seed: u64,
+                 seed: Seed,
                  map_files_dir: &Path) -> Result<Vec<(Entity, SpriteId)>, MapError> {
     let mut entity_vec = Vec::new();
-    if seed == 0 {
+    if seed.0 == 0 {
         let map_reader = BufReader::new(File::open(map_files_dir.join("rust2.wmap"))?);
         let map_bytes = map_reader.bytes();
 
@@ -41,7 +41,7 @@ pub fn build_map(world: &mut World,
                     x = 0;
                     y += 1;
                 }
-                other => return Err(InvalidMapCharacter(other))
+                other => return Err(InvalidMapCharacter(other, x, y))
             }
 
         }
@@ -54,14 +54,19 @@ pub fn build_map(world: &mut World,
 
 #[derive(Debug)]
 pub enum MapError {
-    InvalidMapCharacter(char),
-    MapFileError(std::io::ErrorKind),
-    SeedError(u64),
+    InvalidMapCharacter(char, i32, i32),
+    MapFileError(std::io::Error),
+    SeedError(Seed),
 }
 
 impl Display for MapError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "")
+        let literal = match self {
+            Self::InvalidMapCharacter(ch, x, y) => format!("Could not process char ({}) at ({}, {})", ch, x, y),
+            Self::MapFileError(inner) => format!("File IO error: {}", inner),
+            Self::SeedError(seed) => format!("Could not handle seed: {}", seed),
+        };
+        write!(f, "{}", literal)
     }
 }
 
@@ -69,6 +74,6 @@ impl std::error::Error for MapError {}
 
 impl From<std::io::Error> for MapError {
     fn from(err: std::io::Error) -> Self {
-        MapError::MapFileError(err.kind())
+        MapError::MapFileError(err)
     }
 }

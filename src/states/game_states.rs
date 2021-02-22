@@ -17,7 +17,7 @@ use crate::entities::{initialize_tilemap, initialize_player};
 use westiny_client::MovementBindingTypes;
 use crate::resources::{Collisions, ProjectileCollisions};
 use westiny_common::components::NetworkId;
-use westiny_common::resources::AudioQueue;
+use westiny_common::resources::{AudioQueue, Seed};
 use westiny_client::systems::{
     AudioPlayerSystem,
     NetworkMessageReceiverSystemDesc,
@@ -48,11 +48,9 @@ impl PlayState {
         }
     }
 
-    fn place_objects(&self, world: &mut World) {
-
-        const ONLY_VALID_SEED: u64 = 0;
+    fn place_objects(&self, world: &mut World, seed: Seed) {
         let entities = build_map(world,
-                  ONLY_VALID_SEED,
+                  seed,
                   &self.resource_dir.join("map"))
             .expect("Map could not be created");
 
@@ -121,7 +119,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         initialize_tilemap(world, &sprite_resource, Point2::new(0.0, 0.0));
         initialize_audio(world);
-        self.place_objects(&mut world);
+        self.place_objects(&mut world, init_data.seed);
         initialize_hud(world);
     }
 
