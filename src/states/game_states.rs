@@ -16,7 +16,6 @@ use std::path::PathBuf;
 use crate::entities::{initialize_tilemap, initialize_player};
 use westiny_client::MovementBindingTypes;
 use crate::resources::{Collisions, ProjectileCollisions};
-use westiny_common::components::NetworkId;
 use westiny_common::resources::{AudioQueue, Seed};
 use westiny_client::systems::{
     AudioPlayerSystem,
@@ -112,7 +111,6 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         init_camera(world, &dimensions);
 
-        world.register::<NetworkId>(); // TODO remove if used by a system
         world.register::<Weapon>();
         let init_data = (*world.read_resource::<ClientInitialData>()).clone();
         initialize_player(&mut world, &sprite_resource, init_data.player_network_id, init_data.initial_pos);

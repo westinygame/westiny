@@ -1,6 +1,6 @@
 use crate::events::WestinyEvent;
 use amethyst::prelude::*;
-use amethyst::core::{Time, Transform};
+use amethyst::core::Time;
 use westiny_server::resources::{ClientRegistry, NetworkIdSupplier};
 use crate::resources::{ProjectileCollisions, Collisions};
 
@@ -8,12 +8,8 @@ use log::info;
 use std::path::PathBuf;
 use derive_new::new;
 use westiny_common::resources::map::build_map;
-<<<<<<< HEAD
-use westiny_common::components::{NetworkId, Player, Velocity, BoundingCircle, weapon::Weapon, Projectile};
-=======
-use westiny_common::components::{NetworkId, Player, Velocity, BoundingCircle, weapon::Weapon};
+use westiny_common::components::Projectile;
 use westiny_common::resources::Seed;
->>>>>>> f2a707f (Server sends seed to client at connect)
 
 #[derive(new)]
 pub struct ServerState {
@@ -54,12 +50,12 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
         data.world.insert(ProjectileCollisions::default());
         data.world.insert(seed);
 
-        data.world.register::<NetworkId>();
-        data.world.register::<Player>();
-        data.world.register::<Velocity>();
-        data.world.register::<BoundingCircle>();
-        data.world.register::<Weapon>();
-        data.world.register::<Transform>();
+        // data.world.register::<NetworkId>();
+        // data.world.register::<Player>();
+        // data.world.register::<Velocity>();
+        // data.world.register::<BoundingCircle>();
+        // data.world.register::<Weapon>();
+        // data.world.register::<Transform>();
         data.world.register::<Projectile>();
 
         self.place_objects(data.world, seed);
