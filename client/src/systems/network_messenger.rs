@@ -10,10 +10,9 @@ use std::net::SocketAddr;
 use derive_new::new;
 
 use westiny_common::{
-    network::{PacketType, EntityState, EntityHealth},
+    network::{PacketType, EntityState, EntityHealth, NetworkEntityDelete},
     deserialize,
 };
-
 
 #[derive(SystemDesc, new)]
 #[system_desc(name(NetworkMessageReceiverSystemDesc))]
@@ -27,9 +26,10 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
         Read<'s, EventChannel<NetworkSimulationEvent>>,
         Write<'s, EventChannel<EntityState>>,
         Write<'s, EventChannel<EntityHealth>>,
+        Write<'s, EventChannel<NetworkEntityDelete>>,
     );
 
-    fn run(&mut self, (net_event_ch, mut entity_state_update_channel, mut entity_health_channel): Self::SystemData) {
+    fn run(&mut self, (net_event_ch, mut entity_state_update_channel, mut entity_health_channel, mut entity_delete_channel): Self::SystemData) {
         for event in net_event_ch.read(&mut self.reader) {
             match event {
                 NetworkSimulationEvent::Connect(addr) => log::debug!(
@@ -41,7 +41,11 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
                     addr
                 ),
                 NetworkSimulationEvent::Message(addr, payload) => {
-                    match self.process_payload(addr, payload, &mut entity_state_update_channel, &mut entity_health_channel) {
+                    match self.process_payload(addr,
+                                               payload,
+                                               &mut entity_state_update_channel,
+                                               &mut entity_health_channel,
+                                               &mut entity_delete_channel) {
                         Ok(_) => log::debug!("Message from {} processed successfully.", addr),
                         Err(e) => {
                             log::error!("Could not process message! {:?}, payload: {:02x?}", e, payload)
@@ -61,6 +65,7 @@ impl NetworkMessageReceiverSystem {
         payload: &[u8],
         entity_update_channel: &mut EventChannel<EntityState>,
         entity_health_channel: &mut EventChannel<EntityHealth>,
+        entity_delete_channel: &mut EventChannel<NetworkEntityDelete>,
     ) -> Result<()> {
 
         log::debug!("Message: {:02x?}", payload);
@@ -71,6 +76,7 @@ impl NetworkMessageReceiverSystem {
             }
             PacketType::EntityDelete(delete) => {
                 log::debug!("Network entity delete, entity_id={:?}", delete.network_id);
+                entity_delete_channel.single_write(delete);
                 Ok(())
             }
             PacketType::EntityHealthUpdate(health_update) => {

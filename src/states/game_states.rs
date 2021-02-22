@@ -21,9 +21,10 @@ use westiny_client::systems::{
     AudioPlayerSystem,
     NetworkMessageReceiverSystemDesc,
     NetworkEntityStateUpdateSystemDesc,
-    HudUpdateSystem
+    NetworkEntityDeleteSystemDesc,
+    HudUpdateSystem,
 };
-use westiny_common::systems::{EntityDeleteSystemDesc, HealthUpdateSystemDesc};
+use westiny_common::systems::{HealthUpdateSystemDesc};
 use westiny_client::resources::{initialize_audio, initialize_hud, initialize_sprite_resource, SpriteResource};
 use crate::events::WestinyEvent;
 use crate::systems;
@@ -78,7 +79,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         let network_message_receiver_sys = NetworkMessageReceiverSystemDesc::default().build(&mut world);
         let network_entity_update_sys = NetworkEntityStateUpdateSystemDesc::default().build(&mut world);
-        let entity_delete_system = EntityDeleteSystemDesc::default().build(&mut world);
+        let entity_delete_system = NetworkEntityDeleteSystemDesc::default().build(&mut world);
         let health_update_system = HealthUpdateSystemDesc::default().build(&mut world);
 
         let mut dispatcher = dispatcher_builder
