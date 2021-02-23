@@ -71,7 +71,7 @@ impl<'s> System<'s> for ClientConnectSystem {
                                     network::PacketType::ConnectionResponse(result) => {
                                         app_event.single_write(AppEvent::Connection(result));
                                     }
-                                    _ => log::error!("Unexpected package from server: {:?}", packet)
+                                    _ => log::error!("Unexpected package from server: {:02x?}", packet)
                                 }
                             }
                             Err(err) => log::error!("Connection response could not be deserialized. Cause: {:?}", err)

@@ -5,7 +5,7 @@ use thiserror::Error;
 /// An ID that uniquely identifies a network client.
 /// Can be used in game logic to match relevant entities to network clients.
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
-pub struct ClientID(u32);
+pub struct ClientID(pub u32);
 
 pub struct ClientHandle {
     pub id: ClientID,
