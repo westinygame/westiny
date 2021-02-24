@@ -3,7 +3,7 @@ use amethyst::core::ecs::{System, ReadStorage, WriteExpect, Join};
 use amethyst::core::math::{Point2, UnitQuaternion};
 use amethyst::shred::ReadExpect;
 use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
-use crate::resources::ClientRegistry;
+use crate::resources::{ClientRegistry, StreamId};
 use crate::components;
 use westiny_common::{network, serialize};
 
@@ -20,7 +20,6 @@ impl<'s> System<'s> for EntityStateBroadcasterSystem {
     );
 
     fn run(&mut self, (client_registry, mut net, network_ids, transforms): Self::SystemData) {
-        // TODO these should be sent in 1 message per client
         let mut network_entities = Vec::new();
         for (network_id, transform) in (&network_ids, &transforms).join() {
             let entity_state = network::EntityState {
@@ -37,7 +36,7 @@ impl<'s> System<'s> for EntityStateBroadcasterSystem {
             net.send_with_requirements(
                 handle.addr,
                 &msg,
-                DeliveryRequirement::UnreliableSequenced(None),
+                DeliveryRequirement::UnreliableSequenced(StreamId::EntityStateUpdate.into()),
                 UrgencyRequirement::OnTick
             )
         })

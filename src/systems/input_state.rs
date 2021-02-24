@@ -7,6 +7,7 @@ use westiny_common::components::{InputFlags, Input};
 
 use crate::resources::CursorPosition;
 use westiny_client::{MovementBindingTypes, ActionBinding};
+use westiny_client::resources::StreamId;
 use westiny_common::resources::ServerAddress;
 use westiny_common::{network, serialize};
 
@@ -52,7 +53,7 @@ fn send_to_server(net: &mut TransportResource, server: &ServerAddress, input: &I
     let message = serialize(&network::PacketType::InputState{input: *input})
         .expect("InputState could not be serialized");
 
-    net.send_with_requirements(server.address, &message, DeliveryRequirement::Reliable, UrgencyRequirement::OnTick);
+    net.send_with_requirements(server.address, &message, DeliveryRequirement::UnreliableSequenced(StreamId::InputState.into()), UrgencyRequirement::OnTick);
 }
 
 

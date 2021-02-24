@@ -20,7 +20,6 @@ bitflags::bitflags! {
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Input
 {
-    // bool means is_down? should we use enum bits?
     pub flags : InputFlags,
     pub cursor : Point2<f32>
 }
