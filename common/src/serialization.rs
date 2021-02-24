@@ -54,11 +54,11 @@ mod tests {
                                      pos in arb_point2(),
                                      rot in any::<f32>()) -> PacketType {
             PacketType::EntityStateUpdate(
-                EntityState {
-                    network_id: id,
-                    position: pos,
-                    rotation: rot,
-                }
+                vec![EntityState {
+                        network_id: id,
+                        position: pos,
+                        rotation: rot,
+                    }]
             )
         }
     }

@@ -57,7 +57,7 @@ impl<'s> System<'s> for ClientConnectSystem {
                     .expect("ConnectionRequest could not be serialized");
 
                 log::debug!("Sending message. Time: {}", time_since_start.as_secs_f32());
-                net.send_with_requirements(server.address, &msg, DeliveryRequirement::Reliable, UrgencyRequirement::OnTick);
+                net.send_with_requirements(server.address, &msg, DeliveryRequirement::ReliableSequenced(None), UrgencyRequirement::OnTick);
         }
 
         for event in net_event_ch.read(&mut self.reader) {
