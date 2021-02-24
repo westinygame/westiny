@@ -32,7 +32,7 @@ use westiny_common::network::ClientInitialData;
 use amethyst::renderer::SpriteRender;
 use westiny_common::resources::map::build_map;
 
-use westiny_common::components::weapon::Weapon;
+use westiny_common::components::{weapon::Weapon, Velocity, BoundingCircle};
 
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState {

@@ -15,6 +15,7 @@ use derive_new::new;
 use westiny_common::{
     network::{ClientInitialData, PacketType},
     serialize,
+    collision,
 };
 
 use crate::{
@@ -42,6 +43,8 @@ impl<'s> System<'s> for ClientIntroductionSystem {
         ReadExpect<'s, LazyUpdate>,
         ReadStorage<'s, components::Client>,
         ReadStorage<'s, components::NetworkId>,
+        ReadStorage<'s, Transform>,
+        ReadStorage<'s, components::BoundingCircle>,
     );
 
     fn run(
@@ -56,6 +59,8 @@ impl<'s> System<'s> for ClientIntroductionSystem {
             lazy_update,
             client,
             network_ids,
+            transforms,
+            boundings,
         ): Self::SystemData,
     ) {
         // This vector is used for deduplicating ClientConnected events within one frame to avoid
@@ -80,7 +85,9 @@ impl<'s> System<'s> for ClientIntroductionSystem {
                         );
                         *net_id
                     } else {
+                        let initial_pos = Self::find_spawn_pos(&transforms, &boundings);
                         let net_id = Self::spawn_player(
+                            &initial_pos,
                             &entities,
                             client_id,
                             &client,
@@ -102,6 +109,7 @@ impl<'s> System<'s> for ClientIntroductionSystem {
                     let connection_response =
                         PacketType::ConnectionResponse(Ok(ClientInitialData {
                             player_network_id: entity_network_id,
+                            // TODO initial_pos should not be sent here. On the client side it will be processed from EntityStateUpdate messages anyway.
                             initial_pos: Point2::from([0.0, 0.0]),
                             seed: *seed
                         })
@@ -126,6 +134,7 @@ impl<'s> System<'s> for ClientIntroductionSystem {
 
 impl ClientIntroductionSystem {
     fn spawn_player(
+        initial_pos: &Point2<f32>,
         entities: &Entities<'_>,
         client_id: &ClientID,
         clients: &ReadStorage<'_, components::Client>,
@@ -149,7 +158,7 @@ impl ClientIntroductionSystem {
 
         let transform = {
             let mut t = Transform::default();
-            t.set_translation_xyz(0.0, 0.0, 0.0);
+            t.set_translation_xyz(initial_pos.x, initial_pos.y, 0.0);
             t
         };
 
@@ -205,6 +214,57 @@ impl ClientIntroductionSystem {
         "Disconnecting client's player entity [client_id: {:?}] not found thus could not be removed",
         client_id))
     }
+
+    fn has_collision(
+        transform_storage: &ReadStorage<'_, Transform>,
+        bounding_storage: &ReadStorage<'_, components::BoundingCircle>,
+        collider: &collision::Collider
+    ) -> bool {
+        for (transform, bound) in (transform_storage, bounding_storage).join() {
+            if let Some(_) = collision::check_body_collision(
+                collision::Collider{transform, bound},
+                collider.clone())
+            {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn find_spawn_pos(
+        transform_storage: &ReadStorage<'_, Transform>,
+        bounding_storage: &ReadStorage<'_, components::BoundingCircle>
+    ) -> Point2<f32> {
+        // TODO Quick 'n' dirty stuff
+        const MAX_TRIAL_ITERATION: u32 = 1024;
+        const MAP_SIZE: u32 = 64;
+        const TILE_SIZE: u32 = 16;
+        const BOUND: f32 = (MAP_SIZE/2 * TILE_SIZE) as f32;
+        use rand::Rng;
+
+        let candidate_bounding = components::BoundingCircle { radius: 8.0 };
+
+        for _ in 0..MAX_TRIAL_ITERATION {
+            // TODO hardcoded range: should be calculated from map data
+            let x = rand::thread_rng().gen_range(-BOUND .. BOUND);
+            let y = rand::thread_rng().gen_range(-BOUND .. BOUND);
+
+            let candidate_transform = {
+                let mut t = Transform::default();
+                t.set_translation_xyz(x, y, 0.0);
+                t
+            };
+            if !Self::has_collision(
+                transform_storage, bounding_storage,
+                &collision::Collider{transform: &candidate_transform, bound: &candidate_bounding}
+            ) {
+                return Point2::new(x, y);
+            }
+        }
+
+        log::warn!("Could not find a valid spawn place for player! Fallback to (0,0)");
+        Point2::new(0.0, 0.0)
+    }
 }
 
 #[cfg(test)]
@@ -240,6 +300,7 @@ mod test {
             let clients = world.read_storage::<Client>();
             let net_ids = world.read_storage::<NetworkId>();
             ClientIntroductionSystem::spawn_player(
+                &Point2::new(0.0, 0.0),
                 &world.entities(),
                 &cli_id,
                 &clients,
@@ -266,6 +327,7 @@ mod test {
             let clients = world.read_storage::<Client>();
             let net_ids = world.read_storage::<NetworkId>();
             let first_net_id = ClientIntroductionSystem::spawn_player(
+                &Point2::new(0.0, 0.0),
                 &world.entities(),
                 &ClientID(42),
                 &clients,
@@ -274,6 +336,7 @@ mod test {
                 &world.read_resource::<LazyUpdate>(),
             );
             let second_net_id = ClientIntroductionSystem::spawn_player(
+                &Point2::new(0.0, 0.0),
                 &world.entities(),
                 &ClientID(43),
                 &clients,
@@ -307,6 +370,7 @@ mod test {
         let first_net_id;
         {
             first_net_id = ClientIntroductionSystem::spawn_player(
+                &Point2::new(0.0, 0.0),
                 &world.entities(),
                 &cli_id,
                 &world.read_storage::<Client>(),
@@ -318,6 +382,7 @@ mod test {
         world.maintain();
         {
             let second_net_id = ClientIntroductionSystem::spawn_player(
+                &Point2::new(0.0, 0.0),
                 &world.entities(),
                 &cli_id,
                 &world.read_storage::<Client>(),

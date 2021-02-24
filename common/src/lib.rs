@@ -6,6 +6,7 @@ pub mod systems;
 pub mod network;
 pub mod serialization;
 pub mod entities;
+pub mod collision;
 
 /// The move direction relative to facing
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
