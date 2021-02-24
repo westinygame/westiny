@@ -21,6 +21,7 @@ impl<'s> System<'s> for EntityStateBroadcasterSystem {
 
     fn run(&mut self, (client_registry, mut net, network_ids, transforms): Self::SystemData) {
         // TODO these should be sent in 1 message per client
+        let mut network_entities = Vec::new();
         for (network_id, transform) in (&network_ids, &transforms).join() {
             let entity_state = network::EntityState {
                 network_id: *network_id,
@@ -28,16 +29,18 @@ impl<'s> System<'s> for EntityStateBroadcasterSystem {
                 rotation: get_angle(transform.rotation()),
             };
 
-            let msg = serialize(&network::PacketType::EntityStateUpdate(entity_state)).expect("entity state update could not be serialized");
-            client_registry.get_clients().iter().for_each(|&handle|{
-                net.send_with_requirements(
-                    handle.addr,
-                    &msg,
-                    DeliveryRequirement::UnreliableSequenced(None),
-                    UrgencyRequirement::OnTick
-                )
-            })
+            network_entities.push(entity_state);
         }
+
+        let msg = serialize(&network::PacketType::EntityStateUpdate(network_entities)).expect("entity state update could not be serialized");
+        client_registry.get_clients().iter().for_each(|&handle|{
+            net.send_with_requirements(
+                handle.addr,
+                &msg,
+                DeliveryRequirement::UnreliableSequenced(None),
+                UrgencyRequirement::OnTick
+            )
+        })
     }
 }
 

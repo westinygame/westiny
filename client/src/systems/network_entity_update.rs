@@ -19,12 +19,12 @@ use amethyst::renderer::SpriteRender;
 #[system_desc(name(NetworkEntityStateUpdateSystemDesc))]
 pub struct NetworkEntityStateUpdateSystem {
     #[system_desc(event_channel_reader)]
-    reader: ReaderId<EntityState>,
+    reader: ReaderId<Vec<EntityState>>,
 }
 
 impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
     type SystemData = (
-        Read<'s, EventChannel<EntityState>>,
+        Read<'s, EventChannel<Vec<EntityState>>>,
         WriteStorage<'s, NetworkId>,
         WriteStorage<'s, Transform>,
         WriteStorage<'s, SpriteRender>,
@@ -34,7 +34,7 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
     );
 
     fn run(&mut self, (events, mut network_ids, mut transforms, mut sprite_renders, entities, sprite_resource, mut audio): Self::SystemData) {
-        let mut entity_states: HashMap<_, _> = events.read(&mut self.reader).map(|entity_state| (entity_state.network_id, entity_state)).collect();
+        let mut entity_states: HashMap<_, _> = events.read(&mut self.reader).flat_map(|vec| vec.iter()).map(|entity_state| (entity_state.network_id, entity_state)).collect();
 
         for (net_id, transform) in (&network_ids, &mut transforms).join() {
             if let Some(state) = entity_states.get(net_id) {

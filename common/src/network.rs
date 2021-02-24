@@ -15,7 +15,7 @@ pub enum PacketType {
     InputState {
         input: Input
     },
-    EntityStateUpdate(EntityState),
+    EntityStateUpdate(Vec<EntityState>),
     EntityDelete(NetworkEntityDelete),
     EntityHealthUpdate(EntityHealth),
 }

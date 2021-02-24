@@ -24,7 +24,7 @@ pub struct NetworkMessageReceiverSystem {
 impl<'s> System<'s> for NetworkMessageReceiverSystem {
     type SystemData = (
         Read<'s, EventChannel<NetworkSimulationEvent>>,
-        Write<'s, EventChannel<EntityState>>,
+        Write<'s, EventChannel<Vec<EntityState>>>,
         Write<'s, EventChannel<EntityHealth>>,
         Write<'s, EventChannel<NetworkEntityDelete>>,
     );
@@ -63,7 +63,7 @@ impl NetworkMessageReceiverSystem {
         &self,
         addr: &SocketAddr,
         payload: &[u8],
-        entity_update_channel: &mut EventChannel<EntityState>,
+        entity_update_channel: &mut EventChannel<Vec<EntityState>>,
         entity_health_channel: &mut EventChannel<EntityHealth>,
         entity_delete_channel: &mut EventChannel<NetworkEntityDelete>,
     ) -> Result<()> {
