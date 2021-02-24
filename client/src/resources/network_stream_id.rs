@@ -1,4 +1,4 @@
-#[derive(Copy, Debug)]
+#[derive(Copy, Clone, Debug)]
 #[repr(u8)]
 pub enum StreamId {
     InputState,
