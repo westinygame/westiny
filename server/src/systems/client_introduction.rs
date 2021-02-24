@@ -16,6 +16,7 @@ use westiny_common::{
     network::{ClientInitialData, PacketType},
     serialize,
     collision,
+    resources::{EntityDelete},
 };
 
 use crate::{
@@ -36,6 +37,7 @@ impl<'s> System<'s> for ClientIntroductionSystem {
     type SystemData = (
         Read<'s, EventChannel<ClientNetworkEvent>>,
         Entities<'s>,
+        WriteExpect<'s, EventChannel<EntityDelete>>,
         WriteExpect<'s, TransportResource>,
         ReadExpect<'s, ClientRegistry>,
         ReadExpect<'s, Seed>,
@@ -52,6 +54,7 @@ impl<'s> System<'s> for ClientIntroductionSystem {
         (
             client_net_ec,
             entities,
+            mut entity_delete_channel,
             mut net,
             client_registry,
             seed,
@@ -122,10 +125,8 @@ impl<'s> System<'s> for ClientIntroductionSystem {
                     )
                 }
                 ClientNetworkEvent::ClientDisconnected(client_id) => {
-                    match Self::despawn_player(&entities, &client, client_id) {
-                        Ok(()) => log::debug!("Disconnecting client's player entity [client_id: {:?}], has been removed", client_id),
-                        Err(err) => log::error!("{}", err)
-                    }
+                    log::debug!("Removing disconnecting client's player entity [client_id: {:?}]", client_id);
+                    Self::despawn_player(&entities, &mut entity_delete_channel, &client, client_id);
                 }
             }
         }
@@ -194,25 +195,16 @@ impl ClientIntroductionSystem {
 
     fn despawn_player(
         entities: &Entities<'_>,
+        entity_delete_channel: &mut EventChannel<EntityDelete>,
         client_storage: &ReadStorage<'_, components::Client>,
         client_id: &ClientID,
-    ) -> Result<()> {
+    ) {
         for (entity, client) in (&*entities, client_storage).join() {
             if client.id() == client_id {
-                return match entities.delete(entity) {
-                    Ok(_) =>  Ok(()),
-                    Err(err) => Err(anyhow::anyhow!(
-                        "Disconnecting client's player entity [client_id: {:?}] could not be removed. {}",
-                        client_id,
-                        err
-                    ))
-                };
+                entity_delete_channel.single_write(EntityDelete{entity_id: entity});
+                return;
             }
         }
-
-        Err(anyhow::anyhow!(
-        "Disconnecting client's player entity [client_id: {:?}] not found thus could not be removed",
-        client_id))
     }
 
     fn has_collision(
