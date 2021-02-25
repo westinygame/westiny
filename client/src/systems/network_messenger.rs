@@ -1,8 +1,9 @@
 use amethyst::{
     derive::SystemDesc,
-    ecs::{System, SystemData, Read, Write},
+    ecs::{System, SystemData, Read, Write, ReadExpect, WriteStorage},
     network::simulation::NetworkSimulationEvent,
     shrev::{ReaderId, EventChannel},
+    ui::{UiText},
 };
 
 use anyhow::Result;
@@ -13,6 +14,8 @@ use westiny_common::{
     network::{PacketType, EntityState, EntityHealth, NetworkEntityDelete},
     deserialize,
 };
+use crate::resources::{Hud};
+
 
 #[derive(SystemDesc, new)]
 #[system_desc(name(NetworkMessageReceiverSystemDesc))]
@@ -27,19 +30,27 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
         Write<'s, EventChannel<Vec<EntityState>>>,
         Write<'s, EventChannel<EntityHealth>>,
         Write<'s, EventChannel<NetworkEntityDelete>>,
+        ReadExpect<'s, Hud>,
+        WriteStorage<'s, UiText>,
     );
 
-    fn run(&mut self, (net_event_ch, mut entity_state_update_channel, mut entity_health_channel, mut entity_delete_channel): Self::SystemData) {
+    fn run(&mut self, (net_event_ch, mut entity_state_update_channel, mut entity_health_channel, mut entity_delete_channel, hud, mut ui_texts): Self::SystemData) {
         for event in net_event_ch.read(&mut self.reader) {
             match event {
                 NetworkSimulationEvent::Connect(addr) => log::debug!(
                     "Connect event from {:?}",
                     addr
                 ),
-                NetworkSimulationEvent::Disconnect(addr) => log::debug!(
-                    "Disconnect event from {:?}",
-                    addr
-                ),
+                NetworkSimulationEvent::Disconnect(addr) => {
+                    log::debug!(
+                        "Disconnect event from {:?}",
+                        addr
+                        );
+
+                    if let Some(messages) = ui_texts.get_mut(hud.messages) {
+                        messages.text = "Server is unavailable!".to_string();
+                    }
+                },
                 NetworkSimulationEvent::Message(addr, payload) => {
                     match self.process_payload(addr,
                                                payload,

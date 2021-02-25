@@ -5,6 +5,7 @@ use amethyst::assets::{Loader};
 
 pub struct Hud {
     pub health: Entity,
+    pub messages: Entity
 }
 
 pub fn initialize_hud(world: &mut World)
@@ -32,7 +33,30 @@ pub fn initialize_hud(world: &mut World)
                     Anchor::Middle)
             ).build();
 
-    world.insert(Hud{ health: health });
+    let message_panel_transform = UiTransform::new(
+        "MessagePanel".to_string(),
+        Anchor::TopLeft,
+        Anchor::TopLeft,
+        10., -10., 1.,
+        250., 50.,
+        );
+
+    let message_panel = world.create_entity()
+        .with(message_panel_transform)
+        .with(UiText::new(
+                font.clone(),
+                "".to_string(),
+                [1., 1., 1., 0.8], // color
+                18., // font size
+                LineMode::Wrap,
+                Anchor::TopLeft)
+            ).build();
+
+    world.insert(Hud{
+        health: health,
+        messages: message_panel
+    });
+
 }
 
 pub fn format_health(health: u16) -> String
