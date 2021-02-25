@@ -6,14 +6,16 @@ use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 use std::time::Duration;
 use amethyst::core::frame_limiter::FrameRateLimitStrategy;
-use westiny_common::resources::ServerAddress;
+use westiny_common::{
+    resources::ServerAddress,
+    events::{WestinyEvent, WestinyEventReader},
+};
 use westiny_server::systems as srv_systems;
 
 mod systems;
 mod entities;
 mod resources;
 mod states;
-mod events;
 mod utilities;
 
 #[cfg(test)]
@@ -69,7 +71,7 @@ fn main() -> amethyst::Result<()> {
     let frame_limit = 60;
 
     let mut game =
-        CoreApplication::<_, events::WestinyEvent, events::WestinyEventReader>::build(
+        CoreApplication::<_, WestinyEvent, WestinyEventReader>::build(
             resources_dir.clone(),
             states::server_states::ServerState::new(resources_dir),
         )?

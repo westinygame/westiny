@@ -1,13 +1,15 @@
 use amethyst::prelude::*;
 use crate::{
-    events::{AppEvent, WestinyEvent},
     systems,
     utilities::*,
 };
 use amethyst::shred::{Dispatcher, DispatcherBuilder};
 use amethyst::core::ecs::WorldExt;
 use amethyst::core::ArcThreadPool;
-use westiny_common::resources::ServerAddress;
+use westiny_common::{
+    resources::ServerAddress,
+    events::{AppEvent, WestinyEvent},
+};
 
 pub struct ConnectState {
     dispatcher: Option<Dispatcher<'static, 'static>>,
@@ -70,6 +72,10 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
                             Trans::Quit
                         }
                     }
+                }
+                AppEvent::Disconnect => {
+                    log::error!("Invalid Disconnect event received in ConnectState");
+                    Trans::Quit
                 }
             }
         } else {

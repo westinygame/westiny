@@ -14,12 +14,12 @@ use serde::Deserialize;
 use amethyst::input::InputBundle;
 
 use westiny_client::MovementBindingTypes;
+use westiny_common::events::{WestinyEvent, WestinyEventReader};
 
 mod systems;
 mod entities;
 mod resources;
 mod states;
-mod events;
 mod utilities;
 
 #[cfg(test)]
@@ -75,7 +75,7 @@ fn main() -> amethyst::Result<()> {
         ;
 
     let mut game =
-        CoreApplication::<_, events::WestinyEvent, events::WestinyEventReader>::build(
+        CoreApplication::<_, WestinyEvent, WestinyEventReader>::build(
             &resources_dir,
             states::connection::ConnectState::new(&resources_dir),
         )?.build(game_data)?;

@@ -13,9 +13,9 @@ use derive_new::new;
 use westiny_common::{
     network::{PacketType, EntityState, EntityHealth, NetworkEntityDelete},
     deserialize,
+    events::AppEvent,
 };
 use crate::resources::{Hud};
-
 
 #[derive(SystemDesc, new)]
 #[system_desc(name(NetworkMessageReceiverSystemDesc))]
@@ -27,6 +27,7 @@ pub struct NetworkMessageReceiverSystem {
 impl<'s> System<'s> for NetworkMessageReceiverSystem {
     type SystemData = (
         Read<'s, EventChannel<NetworkSimulationEvent>>,
+        Write<'s, EventChannel<AppEvent>>,
         Write<'s, EventChannel<Vec<EntityState>>>,
         Write<'s, EventChannel<EntityHealth>>,
         Write<'s, EventChannel<NetworkEntityDelete>>,
@@ -34,7 +35,7 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
         WriteStorage<'s, UiText>,
     );
 
-    fn run(&mut self, (net_event_ch, mut entity_state_update_channel, mut entity_health_channel, mut entity_delete_channel, hud, mut ui_texts): Self::SystemData) {
+    fn run(&mut self, (net_event_ch, mut app_event, mut entity_state_update_channel, mut entity_health_channel, mut entity_delete_channel, hud, mut ui_texts): Self::SystemData) {
         for event in net_event_ch.read(&mut self.reader) {
             match event {
                 NetworkSimulationEvent::Connect(addr) => log::debug!(
@@ -50,6 +51,7 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
                     if let Some(messages) = ui_texts.get_mut(hud.messages) {
                         messages.text = "Server is unavailable!".to_string();
                     }
+                    app_event.single_write(AppEvent::Disconnect);
                 },
                 NetworkSimulationEvent::Message(addr, payload) => {
                     match self.process_payload(addr,

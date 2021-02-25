@@ -7,7 +7,7 @@ use amethyst::{
 use amethyst::core::ecs::{Read, Write};
 use amethyst::core::ecs::shrev::EventChannel;
 use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
-use crate::events::AppEvent;
+use westiny_common::events::AppEvent;
 use amethyst::core::Time;
 use std::time::Duration;
 use westiny_common::{network, deserialize, serialize};

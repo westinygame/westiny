@@ -1,4 +1,4 @@
-use crate::events::WestinyEvent;
+use westiny_common::events::WestinyEvent;
 use amethyst::prelude::*;
 use amethyst::core::Time;
 use westiny_server::resources::{ClientRegistry, NetworkIdSupplier};

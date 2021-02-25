@@ -13,12 +13,13 @@ use amethyst::core::{
     },
 };
 use amethyst::derive::EventReader;
-use westiny_common::network;
+use crate::network;
 
 #[derive(Clone, Debug)]
 #[cfg_attr(test, derive(PartialEq))]
 pub enum AppEvent {
     Connection(network::Result<network::ClientInitialData>),
+    Disconnect,
 }
 
 #[derive(Clone, Debug, EventReader)]

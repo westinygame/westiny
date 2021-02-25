@@ -26,9 +26,11 @@ use westiny_client::systems::{
 };
 use westiny_common::systems::{HealthUpdateSystemDesc};
 use westiny_client::resources::{initialize_audio, initialize_hud, initialize_sprite_resource, SpriteResource};
-use crate::events::WestinyEvent;
 use crate::systems;
-use westiny_common::network::ClientInitialData;
+use westiny_common::{
+    events::{AppEvent, WestinyEvent},
+    network::ClientInitialData,
+};
 use amethyst::renderer::SpriteRender;
 use westiny_common::resources::map::build_map;
 
@@ -127,9 +129,19 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         _data: StateData<'_, GameData<'_, '_>>,
         event: WestinyEvent
     ) -> Trans<GameData<'static, 'static>, WestinyEvent> {
-        if let WestinyEvent::EngineEvent(StateEvent::Window(event)) = &event {
-            if is_close_requested(event) || is_key_down(&event, VirtualKeyCode::Escape) {
-                return Trans::Quit;
+        match event {
+            WestinyEvent::EngineEvent(engine_event) => {
+                if let StateEvent::Window(event) = engine_event {
+                    if is_close_requested(&event) || is_key_down(&event, VirtualKeyCode::Escape) {
+                        return Trans::Quit;
+                    }
+                }
+            }
+            WestinyEvent::App(app_event) => {
+                if let AppEvent::Disconnect = &app_event
+                {
+                    return Trans::Switch(Box::new(super::connection::ConnectState::new(&self.resource_dir)));
+                }
             }
         }
 
@@ -142,6 +154,12 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         }
         data.data.update(&data.world);
         Trans::None
+    }
+
+    fn on_stop(&mut self, data: StateData<GameData<'_, '_>>) {
+        // This is a quite brute way to wipe out the scene.
+        data.world.delete_all();
+        data.world.maintain();
     }
 }
 
