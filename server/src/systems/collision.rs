@@ -4,7 +4,7 @@ use amethyst::ecs::prelude::Join;
 
 use westiny_common::collision::{Collider, check_body_collision, check_projectile_collision};
 use westiny_common::components::{Velocity, BoundingCircle, Projectile};
-use crate::resources::{Collision, Collisions, ProjectileCollision, ProjectileCollisions};
+use crate::resources::collision::{Collision, Collisions, ProjectileCollision, ProjectileCollisions};
 use westiny_common::resources::EntityDelete;
 use amethyst::shrev::EventChannel;
 

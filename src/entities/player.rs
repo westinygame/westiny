@@ -3,7 +3,7 @@ use amethyst::core::Transform;
 use amethyst::prelude::*;
 use log::info;
 
-use westiny_common::components::{BoundingCircle, Input, Health, Player, Velocity, weapon::*, NetworkId};
+use westiny_common::components::{Input, Health, Player, NetworkId};
 use westiny_client::resources::SpriteResource;
 use westiny_common::resources::SpriteId;
 
@@ -16,18 +16,6 @@ pub fn initialize_player(world: &mut World,
     let mut transform = Transform::default();
     transform.set_translation_xyz(start_pos.x, start_pos.y, 0.0);
 
-    // TODO define these values in RON resource files.
-    let revolver = WeaponDetails {
-        damage: 5.0,
-        distance: 120.0,
-        fire_rate: 7.2,
-        magazine_size: 6,
-        reload_time: 1.0,
-        spread: 2.0,
-        shot: Shot::Single,
-        bullet_speed: 200.0
-    };
-
     world.register::<Input>();
     world.register::<Health>();
 
@@ -39,9 +27,6 @@ pub fn initialize_player(world: &mut World,
         .with(Player)
         .with(Health(100))
         .with(Input::default())
-        .with(Velocity::default())
-        .with(Weapon::new(revolver))
-        .with(BoundingCircle{radius: 8.0})
         .build();
 
     info!("Player created.");

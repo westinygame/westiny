@@ -12,10 +12,9 @@ use amethyst::{
     window::ScreenDimensions,
 };
 use std::path::PathBuf;
+use amethyst::renderer::SpriteRender;
 
-use crate::entities::{initialize_tilemap, initialize_player};
 use westiny_client::MovementBindingTypes;
-use crate::resources::{Collisions, ProjectileCollisions};
 use westiny_common::resources::{AudioQueue, Seed};
 use westiny_client::systems::{
     AudioPlayerSystem,
@@ -23,18 +22,20 @@ use westiny_client::systems::{
     NetworkEntityStateUpdateSystemDesc,
     NetworkEntityDeleteSystemDesc,
     HudUpdateSystem,
+    InputStateSystem,
+    CameraMovementSystem,
+    CursorPosUpdateSystem,
 };
 use westiny_common::systems::{HealthUpdateSystemDesc};
 use westiny_client::resources::{initialize_audio, initialize_hud, initialize_sprite_resource, SpriteResource};
-use crate::systems;
 use westiny_common::{
     events::{AppEvent, WestinyEvent},
     network::ClientInitialData,
 };
-use amethyst::renderer::SpriteRender;
 use westiny_common::resources::map::build_map;
+use westiny_common::components::{weapon::Weapon, BoundingCircle};
 
-use westiny_common::components::{weapon::Weapon};
+use crate::entities::{initialize_tilemap, initialize_player};
 
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState {
@@ -85,21 +86,15 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         let health_update_system = HealthUpdateSystemDesc::default().build(&mut world);
 
         let mut dispatcher = dispatcher_builder
-            // .with(systems::InputDebugSystem::default(), "input_debug_system", &["input_system"])
             .with(network_message_receiver_sys, "network_message_receiver", &[])
             .with(network_entity_update_sys, "network_entity_update", &[])
-            .with(systems::InputStateSystem, "input_state_system", &["input_system"])
-            .with(systems::CameraMovementSystem, "camera_movement_system", &["input_system"])
-            .with(systems::PlayerMovementSystem, "player_movement_system", &["input_state_system"])
-            .with(systems::PhysicsSystem, "physics_system", &["player_movement_system"])
-            .with(systems::CollisionSystem, "collision_system", &["physics_system"])
-            .with(systems::CollisionHandlerForObstacles, "collision_handler_for_obstacles", &["collision_system"])
-            .with(systems::ProjectileCollisionSystem, "projectile_collision_system", &["collision_system"])
-            .with(systems::CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"])
+            .with(InputStateSystem, "input_state_system", &["input_system"])
+            .with(CameraMovementSystem, "camera_movement_system", &["input_system"])
+            .with(CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"])
             .with(health_update_system, "health_update", &["network_message_receiver"])
             .with(entity_delete_system, "entity_delete", &["network_entity_update"])
             .with(AudioPlayerSystem, "audio_player_system", &["cursor_pos_update_system"])
-            .with(HudUpdateSystem, "hud_update_system", &["cursor_pos_update_system"])
+            .with(HudUpdateSystem, "hud_update_system", &["health_update"])
             .with_pool((*world.read_resource::<ArcThreadPool>()).clone())
             .build();
         dispatcher.setup(world);
@@ -108,13 +103,12 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         let dimensions = (*world.read_resource::<ScreenDimensions>()).clone();
 
-        world.insert(Collisions::default());
-        world.insert(ProjectileCollisions::default());
         world.insert(AudioQueue::default());
 
         init_camera(world, &dimensions);
 
         world.register::<Weapon>();
+        world.register::<BoundingCircle>();
         let init_data = (*world.read_resource::<ClientInitialData>()).clone();
         initialize_player(&mut world, &sprite_resource, init_data.player_network_id, init_data.initial_pos);
 

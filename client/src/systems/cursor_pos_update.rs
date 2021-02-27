@@ -5,11 +5,11 @@ use amethyst::ecs::prelude::Join;
 use amethyst::core::Transform;
 use amethyst::core::math::{Point2, Vector2};
 use amethyst::core::geometry::Plane;
-
 use amethyst::window::ScreenDimensions;
 use amethyst::renderer::camera::Camera;
-use crate::resources::CursorPosition;
-use westiny_client::MovementBindingTypes;
+
+use westiny_common::resources::CursorPosition;
+use crate::MovementBindingTypes;
 
 #[derive(SystemDesc, Default)]
 pub struct CursorPosUpdateSystem;

@@ -3,12 +3,12 @@ use amethyst::ecs::prelude::Join;
 use amethyst::input::InputHandler;
 use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
 
-use westiny_common::components::{InputFlags, Input};
 
-use crate::resources::CursorPosition;
-use westiny_client::{MovementBindingTypes, ActionBinding};
-use westiny_client::resources::StreamId;
-use westiny_common::resources::ServerAddress;
+use crate::{MovementBindingTypes, ActionBinding};
+use crate::resources::StreamId;
+
+use westiny_common::components::{InputFlags, Input};
+use westiny_common::resources::{ServerAddress, CursorPosition};
 use westiny_common::{network, serialize};
 
 fn update_input_keys(input: &mut Input, handler: &InputHandler<MovementBindingTypes>) {
