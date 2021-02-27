@@ -15,8 +15,7 @@ use amethyst::core::{
 use amethyst::derive::EventReader;
 use crate::network;
 
-#[derive(Clone, Debug)]
-#[cfg_attr(test, derive(PartialEq))]
+#[derive(Clone, Debug, PartialEq)]
 pub enum AppEvent {
     Connection(network::Result<network::ClientInitialData>),
     Disconnect,
