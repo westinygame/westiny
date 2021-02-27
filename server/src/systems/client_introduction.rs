@@ -9,7 +9,6 @@ use amethyst::{
     shrev::{EventChannel, ReaderId},
 };
 
-use anyhow::Result;
 use derive_new::new;
 
 use westiny_common::{
