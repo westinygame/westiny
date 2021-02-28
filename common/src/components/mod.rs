@@ -7,6 +7,7 @@ pub use health::Health;
 pub use distance_limit::DistanceLimit;
 pub use projectile::Projectile;
 pub use damage::Damage;
+pub use eliminate::Eliminated;
 
 
 mod input;
@@ -19,3 +20,4 @@ mod health;
 mod distance_limit;
 mod projectile;
 mod damage;
+mod eliminate;

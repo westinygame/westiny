@@ -9,27 +9,30 @@ use westiny_common::components::{NetworkId, Health};
 use westiny_common::network::{EntityHealth, PacketType};
 use crate::resources::{DamageEvent, ClientRegistry, StreamId, ClientID};
 use amethyst::core::ecs::{ReadExpect, WriteExpect, Entity};
-use crate::components::Client;
+use crate::components::{Client, Eliminated};
 use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
 use westiny_common::serialize;
 
 use anyhow;
+use amethyst::core::Time;
 
 #[derive(SystemDesc, new)]
-#[system_desc(name(DamageSystemDesc))]
-pub struct DamageSystem {
+#[system_desc(name(HealthSystemDesc))]
+pub struct HealthSystem {
     #[system_desc(event_channel_reader)]
     reader: ReaderId<DamageEvent>,
 }
 
-impl<'s> System<'s> for DamageSystem {
+impl<'s> System<'s> for HealthSystem {
     type SystemData = (
         Read<'s, EventChannel<DamageEvent>>,
         WriteStorage<'s, Health>,
         ReadStorage<'s, NetworkId>,
         ReadStorage<'s, Client>,
+        WriteStorage<'s, Eliminated>,
         ReadExpect<'s, ClientRegistry>,
         WriteExpect<'s, TransportResource>,
+        ReadExpect<'s, Time>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -38,18 +41,26 @@ impl<'s> System<'s> for DamageSystem {
             mut healths,
             net_ids,
             clients,
+            mut eliminates,
             client_registry,
             mut transport,
+            time,
         ) = data;
 
         for damage_event in damage_event_channel.read(&mut self.reader) {
             if let Some(health) = healths.get_mut(damage_event.target) {
-                *health -= damage_event.damage;
+                let health_drained = health.0 < damage_event.damage.0;
+                if health_drained {
+                    healths.remove(damage_event.target);
+                    eliminates.insert(damage_event.target, Eliminated { elimination_time_sec: time.absolute_time_seconds() });
+                } else {
+                    *health -= damage_event.damage;
 
-                if let Some(client) = clients.get(damage_event.target) {
-                    log::debug!("Client [id: {:?}] took {} damage", client.id, damage_event.damage.0);
-                    if let Err(err) = DamageSystem::notify_client(&net_ids, &client_registry, &mut transport, damage_event.target, health.clone(), &client.id) {
-                        log::error!("Error while sending Health update to client: {}", err);
+                    if let Some(client) = clients.get(damage_event.target) {
+                        log::debug!("Client [id: {:?}] took {} damage", client.id, damage_event.damage.0);
+                        if let Err(err) = DamageSystem::notify_client(&net_ids, &client_registry, &mut transport, damage_event.target, health.clone(), &client.id) {
+                            log::error!("Error while sending Health update to client: {}", err);
+                        }
                     }
                 }
             }
