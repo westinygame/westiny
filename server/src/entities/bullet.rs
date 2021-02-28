@@ -4,7 +4,7 @@ use amethyst::{
     ecs::prelude::{Builder, Entities, LazyUpdate, ReadExpect},
 };
 
-use westiny_common::components::{Velocity, weapon::WeaponDetails, Projectile, DistanceLimit, NetworkId};
+use westiny_common::components::{Velocity, weapon::WeaponDetails, Projectile, DistanceLimit, NetworkId, Damage};
 
 pub fn spawn_bullet(network_id: NetworkId,
                     transform: Transform,
@@ -23,5 +23,6 @@ pub fn spawn_bullet(network_id: NetworkId,
         .with(velocity)
         .with(Projectile::default())
         .with(distance_limit)
+        .with(Damage(weapon_details.damage))
         .build();
 }

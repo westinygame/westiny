@@ -6,6 +6,7 @@ pub use velocity::Velocity;
 pub use health::Health;
 pub use distance_limit::DistanceLimit;
 pub use projectile::Projectile;
+pub use damage::Damage;
 
 
 mod input;
@@ -17,3 +18,4 @@ pub mod weapon;
 mod health;
 mod distance_limit;
 mod projectile;
+mod damage;

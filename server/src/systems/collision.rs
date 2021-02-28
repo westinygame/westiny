@@ -101,18 +101,30 @@ impl<'s> System<'s> for ProjectileCollisionSystem {
     }
 }
 
+use crate::resources::DamageEvent;
+use crate::components;
+
 pub struct ProjectileCollisionHandler;
 
 impl<'s> System<'s> for ProjectileCollisionHandler {
     type SystemData = (
         ReadExpect<'s, ProjectileCollisions>,
-        Write<'s, EventChannel<EntityDelete>>
+        Write<'s, EventChannel<EntityDelete>>,
+        Write<'s, EventChannel<DamageEvent>>,
+        ReadStorage<'s, components::Health>,
+        ReadStorage<'s, components::Damage>,
         );
 
     // Here Projectile components are not explicitly filtered. ProjectCollisionSystem is expected
     // to put proper entities in `collision.projectile`
-    fn run(&mut self, (collisions, mut entity_delete_channel): Self::SystemData) {
+    fn run(&mut self, (collisions, mut entity_delete_channel, mut damage_event, healths, damages): Self::SystemData) {
+
         for collision in &collisions.0 {
+            if healths.contains(collision.target) {
+                if let Some(damage) = damages.get(collision.projectile) {
+                    damage_event.single_write(DamageEvent { damage: *damage, target: collision.target })
+            }}
+
             entity_delete_channel.single_write(EntityDelete{entity_id: collision.projectile})
         }
 

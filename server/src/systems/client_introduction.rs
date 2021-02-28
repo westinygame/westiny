@@ -164,7 +164,7 @@ impl ClientIntroductionSystem {
 
         // TODO define these values in RON resource files. PREFAB?
         let revolver = weapon::WeaponDetails {
-            damage: 5.0,
+            damage: 5,
             distance: 120.0,
             fire_rate: 7.2,
             magazine_size: 6,
@@ -183,6 +183,7 @@ impl ClientIntroductionSystem {
             .with(network_id)
             .with(components::Player)
             .with(transform)
+            .with(components::Health(100))
             .with(components::Input::default())
             .with(components::Velocity::default())
             .with(components::weapon::Weapon::new(revolver))

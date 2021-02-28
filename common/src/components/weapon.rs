@@ -23,7 +23,7 @@ pub struct WeaponDetails
     /// When magazine_size > 0, amount of time required to reload [seconds]
     pub reload_time: f32,
     /// Damage caused by single bullet
-    pub damage: f32,
+    pub damage: u16,
     /// Bullet spread [degree]
     /// 0 is the perfect gun, always shooting where pointed
     /// 10 is a dumb shotgun

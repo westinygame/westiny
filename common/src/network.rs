@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 use derive_new::new;
 use std::fmt::{Display, Debug, Formatter};
-use crate::components::{Input, NetworkId};
+use crate::components::{Input, NetworkId, Health};
 use amethyst::core::math::Point2;
 use crate::resources::Seed;
 
@@ -47,7 +47,7 @@ pub struct NetworkEntityDelete
 pub struct EntityHealth
 {
     pub network_id: NetworkId,
-    pub health: u16,
+    pub health: Health,
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize, Debug, PartialEq)]

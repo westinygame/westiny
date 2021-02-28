@@ -65,6 +65,7 @@ fn main() -> amethyst::Result<()> {
         .with(srv_systems::ProjectileCollisionHandler, "projectile_collision_handler", &["projectile_collision"])
         .with(srv_systems::CollisionHandlerForObstacles, "collision_handler", &["collision"])
         .with(srv_systems::ShooterSystem, "shooter", &["command_transformer"])
+        .with_system_desc(srv_systems::DamageSystemDesc::default(), "damage", &["projectile_collision_handler"])
         .with_system_desc(srv_systems::EntityDeleteBroadcasterSystemDesc::default(), "delete_broadcaster", &["collision_handler"])
         ;
 

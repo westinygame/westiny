@@ -27,11 +27,11 @@ impl<'s> System<'s> for HealthUpdateSystem {
     fn run(&mut self, (health_updates_channel, network_ids, mut healths): Self::SystemData) {
         let updates: HashMap<_, _> = health_updates_channel.read(&mut self.reader).map(|update| (update.network_id, update.health)).collect();
 
-        for (net_id, Health(health)) in (&network_ids, &mut healths).join() {
-            if let Some(new_health) = updates.get(net_id)
+        for (net_id, health) in (&network_ids, &mut healths).join() {
+            if let Some(&new_health) = updates.get(net_id)
             {
                 log::debug!("Health updated net_id={:?}, health=[{:?} -> {:?}]", net_id, health, new_health);
-                *health = *new_health;
+                *health = new_health;
             }
         }
     }
