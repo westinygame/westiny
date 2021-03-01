@@ -1,6 +1,6 @@
-use amethyst::core::Time;
 use amethyst::core::ecs::{Component, VecStorage};
 
+#[derive(Copy, Clone, Debug)]
 pub struct Eliminated {
     pub elimination_time_sec: f64,
 }

@@ -52,13 +52,15 @@ impl<'s> System<'s> for HealthSystem {
                 let health_drained = health.0 < damage_event.damage.0;
                 if health_drained {
                     healths.remove(damage_event.target);
-                    eliminates.insert(damage_event.target, Eliminated { elimination_time_sec: time.absolute_time_seconds() });
+                    if let Err(err) = eliminates.insert(damage_event.target, Eliminated { elimination_time_sec: time.absolute_time_seconds() }) {
+                        log::error!("Component 'Eliminated' could not be inseted to entity. error: {:?}", err);
+                    }
                 } else {
                     *health -= damage_event.damage;
 
                     if let Some(client) = clients.get(damage_event.target) {
                         log::debug!("Client [id: {:?}] took {} damage", client.id, damage_event.damage.0);
-                        if let Err(err) = DamageSystem::notify_client(&net_ids, &client_registry, &mut transport, damage_event.target, health.clone(), &client.id) {
+                        if let Err(err) = HealthSystem::notify_client(&net_ids, &client_registry, &mut transport, damage_event.target, health.clone(), &client.id) {
                             log::error!("Error while sending Health update to client: {}", err);
                         }
                     }
@@ -68,7 +70,7 @@ impl<'s> System<'s> for HealthSystem {
     }
 }
 
-impl DamageSystem {
+impl HealthSystem {
     fn notify_client(net_ids: &ReadStorage<'_, NetworkId>,
                      client_registry: &ClientRegistry,
                      transport: &mut TransportResource,

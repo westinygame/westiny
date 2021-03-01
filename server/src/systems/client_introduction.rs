@@ -1,11 +1,10 @@
 use amethyst::{
-    core::{math::Point2, Transform},
+    core::math::Point2,
     derive::SystemDesc,
     ecs::{
-        Entities, Join, LazyUpdate, Read, ReadExpect, ReadStorage, System, SystemData, WriteExpect,
+        Entities, Join, Read, ReadExpect, ReadStorage, System, SystemData, WriteExpect,
     },
     network::simulation::{DeliveryRequirement, TransportResource, UrgencyRequirement},
-    prelude::Builder,
     shrev::{EventChannel, ReaderId},
 };
 
@@ -14,7 +13,6 @@ use derive_new::new;
 use westiny_common::{
     network::{ClientInitialData, PacketType},
     serialize,
-    collision,
     resources::{EntityDelete},
 };
 
@@ -24,6 +22,7 @@ use crate::{
     resources::{ClientID, ClientNetworkEvent, ClientRegistry, NetworkIdSupplier},
 };
 use westiny_common::resources::Seed;
+use crate::systems::SpawnPlayerEvent;
 
 #[derive(SystemDesc, new)]
 #[system_desc(name(ClientIntroductionSystemDesc))]
@@ -41,11 +40,8 @@ impl<'s> System<'s> for ClientIntroductionSystem {
         ReadExpect<'s, ClientRegistry>,
         ReadExpect<'s, Seed>,
         WriteExpect<'s, NetworkIdSupplier>,
-        ReadExpect<'s, LazyUpdate>,
         ReadStorage<'s, components::Client>,
-        ReadStorage<'s, components::NetworkId>,
-        ReadStorage<'s, Transform>,
-        ReadStorage<'s, components::BoundingCircle>,
+        WriteExpect<'s, EventChannel<SpawnPlayerEvent>>,
     );
 
     fn run(
@@ -58,11 +54,8 @@ impl<'s> System<'s> for ClientIntroductionSystem {
             client_registry,
             seed,
             mut net_id_supplier,
-            lazy_update,
             client,
-            network_ids,
-            transforms,
-            boundings,
+            mut spawn_player_event_channel
         ): Self::SystemData,
     ) {
         // This vector is used for deduplicating ClientConnected events within one frame to avoid
@@ -87,18 +80,14 @@ impl<'s> System<'s> for ClientIntroductionSystem {
                         );
                         *net_id
                     } else {
-                        let initial_pos = Self::find_spawn_pos(&transforms, &boundings);
-                        let net_id = Self::spawn_player(
-                            &initial_pos,
-                            &entities,
-                            client_id,
-                            &client,
-                            &network_ids,
-                            &mut net_id_supplier,
-                            &lazy_update,
-                        );
+                        let net_id = net_id_supplier.next(EntityType::Player);
+                        spawn_player_event_channel.single_write(SpawnPlayerEvent {
+                            client: components::Client { id: *client_id },
+                            network_id: net_id,
+                        });
+
                         log::debug!(
-                            "Player entity spawned for {}, {:?}, {:?}",
+                            "Player entity spawn requested for {}, {:?}, {:?}",
                             client_handle.player_name,
                             client_id,
                             net_id
@@ -133,66 +122,6 @@ impl<'s> System<'s> for ClientIntroductionSystem {
 }
 
 impl ClientIntroductionSystem {
-    fn spawn_player(
-        initial_pos: &Point2<f32>,
-        entities: &Entities<'_>,
-        client_id: &ClientID,
-        clients: &ReadStorage<'_, components::Client>,
-        network_ids: &ReadStorage<'_, components::NetworkId>,
-        net_id_supplier: &mut NetworkIdSupplier,
-        lazy_update: &LazyUpdate,
-    ) -> components::NetworkId {
-        use components::weapon;
-
-        if let Some((cli, net_id)) = (clients, network_ids)
-            .join()
-            .find(|(&cli, _)| &cli.id == client_id)
-        {
-            log::info!(
-                "{:?} already connected, its entity already spawned: {:?}",
-                cli.id,
-                net_id
-            );
-            return *net_id;
-        }
-
-        let transform = {
-            let mut t = Transform::default();
-            t.set_translation_xyz(initial_pos.x, initial_pos.y, 0.0);
-            t
-        };
-
-        // TODO define these values in RON resource files. PREFAB?
-        let revolver = weapon::WeaponDetails {
-            damage: 5,
-            distance: 120.0,
-            fire_rate: 7.2,
-            magazine_size: 6,
-            reload_time: 1.0,
-            spread: 2.0,
-            shot: weapon::Shot::Single,
-            bullet_speed: 200.0,
-        };
-
-        let client = components::Client::new(*client_id);
-        let network_id = net_id_supplier.next(EntityType::Player);
-
-        lazy_update
-            .create_entity(entities)
-            .with(client)
-            .with(network_id)
-            .with(components::Player)
-            .with(transform)
-            .with(components::Health(100))
-            .with(components::Input::default())
-            .with(components::Velocity::default())
-            .with(components::weapon::Weapon::new(revolver))
-            .with(components::BoundingCircle { radius: 8.0 })
-            .build();
-
-        network_id
-    }
-
     fn despawn_player(
         entities: &Entities<'_>,
         entity_delete_channel: &mut EventChannel<EntityDelete>,
@@ -205,57 +134,6 @@ impl ClientIntroductionSystem {
                 return;
             }
         }
-    }
-
-    fn has_collision(
-        transform_storage: &ReadStorage<'_, Transform>,
-        bounding_storage: &ReadStorage<'_, components::BoundingCircle>,
-        collider: &collision::Collider
-    ) -> bool {
-        for (transform, bound) in (transform_storage, bounding_storage).join() {
-            if let Some(_) = collision::check_body_collision(
-                collision::Collider{transform, bound},
-                collider.clone())
-            {
-                return true;
-            }
-        }
-        false
-    }
-
-    fn find_spawn_pos(
-        transform_storage: &ReadStorage<'_, Transform>,
-        bounding_storage: &ReadStorage<'_, components::BoundingCircle>
-    ) -> Point2<f32> {
-        // TODO Quick 'n' dirty stuff
-        const MAX_TRIAL_ITERATION: u32 = 1024;
-        const MAP_SIZE: u32 = 64;
-        const TILE_SIZE: u32 = 16;
-        const BOUND: f32 = (MAP_SIZE/2 * TILE_SIZE) as f32;
-        use rand::Rng;
-
-        let candidate_bounding = components::BoundingCircle { radius: 8.0 };
-
-        for _ in 0..MAX_TRIAL_ITERATION {
-            // TODO hardcoded range: should be calculated from map data
-            let x = rand::thread_rng().gen_range(-BOUND .. BOUND);
-            let y = rand::thread_rng().gen_range(-BOUND .. BOUND);
-
-            let candidate_transform = {
-                let mut t = Transform::default();
-                t.set_translation_xyz(x, y, 0.0);
-                t
-            };
-            if !Self::has_collision(
-                transform_storage, bounding_storage,
-                &collision::Collider{transform: &candidate_transform, bound: &candidate_bounding}
-            ) {
-                return Point2::new(x, y);
-            }
-        }
-
-        log::warn!("Could not find a valid spawn place for player! Fallback to (0,0)");
-        Point2::new(0.0, 0.0)
     }
 }
 

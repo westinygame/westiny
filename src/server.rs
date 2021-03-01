@@ -56,7 +56,7 @@ fn main() -> amethyst::Result<()> {
         .with_bundle(LaminarNetworkBundle::new(Some(socket)))?
         .with(srv_systems::EntityStateBroadcasterSystem, "entity_state_broadcaster", &[])
         .with_system_desc(srv_systems::NetworkMessageReceiverSystemDesc::default(), "msg_receiver", &[])
-        .with_system_desc(srv_systems::ClientIntroductionSystemDesc::default(), "player_spawn", &["msg_receiver"])
+        .with_system_desc(srv_systems::ClientIntroductionSystemDesc::default(), "client_intro", &["msg_receiver"])
         .with_system_desc(srv_systems::CommandTransformerSystemDesc::default(), "command_transformer", &["msg_receiver"])
         .with(srv_systems::PlayerMovementSystem, "player_movement", &["command_transformer"])
         .with(srv_systems::PhysicsSystem, "physics", &["player_movement"])
@@ -65,7 +65,10 @@ fn main() -> amethyst::Result<()> {
         .with(srv_systems::ProjectileCollisionHandler, "projectile_collision_handler", &["projectile_collision"])
         .with(srv_systems::CollisionHandlerForObstacles, "collision_handler", &["collision"])
         .with(srv_systems::ShooterSystem, "shooter", &["command_transformer"])
-        .with_system_desc(srv_systems::DamageSystemDesc::default(), "damage", &["projectile_collision_handler"])
+        .with_system_desc(srv_systems::HealthSystemDesc::default(), "health", &["projectile_collision_handler"])
+        .with(srv_systems::DeathSystem, "death", &["health"])
+        .with(srv_systems::RespawnSystem, "respawn", &["death"])
+        .with_system_desc(srv_systems::SpawnSystemDesc::default(), "spawn", &["client_intro", "respawn"])
         .with_system_desc(srv_systems::EntityDeleteBroadcasterSystemDesc::default(), "delete_broadcaster", &["collision_handler"])
         ;
 
