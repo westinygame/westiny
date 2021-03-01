@@ -27,15 +27,15 @@ use westiny_client::systems::{
     CursorPosUpdateSystem,
 };
 use westiny_common::systems::{HealthUpdateSystemDesc};
-use westiny_client::resources::{initialize_audio, initialize_hud, initialize_sprite_resource, SpriteResource};
+use westiny_client::resources::{initialize_audio, initialize_hud, initialize_sprite_resource, SpriteResource, PlayerNetworkId};
 use westiny_common::{
     events::{AppEvent, WestinyEvent},
     network::ClientInitialData,
 };
 use westiny_common::resources::map::build_map;
-use westiny_common::components::{weapon::Weapon, BoundingCircle};
 
-use crate::entities::{initialize_tilemap, initialize_player};
+use crate::entities::initialize_tilemap;
+use westiny_common::components::BoundingCircle;
 
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState {
@@ -107,15 +107,21 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         init_camera(world, &dimensions);
 
-        world.register::<Weapon>();
-        world.register::<BoundingCircle>();
         let init_data = (*world.read_resource::<ClientInitialData>()).clone();
-        initialize_player(&mut world, &sprite_resource, init_data.player_network_id, init_data.initial_pos);
+        world.insert(PlayerNetworkId(init_data.player_network_id));
 
         initialize_tilemap(world, &sprite_resource, Point2::new(0.0, 0.0));
         initialize_audio(world);
+
+        world.register::<BoundingCircle>();
         self.place_objects(&mut world, init_data.seed);
         initialize_hud(world);
+    }
+
+    fn on_stop(&mut self, data: StateData<GameData<'_, '_>>) {
+        // This is a quite brute way to wipe out the scene.
+        data.world.delete_all();
+        data.world.maintain();
     }
 
     fn handle_event(
@@ -148,12 +154,6 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         }
         data.data.update(&data.world);
         Trans::None
-    }
-
-    fn on_stop(&mut self, data: StateData<GameData<'_, '_>>) {
-        // This is a quite brute way to wipe out the scene.
-        data.world.delete_all();
-        data.world.maintain();
     }
 }
 

@@ -1,11 +1,13 @@
-pub mod systems;
-pub mod resources;
-
 use std::fmt;
-use ::serde::{Serialize, Deserialize};
+
+use ::serde::{Deserialize, Serialize};
 use amethyst::input::BindingTypes;
 
 use westiny_common::MoveDirection;
+
+pub mod systems;
+pub mod resources;
+mod entities;
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActionBinding {

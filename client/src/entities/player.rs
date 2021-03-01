@@ -4,10 +4,10 @@ use amethyst::prelude::*;
 use log::info;
 
 use westiny_common::components::{Input, Health, Player, NetworkId};
-use westiny_client::resources::SpriteResource;
+use crate::resources::SpriteResource;
 use westiny_common::resources::SpriteId;
 
-pub fn initialize_player(world: &mut World,
+pub fn initialize_player<B: Builder>(builder: B,
                          sprite_resource: &SpriteResource,
                          network_id: NetworkId,
                          start_pos: Point2<f32>
@@ -16,11 +16,7 @@ pub fn initialize_player(world: &mut World,
     let mut transform = Transform::default();
     transform.set_translation_xyz(start_pos.x, start_pos.y, 0.0);
 
-    world.register::<Input>();
-    world.register::<Health>();
-
-    world
-        .create_entity()
+    builder
         .with(network_id)
         .with(sprite_resource.sprite_render_for(SpriteId::Player))
         .with(transform)

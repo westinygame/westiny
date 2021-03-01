@@ -57,12 +57,11 @@ impl<'s> System<'s> for HealthSystem {
                     }
                 } else {
                     *health -= damage_event.damage;
-
-                    if let Some(client) = clients.get(damage_event.target) {
-                        log::debug!("Client [id: {:?}] took {} damage", client.id, damage_event.damage.0);
-                        if let Err(err) = HealthSystem::notify_client(&net_ids, &client_registry, &mut transport, damage_event.target, health.clone(), &client.id) {
-                            log::error!("Error while sending Health update to client: {}", err);
-                        }
+                }
+                if let Some(client) = clients.get(damage_event.target) {
+                    log::debug!("Client [id: {:?}] took {} damage", client.id, damage_event.damage.0);
+                    if let Err(err) = HealthSystem::notify_client(&net_ids, &client_registry, &mut transport, damage_event.target, health.clone(), &client.id) {
+                        log::error!("Error while sending Health update to client: {}", err);
                     }
                 }
             }

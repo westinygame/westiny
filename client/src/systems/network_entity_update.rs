@@ -5,7 +5,7 @@ use amethyst::{
 };
 use derive_new::new;
 use westiny_common::network::EntityState;
-use amethyst::core::ecs::{WriteStorage, Join, Entities, WriteExpect};
+use amethyst::core::ecs::{WriteStorage, Join, Entities, WriteExpect, LazyUpdate};
 use westiny_common::components::{NetworkId, EntityType};
 use westiny_common::resources::{AudioQueue, SpriteId, SoundId};
 use amethyst::core::Transform;
@@ -30,17 +30,38 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
         WriteStorage<'s, SpriteRender>,
         Entities<'s>,
         ReadExpect<'s, resources::SpriteResource>,
-        WriteExpect<'s, AudioQueue>
+        WriteExpect<'s, AudioQueue>,
+        ReadExpect<'s, resources::PlayerNetworkId>,
+        Read<'s, LazyUpdate>,
     );
 
-    fn run(&mut self, (events, mut network_ids, mut transforms, mut sprite_renders, entities, sprite_resource, mut audio): Self::SystemData) {
+    fn run(&mut self,
+           (
+               events,
+               mut network_ids,
+               mut transforms,
+               mut sprite_renders,
+               entities,
+               sprite_resource,
+               mut audio,
+               player_net_id,
+               lazy,
+           ): Self::SystemData) {
         let mut entity_states: HashMap<_, _> = events.read(&mut self.reader).flat_map(|vec| vec.iter()).map(|entity_state| (entity_state.network_id, entity_state)).collect();
+
+
 
         for (net_id, transform) in (&network_ids, &mut transforms).join() {
             if let Some(state) = entity_states.get(net_id) {
                 update_transform(transform, &state);
                 entity_states.remove(&net_id);
             }
+        }
+
+        // if it is this player
+        if let Some(&new_state) = entity_states.get(&player_net_id.0) {
+            crate::entities::player::initialize_player(lazy.create_entity(&entities), &sprite_resource, player_net_id.0, new_state.position.clone());
+            entity_states.remove(&player_net_id.0);
         }
 
         for (net_id, entity_state) in entity_states {
