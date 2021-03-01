@@ -40,6 +40,7 @@ impl<'s> System<'s> for ClientIntroductionSystem {
         ReadExpect<'s, ClientRegistry>,
         ReadExpect<'s, Seed>,
         WriteExpect<'s, NetworkIdSupplier>,
+        ReadStorage<'s, components::NetworkId>,
         ReadStorage<'s, components::Client>,
         WriteExpect<'s, EventChannel<SpawnPlayerEvent>>,
     );
@@ -54,6 +55,7 @@ impl<'s> System<'s> for ClientIntroductionSystem {
             client_registry,
             seed,
             mut net_id_supplier,
+            network_ids,
             client,
             mut spawn_player_event_channel
         ): Self::SystemData,
@@ -81,6 +83,18 @@ impl<'s> System<'s> for ClientIntroductionSystem {
                         *net_id
                     } else {
                         let net_id = net_id_supplier.next(EntityType::Player);
+
+                        if let Some((cli, net_id)) = (&client, &network_ids)
+                            .join()
+                            .find(|(&cli, _)| cli.id == *client_id)
+                        {
+                            log::info!(
+                                "{:?} already connected, its entity already spawned: {:?}",
+                                cli.id,
+                                net_id
+                            );
+                        }
+
                         spawn_player_event_channel.single_write(SpawnPlayerEvent {
                             client: components::Client { id: *client_id },
                             network_id: net_id,
@@ -137,138 +151,4 @@ impl ClientIntroductionSystem {
     }
 }
 
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::components::Client;
-    use amethyst::ecs::prelude::*;
-    use amethyst::ecs::World;
-    use westiny_common::components::{
-        weapon::Weapon, BoundingCircle, Input, NetworkId, Player, Velocity,
-    };
 
-    fn create_testworld() -> World {
-        let mut world = World::new();
-        world.register::<Transform>();
-        world.register::<Client>();
-        world.register::<NetworkId>();
-        world.register::<Player>();
-        world.register::<Input>();
-        world.register::<Velocity>();
-        world.register::<Weapon>();
-        world.register::<BoundingCircle>();
-        world
-    }
-
-    #[test]
-    fn spawn_one_player() {
-        let cli_id = ClientID(42);
-
-        let mut world = create_testworld();
-        let mut net_id_sup = NetworkIdSupplier::new();
-        {
-            let clients = world.read_storage::<Client>();
-            let net_ids = world.read_storage::<NetworkId>();
-            ClientIntroductionSystem::spawn_player(
-                &Point2::new(0.0, 0.0),
-                &world.entities(),
-                &cli_id,
-                &clients,
-                &net_ids,
-                &mut net_id_sup,
-                &world.read_resource::<LazyUpdate>(),
-            );
-        }
-        world.maintain();
-
-        let entities: Vec<_> = world.entities().join().collect();
-        assert_eq!(entities.len(), 1);
-        assert_eq!(
-            world.read_storage::<Client>().get(entities[0]).unwrap().id,
-            cli_id
-        );
-    }
-
-    #[test]
-    fn spawn_two_player() {
-        let mut world = create_testworld();
-        let mut net_id_sup = NetworkIdSupplier::new();
-        {
-            let clients = world.read_storage::<Client>();
-            let net_ids = world.read_storage::<NetworkId>();
-            let first_net_id = ClientIntroductionSystem::spawn_player(
-                &Point2::new(0.0, 0.0),
-                &world.entities(),
-                &ClientID(42),
-                &clients,
-                &net_ids,
-                &mut net_id_sup,
-                &world.read_resource::<LazyUpdate>(),
-            );
-            let second_net_id = ClientIntroductionSystem::spawn_player(
-                &Point2::new(0.0, 0.0),
-                &world.entities(),
-                &ClientID(43),
-                &clients,
-                &net_ids,
-                &mut net_id_sup,
-                &world.read_resource::<LazyUpdate>(),
-            );
-            assert_ne!(first_net_id, second_net_id);
-        }
-        world.maintain();
-
-        use std::collections::BTreeSet;
-
-        let cli_storage = world.read_storage::<Client>();
-        let client_ids: BTreeSet<_> = world
-            .entities()
-            .join()
-            .map(|e| cli_storage.get(e).unwrap().id.0)
-            .collect();
-
-        assert!(client_ids.contains(&42));
-        assert!(client_ids.contains(&43));
-    }
-
-    #[test]
-    fn respawn_player_should_not_create_new_entity() {
-        let mut world = create_testworld();
-        let mut net_id_sup = NetworkIdSupplier::new();
-        let cli_id = ClientID(42);
-
-        let first_net_id;
-        {
-            first_net_id = ClientIntroductionSystem::spawn_player(
-                &Point2::new(0.0, 0.0),
-                &world.entities(),
-                &cli_id,
-                &world.read_storage::<Client>(),
-                &world.read_storage::<NetworkId>(),
-                &mut net_id_sup,
-                &world.read_resource::<LazyUpdate>(),
-            );
-        }
-        world.maintain();
-        {
-            let second_net_id = ClientIntroductionSystem::spawn_player(
-                &Point2::new(0.0, 0.0),
-                &world.entities(),
-                &cli_id,
-                &world.read_storage::<Client>(),
-                &world.read_storage::<NetworkId>(),
-                &mut net_id_sup,
-                &world.read_resource::<LazyUpdate>(),
-            );
-            assert_eq!(first_net_id, second_net_id);
-        }
-        world.maintain();
-
-        let entities: Vec<_> = world.entities().join().collect();
-        assert_eq!(entities.len(), 1);
-        assert_eq!(
-            world.read_storage::<Client>().get(entities[0]).unwrap().id,
-            cli_id
-        );
-    }
-}

@@ -8,6 +8,7 @@ use westiny_common::collision;
 use amethyst::core::ecs::shrev::EventChannel;
 use westiny_common::resources::EntityDelete;
 use derive_new::new;
+use crate::resources::ClientRegistry;
 
 pub struct RespawnSystem;
 
@@ -55,6 +56,7 @@ impl<'s> System<'s> for RespawnSystem {
                 if time.absolute_time_seconds() - eliminate.elimination_time_sec >= respawn.respawn_duration.as_secs_f64() {
                     // if expired
 
+                    log::debug!("Request player spawn");
                     spawn_player_event_channel.single_write(SpawnPlayerEvent {
                         client: *client,
                         network_id: *net_id,
@@ -80,9 +82,8 @@ impl<'s> System<'s> for SpawnSystem {
         ReadStorage<'s, Transform>,
         ReadStorage<'s, components::BoundingCircle>,
         Entities<'s>,
-        ReadStorage<'s, components::Client>,
-        ReadStorage<'s, components::NetworkId>,
         ReadExpect<'s, LazyUpdate>,
+        ReadExpect<'s, ClientRegistry>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -91,9 +92,8 @@ impl<'s> System<'s> for SpawnSystem {
             transforms,
             boundings,
             entities,
-            clients,
-            net_ids,
             lazy,
+            client_registry,
         ) = data;
 
         for spawn_event in spawn_event_channel.read(&mut self.reader) {
@@ -101,10 +101,9 @@ impl<'s> System<'s> for SpawnSystem {
             SpawnSystem::spawn_player(&spawn_pos,
                                       &entities,
                                       spawn_event.client,
-                                      &clients,
-                                      &net_ids,
                                       spawn_event.network_id,
                                       &lazy);
+            log::info!("Player created for {}", client_registry.find_client(spawn_event.client.id).unwrap().player_name);
         }
     }
 }
@@ -114,24 +113,10 @@ impl SpawnSystem {
         initial_pos: &Point2<f32>,
         entities: &Entities<'_>,
         client: components::Client,
-        clients: &ReadStorage<'_, components::Client>,
-        network_ids: &ReadStorage<'_, components::NetworkId>,
         network_id: components::NetworkId,
         lazy_update: &LazyUpdate,
-    ) -> components::NetworkId {
+    ) {
         use components::weapon;
-
-        if let Some((cli, net_id)) = (clients, network_ids)
-            .join()
-            .find(|(&cli, _)| cli.id == client.id)
-        {
-            log::info!(
-                "{:?} already connected, its entity already spawned: {:?}",
-                cli.id,
-                net_id
-            );
-            return *net_id;
-        }
 
         let transform = {
             let mut t = Transform::default();
@@ -164,8 +149,6 @@ impl SpawnSystem {
             .with(components::BoundingCircle { radius: 8.0 })
             .with(components::Respawn {respawn_duration: Duration::from_secs(5)})
             .build();
-
-        network_id
     }
 
     fn has_collision(
@@ -223,4 +206,130 @@ impl SpawnSystem {
 pub struct SpawnPlayerEvent {
     pub client: components::Client,
     pub network_id: components::NetworkId,
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::components::{Client, EntityType, Health, Respawn, weapon::Weapon, BoundingCircle, Input, NetworkId, Player, Velocity,
+    };
+    use amethyst::ecs::prelude::*;
+    use amethyst::ecs::World;
+    use amethyst::core::Transform;
+    use crate::resources::ClientID;
+
+    fn create_testworld() -> World {
+        let mut world = World::new();
+        world.register::<Transform>();
+        world.register::<Client>();
+        world.register::<NetworkId>();
+        world.register::<Player>();
+        world.register::<Input>();
+        world.register::<Velocity>();
+        world.register::<Weapon>();
+        world.register::<BoundingCircle>();
+        world.register::<Health>();
+        world.register::<Respawn>();
+        world
+    }
+
+    #[test]
+    fn spawn_one_player() {
+        let cli_id = ClientID(42);
+
+        let mut world = create_testworld();
+        {
+            SpawnSystem::spawn_player(
+                &Point2::new(0.0, 0.0),
+                &world.entities(),
+                Client{id: cli_id},
+                NetworkId {id: 0, entity_type: EntityType::Player},
+                &world.read_resource::<LazyUpdate>(),
+            );
+        }
+        world.maintain();
+
+        let entities: Vec<_> = world.entities().join().collect();
+        assert_eq!(entities.len(), 1);
+        assert_eq!(
+            world.read_storage::<Client>().get(entities[0]).unwrap().id,
+            cli_id
+        );
+    }
+
+    #[test]
+    fn spawn_two_player() {
+        let mut world = create_testworld();
+        {
+            SpawnSystem::spawn_player(
+                &Point2::new(0.0, 0.0),
+                &world.entities(),
+                Client {id: ClientID(42)},
+                NetworkId {id: 0, entity_type: EntityType::Player},
+                &world.read_resource::<LazyUpdate>(),
+            );
+            SpawnSystem::spawn_player(
+                &Point2::new(0.0, 0.0),
+                &world.entities(),
+                Client {id: ClientID(43)},
+                NetworkId { id: 1, entity_type: EntityType::Player},
+                &world.read_resource::<LazyUpdate>(),
+            );
+        }
+        world.maintain();
+
+        use std::collections::BTreeSet;
+
+        let cli_storage = world.read_storage::<Client>();
+        let client_ids: BTreeSet<_> = world
+            .entities()
+            .join()
+            .map(|e| cli_storage.get(e).unwrap().id.0)
+            .collect();
+
+        assert!(client_ids.contains(&42));
+        assert!(client_ids.contains(&43));
+    }
+
+    // TODO this logic has been moved to ClientIntroductionSystem. Domi, pls move this testcase there
+    // #[test]
+    // fn respawn_player_should_not_create_new_entity() {
+    //     let mut world = create_testworld();
+    //     let mut net_id_sup = NetworkIdSupplier::new();
+    //     let cli_id = ClientID(42);
+    //
+    //     let first_net_id;
+    //     {
+    //         first_net_id = ClientIntroductionSystem::spawn_player(
+    //             &Point2::new(0.0, 0.0),
+    //             &world.entities(),
+    //             &cli_id,
+    //             &world.read_storage::<Client>(),
+    //             &world.read_storage::<NetworkId>(),
+    //             &mut net_id_sup,
+    //             &world.read_resource::<LazyUpdate>(),
+    //         );
+    //     }
+    //     world.maintain();
+    //     {
+    //         let second_net_id = ClientIntroductionSystem::spawn_player(
+    //             &Point2::new(0.0, 0.0),
+    //             &world.entities(),
+    //             &cli_id,
+    //             &world.read_storage::<Client>(),
+    //             &world.read_storage::<NetworkId>(),
+    //             &mut net_id_sup,
+    //             &world.read_resource::<LazyUpdate>(),
+    //         );
+    //         assert_eq!(first_net_id, second_net_id);
+    //     }
+    //     world.maintain();
+    //
+    //     let entities: Vec<_> = world.entities().join().collect();
+    //     assert_eq!(entities.len(), 1);
+    //     assert_eq!(
+    //         world.read_storage::<Client>().get(entities[0]).unwrap().id,
+    //         cli_id
+    //     );
+    // }
 }

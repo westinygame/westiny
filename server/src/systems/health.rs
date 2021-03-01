@@ -49,11 +49,11 @@ impl<'s> System<'s> for HealthSystem {
 
         for damage_event in damage_event_channel.read(&mut self.reader) {
             if let Some(health) = healths.get_mut(damage_event.target) {
-                let health_drained = health.0 < damage_event.damage.0;
+                let health_drained = health.0 <= damage_event.damage.0;
                 if health_drained {
-                    healths.remove(damage_event.target);
+                    health.0 = 0;
                     if let Err(err) = eliminates.insert(damage_event.target, Eliminated { elimination_time_sec: time.absolute_time_seconds() }) {
-                        log::error!("Component 'Eliminated' could not be inseted to entity. error: {:?}", err);
+                        log::error!("Component 'Eliminated' could not be inserted to entity. error: {:?}", err);
                     }
                 } else {
                     *health -= damage_event.damage;
