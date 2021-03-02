@@ -9,7 +9,7 @@ use amethyst::window::ScreenDimensions;
 use amethyst::renderer::camera::Camera;
 
 use westiny_common::resources::CursorPosition;
-use crate::MovementBindingTypes;
+use crate::bindings::MovementBindingTypes;
 
 #[derive(SystemDesc, Default)]
 pub struct CursorPosUpdateSystem;

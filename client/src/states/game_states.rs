@@ -14,7 +14,7 @@ use amethyst::{
 use std::path::PathBuf;
 use amethyst::renderer::SpriteRender;
 
-use crate::MovementBindingTypes;
+use crate::bindings::MovementBindingTypes;
 use crate::systems::{
     AudioPlayerSystem,
     NetworkMessageReceiverSystemDesc,

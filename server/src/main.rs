@@ -10,8 +10,11 @@ use westiny_common::{
     events::{WestinyEvent, WestinyEventReader},
     utilities::read_ron,
 };
-use westiny_server::systems as srv_systems;
-use westiny_server::server_state;
+pub mod resources;
+pub mod systems;
+pub mod entities;
+pub mod components;
+pub mod server_state;
 
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
@@ -46,22 +49,22 @@ fn main() -> amethyst::Result<()> {
 
     let game_data = GameDataBuilder::default()
         .with_bundle(LaminarNetworkBundle::new(Some(socket)))?
-        .with(srv_systems::EntityStateBroadcasterSystem, "entity_state_broadcaster", &[])
-        .with_system_desc(srv_systems::NetworkMessageReceiverSystemDesc::default(), "msg_receiver", &[])
-        .with_system_desc(srv_systems::ClientIntroductionSystemDesc::default(), "client_intro", &["msg_receiver"])
-        .with_system_desc(srv_systems::CommandTransformerSystemDesc::default(), "command_transformer", &["msg_receiver"])
-        .with(srv_systems::PlayerMovementSystem, "player_movement", &["command_transformer"])
-        .with(srv_systems::PhysicsSystem, "physics", &["player_movement"])
-        .with(srv_systems::CollisionSystem, "collision", &["physics"])
-        .with(srv_systems::ProjectileCollisionSystem, "projectile_collision", &["physics"])
-        .with(srv_systems::ProjectileCollisionHandler, "projectile_collision_handler", &["projectile_collision"])
-        .with(srv_systems::CollisionHandlerForObstacles, "collision_handler", &["collision"])
-        .with(srv_systems::ShooterSystem, "shooter", &["command_transformer"])
-        .with_system_desc(srv_systems::HealthSystemDesc::default(), "health", &["projectile_collision_handler"])
-        .with(srv_systems::DeathSystem, "death", &["health"])
-        .with(srv_systems::RespawnSystem, "respawn", &["death"])
-        .with_system_desc(srv_systems::SpawnSystemDesc::default(), "spawn", &["client_intro", "respawn"])
-        .with_system_desc(srv_systems::EntityDeleteBroadcasterSystemDesc::default(), "delete_broadcaster", &["collision_handler"])
+        .with(systems::EntityStateBroadcasterSystem, "entity_state_broadcaster", &[])
+        .with_system_desc(systems::NetworkMessageReceiverSystemDesc::default(), "msg_receiver", &[])
+        .with_system_desc(systems::ClientIntroductionSystemDesc::default(), "client_intro", &["msg_receiver"])
+        .with_system_desc(systems::CommandTransformerSystemDesc::default(), "command_transformer", &["msg_receiver"])
+        .with(systems::PlayerMovementSystem, "player_movement", &["command_transformer"])
+        .with(systems::PhysicsSystem, "physics", &["player_movement"])
+        .with(systems::CollisionSystem, "collision", &["physics"])
+        .with(systems::ProjectileCollisionSystem, "projectile_collision", &["physics"])
+        .with(systems::ProjectileCollisionHandler, "projectile_collision_handler", &["projectile_collision"])
+        .with(systems::CollisionHandlerForObstacles, "collision_handler", &["collision"])
+        .with(systems::ShooterSystem, "shooter", &["command_transformer"])
+        .with_system_desc(systems::HealthSystemDesc::default(), "health", &["projectile_collision_handler"])
+        .with(systems::DeathSystem, "death", &["health"])
+        .with(systems::RespawnSystem, "respawn", &["death"])
+        .with_system_desc(systems::SpawnSystemDesc::default(), "spawn", &["client_intro", "respawn"])
+        .with_system_desc(systems::EntityDeleteBroadcasterSystemDesc::default(), "delete_broadcaster", &["collision_handler"])
         ;
 
     let frame_limit = 60;

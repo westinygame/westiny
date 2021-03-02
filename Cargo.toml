@@ -3,6 +3,8 @@ name = "westiny"
 version = "0.1.0"
 authors = ["Domonkos Suranyi <domonkos.suranyi@protonmail.com>"]
 edition = "2018"
+readme = "README.md"
+license-file = "LICENSE"
 
 [dependencies]
 westiny_common = { path = "common" }
@@ -24,11 +26,7 @@ metal = ["amethyst/metal"]
 vulkan = ["amethyst/vulkan"]
 tiles = ["amethyst/tiles"]
 
-[[bin]]
-name = "westiny_server"
-path = "src/server.rs"
-
 [workspace]
-members = [ ".", "server", "common" ]
+members = [ ".", "server", "common", "client"]
 # Add everything to default-members as well, e.g. cargo test will execute them as well.
-default-members = [ ".", "server", "common" ]
+default-members = [ ".", "server", "common", "client"]

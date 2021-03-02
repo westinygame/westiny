@@ -171,12 +171,13 @@ impl SpawnSystem {
         transform_storage: &ReadStorage<'_, Transform>,
         bounding_storage: &ReadStorage<'_, components::BoundingCircle>
     ) -> Point2<f32> {
+        use rand::Rng;
+
         // TODO Quick 'n' dirty stuff
         const MAX_TRIAL_ITERATION: u32 = 1024;
         const MAP_SIZE: u32 = 64;
         const TILE_SIZE: u32 = 16;
         const BOUND: f32 = (MAP_SIZE/2 * TILE_SIZE) as f32;
-        use rand::Rng;
 
         let candidate_bounding = components::BoundingCircle { radius: 8.0 };
 

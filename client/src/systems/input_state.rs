@@ -4,7 +4,7 @@ use amethyst::input::InputHandler;
 use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
 
 
-use crate::{MovementBindingTypes, ActionBinding};
+use crate::bindings::{MovementBindingTypes, ActionBinding};
 use crate::resources::StreamId;
 
 use westiny_common::components::{InputFlags, Input};

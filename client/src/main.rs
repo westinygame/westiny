@@ -12,10 +12,15 @@ use std::str::FromStr;
 use serde::Deserialize;
 use amethyst::input::InputBundle;
 
-use westiny_client::MovementBindingTypes;
-use westiny_client::resources::GroundTile;
+use crate::resources::GroundTile;
 use westiny_common::events::{WestinyEvent, WestinyEventReader};
 use westiny_common::utilities::read_ron;
+
+pub mod systems;
+pub mod resources;
+pub mod entities;
+pub mod states;
+mod bindings;
 
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
@@ -47,12 +52,12 @@ fn main() -> amethyst::Result<()> {
     };
     let socket = LaminarSocket::bind_with_config(client_socket, laminar_config)?;
     let key_bindings = resources_dir.join("input.ron");
-    let input_bundle = InputBundle::<MovementBindingTypes>::new().with_bindings_from_file(key_bindings)?;
+    let input_bundle = InputBundle::<bindings::MovementBindingTypes>::new().with_bindings_from_file(key_bindings)?;
 
     let game_data = GameDataBuilder::default()
         .with_bundle(TransformBundle::new())?
         .with_bundle(input_bundle)?
-        .with_bundle(UiBundle::<MovementBindingTypes>::new())?
+        .with_bundle(UiBundle::<bindings::MovementBindingTypes>::new())?
         .with_bundle(RenderingBundle::<DefaultBackend>::new()
             .with_plugin(
                 RenderToWindow::from_config_path(display_config)?
@@ -69,7 +74,7 @@ fn main() -> amethyst::Result<()> {
     let mut game =
         CoreApplication::<_, WestinyEvent, WestinyEventReader>::build(
             &resources_dir,
-            westiny_client::states::connection::ConnectState::new(&resources_dir),
+            states::connection::ConnectState::new(&resources_dir),
         )?.build(game_data)?;
 
     log::info!("Starting client");

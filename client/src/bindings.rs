@@ -3,13 +3,6 @@ use std::fmt;
 use ::serde::{Deserialize, Serialize};
 use amethyst::input::BindingTypes;
 
-use westiny_common::MoveDirection;
-
-pub mod systems;
-pub mod resources;
-pub mod entities;
-pub mod states;
-
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActionBinding {
     Forward,
@@ -45,14 +38,3 @@ impl BindingTypes for MovementBindingTypes {
     type Axis = AxisBinding;
     type Action = ActionBinding;
 }
-
-pub fn move_direction_from_binding(binding: &ActionBinding) -> Option<MoveDirection> {
-    match binding {
-        ActionBinding::Forward => Some(MoveDirection::Forward),
-        ActionBinding::Backward => Some(MoveDirection::Backward),
-        ActionBinding::StrafeLeft => Some(MoveDirection::StrafeLeft),
-        ActionBinding::StrafeRight => Some(MoveDirection::StrafeRight),
-        _ => None,
-    }
-}
-
