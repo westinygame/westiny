@@ -1,6 +1,6 @@
 use amethyst::utils::application_root_dir;
 use amethyst::{GameDataBuilder, CoreApplication};
-use amethyst::network::simulation::laminar::{LaminarNetworkBundle, LaminarSocket, LaminarConfig};
+use amethyst::network::simulation::laminar::{LaminarNetworkBundle, LaminarSocket};
 use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 use std::time::Duration;
@@ -9,6 +9,7 @@ use westiny_common::{
     resources::ServerAddress,
     events::{WestinyEvent, WestinyEventReader},
     utilities::read_ron,
+    NetworkConfig,
 };
 pub mod resources;
 pub mod systems;
@@ -39,12 +40,13 @@ fn main() -> amethyst::Result<()> {
     let socket_address = SocketAddr::new(IpAddr::from_str("0.0.0.0").unwrap(), server_port);
     log::info!("Start listening on {}", socket_address);
 
-    let laminar_config = {
-        let mut conf = LaminarConfig::default();
-        // send heartbeat in every 3 seconds
-        conf.heartbeat_interval = Some(Duration::from_secs(3));
-        conf
+    let laminar_config= {
+        let ron_path = resources_dir.join("protocol.ron");
+        read_ron::<NetworkConfig>(&ron_path)
+            .map(|net_conf| net_conf.into())
+            .expect(&format!("Failed to load Laminar protocol configuration file: {}", ron_path.as_os_str().to_str().unwrap()))
     };
+
     let socket = LaminarSocket::bind_with_config(socket_address, laminar_config)?;
 
     let game_data = GameDataBuilder::default()

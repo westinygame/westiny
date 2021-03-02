@@ -5,8 +5,7 @@ use amethyst::core::TransformBundle;
 use amethyst::renderer::{RenderingBundle, RenderToWindow, RenderFlat2D, types::DefaultBackend};
 use amethyst::ui::{RenderUi, UiBundle};
 use amethyst::tiles::{RenderTiles2D, MortonEncoder};
-use amethyst::network::simulation::laminar::{LaminarSocket, LaminarNetworkBundle, LaminarConfig};
-use std::time::Duration;
+use amethyst::network::simulation::laminar::{LaminarSocket, LaminarNetworkBundle};
 use std::net::{SocketAddr, IpAddr};
 use std::str::FromStr;
 use serde::Deserialize;
@@ -15,6 +14,7 @@ use amethyst::input::InputBundle;
 use crate::resources::GroundTile;
 use westiny_common::events::{WestinyEvent, WestinyEventReader};
 use westiny_common::utilities::read_ron;
+use westiny_common::NetworkConfig;
 
 mod systems;
 mod resources;
@@ -48,12 +48,13 @@ fn main() -> amethyst::Result<()> {
     };
     let client_socket = SocketAddr::new(IpAddr::from_str("0.0.0.0")?, client_port);
 
-    let laminar_config = {
-        let mut conf = LaminarConfig::default();
-        // send heartbeat in every 3 seconds
-        conf.heartbeat_interval = Some(Duration::from_secs(3));
-        conf
+    let laminar_config= {
+        let ron_path = common_resources_dir.join("protocol.ron");
+        read_ron::<NetworkConfig>(&ron_path)
+            .map(|net_conf| net_conf.into())
+            .expect(&format!("Failed to load Laminar protocol configuration file: {}", ron_path.as_os_str().to_str().unwrap()))
     };
+
     let socket = LaminarSocket::bind_with_config(client_socket, laminar_config)?;
     let key_bindings = resources_dir.join("input.ron");
     let input_bundle = InputBundle::<bindings::MovementBindingTypes>::new().with_bindings_from_file(key_bindings)?;

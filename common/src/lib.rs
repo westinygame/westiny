@@ -1,4 +1,6 @@
 use serde::{Serialize, Deserialize};
+use amethyst::network::simulation::laminar::LaminarConfig;
+use std::time::Duration;
 
 pub mod components;
 pub mod resources;
@@ -23,3 +25,17 @@ pub enum MoveDirection {
 }
 
 pub use serialization::{serialize, deserialize};
+
+
+#[derive(Deserialize)]
+pub struct NetworkConfig {
+    hartbeat_interval: u8,
+}
+
+impl Into<LaminarConfig> for NetworkConfig {
+    fn into(self) -> LaminarConfig {
+        let mut laminar = LaminarConfig::default();
+        laminar.heartbeat_interval = Some(Duration::from_secs(self.hartbeat_interval as u64));
+        laminar
+    }
+}
