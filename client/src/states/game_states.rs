@@ -3,10 +3,9 @@ use amethyst::{
         transform::Transform,
         math::{Point2, Vector3},
         ecs::{Dispatcher, DispatcherBuilder},
-        SystemBundle,
         ArcThreadPool,
     },
-    input::{is_close_requested, is_key_down, VirtualKeyCode, InputBundle},
+    input::{is_close_requested, is_key_down, VirtualKeyCode},
     prelude::*,
     renderer::Camera,
     window::ScreenDimensions,
@@ -14,7 +13,6 @@ use amethyst::{
 use std::path::PathBuf;
 use amethyst::renderer::SpriteRender;
 
-use crate::bindings::MovementBindingTypes;
 use crate::systems::{
     AudioPlayerSystem,
     NetworkMessageReceiverSystemDesc,
@@ -72,12 +70,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         let sprite_resource = initialize_sprite_resource(&mut world);
 
-        let mut dispatcher_builder = DispatcherBuilder::new();
-
-        // let key_bindings = self.resource_dir.join("input.ron");
-        //
-        // InputBundle::<MovementBindingTypes>::new().with_bindings_from_file(key_bindings).unwrap()
-        //     .build(&mut world, &mut dispatcher_builder).unwrap();
+        let dispatcher_builder = DispatcherBuilder::new();
 
         let network_message_receiver_sys = NetworkMessageReceiverSystemDesc::default().build(&mut world);
         let network_entity_update_sys = NetworkEntityStateUpdateSystemDesc::default().build(&mut world);

@@ -16,10 +16,10 @@ use crate::resources::GroundTile;
 use westiny_common::events::{WestinyEvent, WestinyEventReader};
 use westiny_common::utilities::read_ron;
 
-pub mod systems;
-pub mod resources;
-pub mod entities;
-pub mod states;
+mod systems;
+mod resources;
+mod entities;
+mod states;
 mod bindings;
 
 #[cfg(test)]
