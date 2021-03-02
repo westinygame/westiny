@@ -5,9 +5,10 @@ use amethyst::core::ArcThreadPool;
 use westiny_common::{
     resources::ServerAddress,
     events::{AppEvent, WestinyEvent},
-    utilities::read_ron,
 };
 use crate::systems;
+use std::net::SocketAddr;
+use std::str::FromStr;
 
 pub struct ConnectState {
     dispatcher: Option<Dispatcher<'static, 'static>>,
@@ -27,19 +28,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         let mut world = data.world;
 
-        let server_address: ServerAddress = {
-            let ron_path = self.resource_dir.join("server_network.ron");
-            read_ron(&ron_path).unwrap_or_else(|err| {
-                let address = ServerAddress::default();
-                log::warn!("Failed to read server network configuration file: {}, error: [{}] \
-                Using default server port ({})",
-                           ron_path.as_os_str().to_str().unwrap(),
-                           err,
-                           address.address);
-                address
-            })
-        };
-        world.insert(server_address);
+        world.insert(get_server_address());
 
         let mut dispatcher_builder = DispatcherBuilder::new();
 
@@ -87,6 +76,28 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ConnectState {
             dispatcher.dispatch(&data.world);
         }
         Trans::None
+    }
+}
+
+fn get_server_address() -> ServerAddress {
+    let address_result = std::env::var("WESTINY_SERVER_ADDRESS")
+        .map_err(|err| {
+            anyhow::Error::from(err)
+        })
+        .and_then(|env| SocketAddr::from_str(&env)
+            .map_err(|err|anyhow::Error::from(err)))
+        .map(|addr| ServerAddress { address:addr });
+
+    match address_result {
+        Ok(addr) => {
+            log::info!("Server address: {}", addr.address);
+            addr
+        }
+        Err(err) => {
+            let addr = ServerAddress::default();
+            log::warn!("Server address has not been configured. Error: {}. Using default address: {}", err, addr.address);
+            addr
+        }
     }
 }
 
