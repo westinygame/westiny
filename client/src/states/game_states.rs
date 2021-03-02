@@ -14,9 +14,8 @@ use amethyst::{
 use std::path::PathBuf;
 use amethyst::renderer::SpriteRender;
 
-use westiny_client::MovementBindingTypes;
-use westiny_common::resources::{AudioQueue, Seed};
-use westiny_client::systems::{
+use crate::MovementBindingTypes;
+use crate::systems::{
     AudioPlayerSystem,
     NetworkMessageReceiverSystemDesc,
     NetworkEntityStateUpdateSystemDesc,
@@ -26,16 +25,16 @@ use westiny_client::systems::{
     CameraMovementSystem,
     CursorPosUpdateSystem,
 };
-use westiny_common::systems::{HealthUpdateSystemDesc};
-use westiny_client::resources::{initialize_audio, initialize_hud, initialize_sprite_resource, SpriteResource, PlayerNetworkId};
+use crate::resources::{initialize_audio, initialize_hud, initialize_sprite_resource, SpriteResource, PlayerNetworkId};
+use crate::entities::initialize_tilemap;
+
 use westiny_common::{
+    components::BoundingCircle,
     events::{AppEvent, WestinyEvent},
     network::ClientInitialData,
+    systems::HealthUpdateSystemDesc,
+    resources::{AudioQueue, Seed, map::build_map}
 };
-use westiny_common::resources::map::build_map;
-
-use crate::entities::initialize_tilemap;
-use westiny_common::components::BoundingCircle;
 
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState {

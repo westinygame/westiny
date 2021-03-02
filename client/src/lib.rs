@@ -7,7 +7,8 @@ use westiny_common::MoveDirection;
 
 pub mod systems;
 pub mod resources;
-mod entities;
+pub mod entities;
+pub mod states;
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ActionBinding {

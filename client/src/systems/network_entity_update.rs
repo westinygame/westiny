@@ -13,6 +13,7 @@ use std::collections::HashMap;
 use amethyst::shred::ReadExpect;
 
 use crate::resources;
+use crate::entities::initialize_player;
 use amethyst::renderer::SpriteRender;
 
 #[derive(SystemDesc, new)]
@@ -60,7 +61,7 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
 
         // if it is this player
         if let Some(&new_state) = entity_states.get(&player_net_id.0) {
-            crate::entities::player::initialize_player(lazy.create_entity(&entities), &sprite_resource, player_net_id.0, new_state.position.clone());
+            initialize_player(lazy.create_entity(&entities), &sprite_resource, player_net_id.0, new_state.position.clone());
             entity_states.remove(&player_net_id.0);
         }
 

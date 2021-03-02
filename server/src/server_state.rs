@@ -1,8 +1,7 @@
-use westiny_common::events::WestinyEvent;
 use amethyst::prelude::*;
 use amethyst::core::Time;
-use westiny_server::resources::{ClientRegistry, NetworkIdSupplier};
-use westiny_server::resources::collision;
+use crate::resources::{ClientRegistry, NetworkIdSupplier};
+use crate::resources::collision;
 
 use log::info;
 use std::path::PathBuf;
@@ -10,6 +9,7 @@ use derive_new::new;
 use westiny_common::resources::map::build_map;
 use westiny_common::components::Projectile;
 use westiny_common::resources::Seed;
+use westiny_common::events::WestinyEvent;
 
 #[derive(new)]
 pub struct ServerState {

@@ -1,7 +1,6 @@
 use amethyst::utils::application_root_dir;
 use amethyst::{GameDataBuilder, CoreApplication};
 use amethyst::network::simulation::laminar::{LaminarNetworkBundle, LaminarSocket, LaminarConfig};
-use crate::utilities::*;
 use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 use std::time::Duration;
@@ -9,17 +8,10 @@ use amethyst::core::frame_limiter::FrameRateLimitStrategy;
 use westiny_common::{
     resources::ServerAddress,
     events::{WestinyEvent, WestinyEventReader},
+    utilities::read_ron,
 };
 use westiny_server::systems as srv_systems;
-
-mod systems;
-mod entities;
-mod resources;
-mod states;
-mod utilities;
-
-#[cfg(test)]
-mod test_helpers;
+use westiny_server::server_state;
 
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
@@ -77,7 +69,7 @@ fn main() -> amethyst::Result<()> {
     let mut game =
         CoreApplication::<_, WestinyEvent, WestinyEventReader>::build(
             resources_dir.clone(),
-            states::server_states::ServerState::new(resources_dir),
+            server_state::ServerState::new(resources_dir),
         )?
         .with_frame_limit(
             FrameRateLimitStrategy::SleepAndYield(Duration::from_millis(2)),

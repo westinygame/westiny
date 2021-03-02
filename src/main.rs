@@ -7,23 +7,15 @@ use amethyst::ui::{RenderUi, UiBundle};
 use amethyst::tiles::{RenderTiles2D, MortonEncoder};
 use amethyst::network::simulation::laminar::{LaminarSocket, LaminarNetworkBundle, LaminarConfig};
 use std::time::Duration;
-use crate::utilities::read_ron;
 use std::net::{SocketAddr, IpAddr};
 use std::str::FromStr;
 use serde::Deserialize;
 use amethyst::input::InputBundle;
 
 use westiny_client::MovementBindingTypes;
+use westiny_client::resources::GroundTile;
 use westiny_common::events::{WestinyEvent, WestinyEventReader};
-
-mod systems;
-mod entities;
-mod resources;
-mod states;
-mod utilities;
-
-#[cfg(test)]
-mod test_helpers;
+use westiny_common::utilities::read_ron;
 
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
@@ -67,7 +59,7 @@ fn main() -> amethyst::Result<()> {
                     .with_clear([0.0, 0.0, 0.0, 1.0])
             )
             .with_plugin(RenderFlat2D::default())
-            .with_plugin(RenderTiles2D::<resources::GroundTile, MortonEncoder>::default())
+            .with_plugin(RenderTiles2D::<GroundTile, MortonEncoder>::default())
             .with_plugin(RenderUi::default())
             )?
         .with_bundle(LaminarNetworkBundle::new(Some(socket)))?
@@ -77,7 +69,7 @@ fn main() -> amethyst::Result<()> {
     let mut game =
         CoreApplication::<_, WestinyEvent, WestinyEventReader>::build(
             &resources_dir,
-            states::connection::ConnectState::new(&resources_dir),
+            westiny_client::states::connection::ConnectState::new(&resources_dir),
         )?.build(game_data)?;
 
     log::info!("Starting client");

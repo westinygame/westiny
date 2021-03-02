@@ -8,6 +8,10 @@ pub mod serialization;
 pub mod entities;
 pub mod collision;
 pub mod events;
+pub mod utilities;
+
+#[cfg(test)]
+pub mod test_helpers;
 
 /// The move direction relative to facing
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
