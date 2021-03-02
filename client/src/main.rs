@@ -25,7 +25,7 @@ mod bindings;
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
 
-    let app_root = application_root_dir()?;
+    let app_root = application_root_dir().map(|path| path.join(".."))?;
     let resources_dir = app_root.join("resources");
     let display_config = resources_dir.join("display_config.ron");
 
