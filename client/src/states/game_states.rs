@@ -74,10 +74,10 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         let mut dispatcher_builder = DispatcherBuilder::new();
 
-        let key_bindings = self.resource_dir.join("input.ron");
-
-        InputBundle::<MovementBindingTypes>::new().with_bindings_from_file(key_bindings).unwrap()
-            .build(&mut world, &mut dispatcher_builder).unwrap();
+        // let key_bindings = self.resource_dir.join("input.ron");
+        //
+        // InputBundle::<MovementBindingTypes>::new().with_bindings_from_file(key_bindings).unwrap()
+        //     .build(&mut world, &mut dispatcher_builder).unwrap();
 
         let network_message_receiver_sys = NetworkMessageReceiverSystemDesc::default().build(&mut world);
         let network_entity_update_sys = NetworkEntityStateUpdateSystemDesc::default().build(&mut world);
@@ -87,8 +87,8 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         let mut dispatcher = dispatcher_builder
             .with(network_message_receiver_sys, "network_message_receiver", &[])
             .with(network_entity_update_sys, "network_entity_update", &[])
-            .with(InputStateSystem, "input_state_system", &["input_system"])
-            .with(CameraMovementSystem, "camera_movement_system", &["input_system"])
+            .with(InputStateSystem, "input_state_system", &[])
+            .with(CameraMovementSystem, "camera_movement_system", &[])
             .with(CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"])
             .with(health_update_system, "health_update", &["network_message_receiver"])
             .with(entity_delete_system, "entity_delete", &["network_entity_update"])
@@ -148,10 +148,10 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
     }
 
     fn update(&mut self, data: StateData<GameData<'_, '_>>) -> Trans<GameData<'static, 'static>, WestinyEvent> {
+        data.data.update(&data.world);
         if let Some(dispatcher) = self.dispatcher.as_mut() {
             dispatcher.dispatch(&data.world);
         }
-        data.data.update(&data.world);
         Trans::None
     }
 }

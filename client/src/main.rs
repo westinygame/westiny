@@ -28,8 +28,9 @@ mod test_helpers;
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
 
-    let app_root = application_root_dir().map(|path| path.join(".."))?;
-    let resources_dir = app_root.join("resources");
+    let app_root = application_root_dir()?;
+    let common_resources_dir = app_root.join("../resources");
+    let resources_dir = app_root.join("assets");
     let display_config = resources_dir.join("display_config.ron");
 
     let client_port: u16 = {
@@ -77,7 +78,7 @@ fn main() -> amethyst::Result<()> {
     let mut game =
         CoreApplication::<_, WestinyEvent, WestinyEventReader>::build(
             &resources_dir,
-            states::connection::ConnectState::new(&resources_dir),
+            states::connection::ConnectState::new(&common_resources_dir),
         )?.build(game_data)?;
 
     log::info!("Starting client");
