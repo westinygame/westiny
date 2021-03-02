@@ -22,6 +22,9 @@ pub mod entities;
 pub mod states;
 mod bindings;
 
+#[cfg(test)]
+mod test_helpers;
+
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
 
