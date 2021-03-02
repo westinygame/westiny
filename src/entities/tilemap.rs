@@ -21,7 +21,7 @@ pub fn initialize_tilemap(
         );
 
     let mut transform = Transform::default();
-    transform.set_translation_xyz(position.x, position.y, 0.0);
+    transform.set_translation_xyz(position.x, position.y, -0.9);
 
     let _map_entity = world
         .create_entity()

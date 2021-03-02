@@ -65,16 +65,20 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
         }
 
         for (net_id, entity_state) in entity_states {
+            let mut transform = Transform::default();
+            update_transform(&mut transform, &entity_state);
+
             let sprite_id = match net_id.entity_type {
                 EntityType::Player => SpriteId::Player,
                 EntityType::Bullet => {audio.play(SoundId::SingleShot, 1.0); SpriteId::Bullet},
+                EntityType::Corpse => {
+                    // TODO constants should be used instead of magic numbers
+                    transform.set_translation_z(-0.9);
+                    SpriteId::Corpse
+                },
             };
 
-            let transform = {
-                let mut transform = Transform::default();
-                update_transform(&mut transform, &entity_state);
-                transform
-            };
+
 
             entities.build_entity()
                 .with(net_id, &mut network_ids)

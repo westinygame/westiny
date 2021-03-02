@@ -13,4 +13,5 @@ pub struct NetworkId {
 pub enum EntityType {
     Player,
     Bullet,
+    Corpse,
 }

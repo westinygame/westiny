@@ -50,6 +50,13 @@ List((
             y: 16,
             width: 16,
             height: 16,
-        )
+        ),
+        // 7: corpse
+        (
+            x: 33,
+            y: 16,
+            width: 16,
+            height: 16,
+        ),
     ],
 ))
