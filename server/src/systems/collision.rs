@@ -50,15 +50,31 @@ pub struct CollisionHandlerForObstacles;
 impl<'s> System<'s> for CollisionHandlerForObstacles {
     type SystemData = (
         ReadExpect<'s, Collisions>,
-        WriteStorage<'s, Transform>
+        WriteStorage<'s, Transform>,
+        Write<'s, EventChannel<DamageEvent>>,
+        ReadStorage<'s, components::Health>,
+        ReadStorage<'s, components::Damage>,
         );
 
-    fn run(&mut self, (collisions, mut transforms): Self::SystemData) {
+    fn run(&mut self, (collisions, mut transforms, mut damage_event_channel, healths, damages): Self::SystemData) {
         for collision in &collisions.0 {
             if let Some(transform) = transforms.get_mut(collision.collider)
             {
                 transform.prepend_translation_x(-collision.vector.x);
                 transform.prepend_translation_y(-collision.vector.y);
+
+                if let Some(damage) = damages.get(collision.collider) {
+                    if healths.contains(collision.collidee) {
+                        damage_event_channel.single_write(DamageEvent { damage: *damage, target: collision.collidee });
+                    }
+                }
+
+                if let Some(damage) = damages.get(collision.collidee) {
+                    if healths.contains(collision.collider) {
+                        damage_event_channel.single_write(DamageEvent { damage: *damage, target: collision.collider });
+                    }
+                }
+
             }
         }
 

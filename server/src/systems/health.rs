@@ -51,11 +51,13 @@ impl<'s> System<'s> for HealthSystem {
             if let Some(health) = healths.get_mut(damage_event.target) {
                 let health_drained = health.0 <= damage_event.damage.0;
                 if health_drained {
+
                     health.0 = 0;
                     if let Err(err) = eliminates.insert(damage_event.target, Eliminated { elimination_time_sec: time.absolute_time_seconds() }) {
                         log::error!("Component 'Eliminated' could not be inserted to entity. error: {:?}", err);
                     }
                 } else {
+                    log::info!("Health: {:?}", health);
                     *health -= damage_event.damage;
                 }
                 if let Some(client) = clients.get(damage_event.target) {

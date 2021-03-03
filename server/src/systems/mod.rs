@@ -10,6 +10,7 @@ pub use player_movement::PlayerMovementSystem;
 pub use shooter::ShooterSystem;
 pub use spawn::{SpawnPlayerEvent, SpawnSystemDesc, RespawnSystem};
 pub use death::DeathSystem;
+pub use monster_spawn::MonsterSystem;
 
 mod network_messenger;
 mod client_introduction;
@@ -23,3 +24,4 @@ mod collision;
 mod health;
 mod spawn;
 mod death;
+mod monster_spawn;

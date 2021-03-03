@@ -14,12 +14,11 @@ impl<'s> System<'s> for PlayerMovementSystem {
     type SystemData = (
         WriteStorage<'s, Transform>,
         WriteStorage<'s, Velocity>,
-        ReadStorage<'s, Player>,
         ReadStorage<'s, Input>,
     );
 
-    fn run(&mut self, (mut transforms, mut velocities, players, inputs): Self::SystemData) {
-        for (_player, input, mut velocity, transform) in (&players, &inputs, &mut velocities, &mut transforms).join() {
+    fn run(&mut self, (mut transforms, mut velocities, inputs): Self::SystemData) {
+        for (input, mut velocity, transform) in (&inputs, &mut velocities, &mut transforms).join() {
             let angle = angle_toward_point(&transform, &input.cursor);
 
             let move_inputs = move_directions_from_input(&input);

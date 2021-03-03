@@ -16,7 +16,6 @@ impl<'s> System<'s> for ShooterSystem {
     type SystemData = (
         Entities<'s>,
         ReadStorage<'s, Transform>,
-        ReadStorage<'s, Player>,
         ReadStorage<'s, Input>,
         ReadStorage<'s, BoundingCircle>,
         WriteStorage<'s, Weapon>,
@@ -25,8 +24,8 @@ impl<'s> System<'s> for ShooterSystem {
         ReadExpect<'s, LazyUpdate>,
     );
 
-    fn run(&mut self, (entities, transforms, players, inputs, bounds, mut weapons, time, mut net_id_supplier, lazy_update): Self::SystemData) {
-        for (_player, input, player_transform, player_bound, mut weapon) in (&players, &inputs, &transforms, &bounds, &mut weapons).join() {
+    fn run(&mut self, (entities, transforms, inputs, bounds, mut weapons, time, mut net_id_supplier, lazy_update): Self::SystemData) {
+        for (input, player_transform, player_bound, mut weapon) in (&inputs, &transforms, &bounds, &mut weapons).join() {
             if input.flags.intersects(InputFlags::SHOOT)
             {
                 if weapon.is_allowed_to_shoot(time.absolute_time_seconds())

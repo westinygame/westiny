@@ -67,6 +67,7 @@ fn main() -> amethyst::Result<()> {
         .with(systems::RespawnSystem, "respawn", &["death"])
         .with_system_desc(systems::SpawnSystemDesc::default(), "spawn", &["client_intro", "respawn"])
         .with_system_desc(systems::EntityDeleteBroadcasterSystemDesc::default(), "delete_broadcaster", &["collision_handler"])
+        .with(systems::MonsterSystem, "monster_spawn", &[])
         ;
 
     let frame_limit = 60;

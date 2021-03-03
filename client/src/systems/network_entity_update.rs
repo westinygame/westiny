@@ -77,6 +77,7 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
                     transform.set_translation_z(-0.9);
                     SpriteId::Corpse
                 },
+                EntityType::Monster => SpriteId::ShootingPlayer
             };
 
 

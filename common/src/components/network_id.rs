@@ -14,4 +14,5 @@ pub enum EntityType {
     Player,
     Bullet,
     Corpse,
+    Monster,
 }
