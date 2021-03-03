@@ -80,9 +80,9 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         let mut dispatcher = dispatcher_builder
             .with(network_message_receiver_sys, "network_message_receiver", &[])
             .with(network_entity_update_sys, "network_entity_update", &[])
-            .with(InputStateSystem, "input_state_system", &[])
-            .with(CameraMovementSystem, "camera_movement_system", &[])
+            .with(CameraMovementSystem, "camera_movement_system", &["network_entity_update"])
             .with(CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"])
+            .with(InputStateSystem, "input_state_system", &["cursor_pos_update_system"])
             .with(health_update_system, "health_update", &["network_message_receiver"])
             .with(entity_delete_system, "entity_delete", &["network_entity_update"])
             .with(AudioPlayerSystem, "audio_player_system", &["cursor_pos_update_system"])
