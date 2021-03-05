@@ -12,3 +12,10 @@ serde = "1.0.120"
 anyhow = "1.0.38"
 derive-new = "0.5.9"
 log = "0.4.14"
+
+[features]
+default = ["vulkan", "tiles"]
+empty = ["amethyst/empty"]
+metal = ["amethyst/metal"]
+vulkan = ["amethyst/vulkan"]
+tiles = ["amethyst/tiles"]

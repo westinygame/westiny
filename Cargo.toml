@@ -6,26 +6,6 @@ edition = "2018"
 readme = "README.md"
 license-file = "LICENSE"
 
-[dependencies]
-#westiny_common = { path = "common" }
-#westiny_server = { path = "server" }
-#westiny_client = { path = "client" }
-amethyst = "0.15.3"
-amethyst_test = "0.15.3"
-array-init = "1.0.0"
-log = "0.4.11"
-serde = "1.0.120"
-derive-new = "0.5.8"
-thiserror = "1.0.23"
-anyhow = "1.0.38"
-
-[features]
-default = ["vulkan", "tiles"]
-empty = ["amethyst/empty"]
-metal = ["amethyst/metal"]
-vulkan = ["amethyst/vulkan"]
-tiles = ["amethyst/tiles"]
-
 [workspace]
 members = [ ".", "server", "common", "client"]
 # Add everything to default-members as well, e.g. cargo test will execute them as well.
