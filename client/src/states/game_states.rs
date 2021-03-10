@@ -13,8 +13,19 @@ use amethyst::{
 use std::path::PathBuf;
 use amethyst::renderer::SpriteRender;
 
-use crate::systems::{AudioPlayerSystem, NetworkMessageReceiverSystemDesc, NetworkEntityStateUpdateSystemDesc, NetworkEntityDeleteSystemDesc, HudUpdateSystem, InputStateSystem, CameraMovementSystem, CursorPosUpdateSystem, PhysicsSystem};
-use crate::resources::{initialize_audio, initialize_hud, initialize_sprite_resource, SpriteResource, PlayerNetworkId};
+use crate::systems::{
+    AudioPlayerSystem,
+    NetworkMessageReceiverSystemDesc,
+    NetworkEntityStateUpdateSystemDesc,
+    NetworkEntityDeleteSystemDesc,
+    HudUpdateSystem,
+    NotificationBarSystemDesc,
+    InputStateSystem,
+    CameraMovementSystem,
+    CursorPosUpdateSystem,
+    PhysicsSystem,
+};
+use crate::resources::{initialize_audio, initialize_hud, NotificationBar, initialize_sprite_resource, SpriteResource, PlayerNetworkId};
 use crate::entities::initialize_tilemap;
 
 use westiny_common::{
@@ -67,6 +78,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         let network_entity_update_sys = NetworkEntityStateUpdateSystemDesc::default().build(&mut world);
         let entity_delete_system = NetworkEntityDeleteSystemDesc::default().build(&mut world);
         let health_update_system = HealthUpdateSystemDesc::default().build(&mut world);
+        let notification_bar_sys = NotificationBarSystemDesc::default().build(&mut world);
 
         let mut dispatcher = dispatcher_builder
             .with(network_message_receiver_sys, "network_message_receiver", &[])
@@ -79,6 +91,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
             .with(entity_delete_system, "entity_delete", &["network_entity_update", "physics"])
             .with(AudioPlayerSystem, "audio_player_system", &["cursor_pos_update_system"])
             .with(HudUpdateSystem, "hud_update_system", &["health_update"])
+            .with(notification_bar_sys, "notification_bar", &["network_message_receiver"])
             .with_pool((*world.read_resource::<ArcThreadPool>()).clone())
             .build();
         dispatcher.setup(world);
@@ -99,7 +112,8 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         world.register::<BoundingCircle>();
         self.place_objects(&mut world, init_data.seed);
-        initialize_hud(world);
+        initialize_hud(&mut world);
+        NotificationBar::initialize(&mut world);
     }
 
     fn on_stop(&mut self, data: StateData<GameData<'_, '_>>) {

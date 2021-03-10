@@ -1,9 +1,8 @@
 use amethyst::{
     derive::SystemDesc,
-    ecs::{System, SystemData, Read, Write, ReadExpect, WriteStorage},
+    ecs::{System, SystemData, Read, Write},
     network::simulation::NetworkSimulationEvent,
     shrev::{ReaderId, EventChannel},
-    ui::{UiText},
 };
 
 use anyhow::Result;
@@ -11,11 +10,10 @@ use std::net::SocketAddr;
 use derive_new::new;
 
 use westiny_common::{
-    network::{PacketType, EntityState, EntityHealth, NetworkEntityDelete},
+    network::{PacketType, EntityState, EntityHealth, NetworkEntityDelete, PlayerNotification},
     deserialize,
     events::AppEvent,
 };
-use crate::resources::{Hud};
 
 #[derive(SystemDesc, new)]
 #[system_desc(name(NetworkMessageReceiverSystemDesc))]
@@ -31,11 +29,10 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
         Write<'s, EventChannel<Vec<EntityState>>>,
         Write<'s, EventChannel<EntityHealth>>,
         Write<'s, EventChannel<NetworkEntityDelete>>,
-        ReadExpect<'s, Hud>,
-        WriteStorage<'s, UiText>,
+        Write<'s, EventChannel<PlayerNotification>>,
     );
 
-    fn run(&mut self, (net_event_ch, mut app_event, mut entity_state_update_channel, mut entity_health_channel, mut entity_delete_channel, hud, mut ui_texts): Self::SystemData) {
+    fn run(&mut self, (net_event_ch, mut app_event, mut entity_state_update_channel, mut entity_health_channel, mut entity_delete_channel, mut message_channel): Self::SystemData) {
         for event in net_event_ch.read(&mut self.reader) {
             match event {
                 NetworkSimulationEvent::Connect(addr) => log::debug!(
@@ -48,17 +45,16 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
                         addr
                         );
 
-                    if let Some(messages) = ui_texts.get_mut(hud.messages) {
-                        messages.text = "Server is unavailable!".to_string();
-                    }
+                    message_channel.single_write(PlayerNotification{message: "Server is unavailable!".to_string()});
                     app_event.single_write(AppEvent::Disconnect);
                 },
                 NetworkSimulationEvent::Message(addr, payload) => {
-                    match self.process_payload(addr,
-                                               payload,
+                    match self.process_payload(&addr,
+                                               &payload,
                                                &mut entity_state_update_channel,
                                                &mut entity_health_channel,
-                                               &mut entity_delete_channel) {
+                                               &mut entity_delete_channel,
+                                               &mut message_channel) {
                         Ok(_) => log::debug!("Message from {} processed successfully.", addr),
                         Err(e) => {
                             log::error!("Could not process message! {:?}, payload: {:02x?}", e, payload)
@@ -79,6 +75,7 @@ impl NetworkMessageReceiverSystem {
         entity_update_channel: &mut EventChannel<Vec<EntityState>>,
         entity_health_channel: &mut EventChannel<EntityHealth>,
         entity_delete_channel: &mut EventChannel<NetworkEntityDelete>,
+        message_channel: &mut EventChannel<PlayerNotification>,
     ) -> Result<()> {
 
         log::debug!("Message: {:02x?}", payload);
@@ -96,6 +93,13 @@ impl NetworkMessageReceiverSystem {
                 log::debug!("Network entity health change, entity_id={:?}, health={:?}", health_update.network_id, health_update.health);
                 entity_health_channel.single_write(health_update);
                 Ok(())
+            }
+            PacketType::Notification(notification) =>
+            {
+                log::info!("PlayerNotification: {}", notification.message);
+                message_channel.single_write(notification);
+                Ok(())
+
             }
             _ => Err(anyhow::anyhow!(
                 "Unexpected message from {}, payload={:02x?}",
