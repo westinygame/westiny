@@ -58,5 +58,12 @@ List((
             width: 16,
             height: 16,
         ),
+        // 8: hand with pistol
+        (
+            x: 48,
+            y: 16,
+            width: 9,
+            height: 15,
+        ),
     ],
 ))
