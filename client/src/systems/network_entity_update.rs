@@ -2,10 +2,11 @@ use amethyst::{
     derive::SystemDesc,
     ecs::{System, SystemData, Read},
     shrev::{ReaderId, EventChannel},
+    core::transform::Parent,
 };
 use derive_new::new;
 use westiny_common::network::EntityState;
-use amethyst::core::ecs::{WriteStorage, Join, Entities, LazyUpdate};
+use amethyst::core::ecs::{WriteStorage, Join, Entities, WriteExpect, LazyUpdate, Builder};
 use westiny_common::components::{NetworkId, EntityType};
 use westiny_common::resources::SpriteId;
 use amethyst::core::Transform;
@@ -57,7 +58,15 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
 
         // if it is this player
         if let Some(&new_state) = entity_states.get(&player_net_id.0) {
-            initialize_player(lazy.create_entity(&entities), &sprite_resource, player_net_id.0, new_state.position.clone());
+            let entity = initialize_player(lazy.create_entity(&entities), &sprite_resource, player_net_id.0, new_state.position.clone());
+            let mut hand_transform = Transform::default();
+            hand_transform.set_translation_xyz(-3., -6., 0.);
+            lazy
+                .create_entity(&entities)
+                .with(Parent{entity})
+                .with(hand_transform)
+                .with(sprite_resource.sprite_render_for(SpriteId::HandWithPistol))
+                .build();
             entity_states.remove(&player_net_id.0);
         }
 

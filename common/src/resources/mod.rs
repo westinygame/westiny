@@ -32,6 +32,7 @@ pub enum SpriteId {
     Bullet = 5,
     Barrel = 6,
     Corpse = 7,
+    HandWithPistol = 8,
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Debug)]
