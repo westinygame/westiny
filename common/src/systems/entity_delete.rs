@@ -3,7 +3,7 @@ use amethyst::ecs::{Read, System, SystemData, Entities};
 use amethyst::derive::SystemDesc;
 use amethyst::shrev::{ReaderId, EventChannel};
 
-use crate::resources::EntityDelete;
+use crate::events::EntityDelete;
 
 #[derive(SystemDesc, new)]
 #[system_desc(name(EntityDeleteSystemDesc))]

@@ -6,7 +6,7 @@ use amethyst::core::math::Point2;
 use std::time::Duration;
 use westiny_common::collision;
 use amethyst::core::ecs::shrev::EventChannel;
-use westiny_common::resources::EntityDelete;
+use westiny_common::events::EntityDelete;
 use derive_new::new;
 use crate::resources::ClientRegistry;
 
@@ -127,7 +127,7 @@ impl SpawnSystem {
         // TODO define these values in RON resource files. PREFAB?
         let revolver = weapon::WeaponDetails {
             damage: 5,
-            distance: 120.0,
+            bullet_time_limit: 0.6,
             fire_rate: 7.2,
             magazine_size: 6,
             reload_time: 1.0,

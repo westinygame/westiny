@@ -1,38 +1,26 @@
 use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Read, Write, System, SystemData, ReadStorage, WriteStorage, Entities};
-use amethyst::shrev::EventChannel;
+use amethyst::ecs::{Read, System, SystemData, ReadStorage, WriteStorage};
 use amethyst::ecs::prelude::Join;
 use amethyst::core::{Transform, Time};
 use amethyst::core::math::Vector2;
 
-use crate::components::{Velocity, DistanceLimit};
-use crate::resources::EntityDelete;
+use crate::components::{Velocity};
 
 #[derive(SystemDesc)]
 pub struct PhysicsSystem;
 
 impl<'s> System<'s> for PhysicsSystem {
     type SystemData = (
-        Entities<'s>,
         WriteStorage<'s, Transform>,
         ReadStorage<'s, Velocity>,
         Read<'s, Time>,
-        WriteStorage<'s, DistanceLimit>,
-        Write<'s, EventChannel<EntityDelete>>
     );
 
-    fn run(&mut self, (entities, mut transforms, velocities, time, mut distance_limits, mut delete_entity_channel): Self::SystemData) {
-        for (moving_entity, transform, velocity, maybe_distance_limit) in
-            (&*entities, &mut transforms, &velocities, (&mut distance_limits).maybe()).join()
+    fn run(&mut self, (mut transforms, velocities, time): Self::SystemData) {
+        for (transform, velocity) in
+            (&mut transforms, &velocities).join()
         {
-            let delta_s = update_position(transform, velocity, &time).norm();
-
-            if let Some(distance_limit) = maybe_distance_limit {
-                distance_limit.distance_to_live -= delta_s;
-                if distance_limit.distance_to_live < 0.0 {
-                    delete_entity_channel.single_write(EntityDelete{entity_id: moving_entity})
-                }
-            }
+            update_position(transform, velocity, &time).norm();
         }
     }
 }

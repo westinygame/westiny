@@ -6,7 +6,7 @@ use amethyst::network::simulation::{TransportResource, DeliveryRequirement, Urge
 
 use crate::resources::ClientRegistry;
 use crate::components::NetworkId;
-use westiny_common::resources::EntityDelete;
+use westiny_common::events::EntityDelete;
 use westiny_common::{network, serialize};
 
 // This system does two things:

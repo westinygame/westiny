@@ -28,8 +28,8 @@ pub struct WeaponDetails
     /// 0 is the perfect gun, always shooting where pointed
     /// 10 is a dumb shotgun
     pub spread: f32,
-    /// Shooting distance, bullets disappear after
-    pub distance: f32,
+    /// Shooting time, bullets disappear after
+    pub bullet_time_limit: f32,
     pub bullet_speed: f32,
     pub shot: Shot
 }

@@ -4,16 +4,18 @@ use amethyst::{
     ecs::prelude::{Builder, Entities, LazyUpdate, ReadExpect},
 };
 
-use westiny_common::components::{Velocity, weapon::WeaponDetails, Projectile, DistanceLimit, NetworkId, Damage};
+use westiny_common::components::{Velocity, weapon::WeaponDetails, Projectile, TimeLimit, NetworkId, Damage};
+use std::time::Duration;
 
 pub fn spawn_bullet(network_id: NetworkId,
                     transform: Transform,
                     direction: Vector2<f32>,
+                    current_time: Duration,
                     weapon_details: &WeaponDetails, 
                     entities: &Entities,
                     lazy_update: &ReadExpect<LazyUpdate>)
 {
-    let distance_limit = DistanceLimit::new(weapon_details.distance);
+    let time_limit = TimeLimit::new(weapon_details.bullet_time_limit, current_time);
     let velocity = Velocity(direction * weapon_details.bullet_speed);
 
     lazy_update
@@ -22,7 +24,7 @@ pub fn spawn_bullet(network_id: NetworkId,
         .with(transform)
         .with(velocity)
         .with(Projectile::default())
-        .with(distance_limit)
+        .with(time_limit)
         .with(Damage(weapon_details.damage))
         .build();
 }

@@ -3,7 +3,7 @@ use amethyst::ecs::{System, SystemData, Entities};
 use amethyst::derive::SystemDesc;
 use amethyst::shrev::{ReaderId, EventChannel};
 
-use westiny_common::resources::EntityDelete;
+use westiny_common::events::EntityDelete;
 use westiny_common::network::NetworkEntityDelete;
 use amethyst::core::ecs::{ReadStorage, Join, Entity, Read};
 use westiny_common::components::NetworkId;

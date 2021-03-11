@@ -41,7 +41,13 @@ impl<'s> System<'s> for ShooterSystem {
                     *bullet_transform.translation_mut() -= direction3d * player_bound.radius;
 
                     let network_id = net_id_supplier.next(EntityType::Bullet);
-                    spawn_bullet(network_id, bullet_transform, direction2d, &weapon.details, &entities, &lazy_update);
+                    spawn_bullet(network_id,
+                                 bullet_transform,
+                                 direction2d,
+                                 time.absolute_time(),
+                                 &weapon.details,
+                                 &entities,
+                                 &lazy_update);
                     weapon.last_shot_time = time.absolute_time_seconds();
                     weapon.input_lifted = false;
                 }
