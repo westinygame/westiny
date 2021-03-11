@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use derive_new::new;
 use std::fmt::{Display, Debug, Formatter};
 use crate::components::{Input, NetworkId, Health};
-use amethyst::core::math::Point2;
+use amethyst::core::math::{Point2, Vector2};
 use crate::resources::Seed;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -18,7 +18,8 @@ pub enum PacketType {
     EntityStateUpdate(Vec<EntityState>),
     EntityDelete(NetworkEntityDelete),
     EntityHealthUpdate(EntityHealth),
-    Notification(PlayerNotification)
+    Notification(PlayerNotification),
+    ShotEvent(ShotEvent),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -38,15 +39,13 @@ pub struct EntityState {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[cfg_attr(test, derive(PartialEq))]
-pub struct NetworkEntityDelete
-{
+pub struct NetworkEntityDelete {
     pub network_id: NetworkId,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[cfg_attr(test, derive(PartialEq))]
-pub struct EntityHealth
-{
+pub struct EntityHealth {
     pub network_id: NetworkId,
     pub health: Health,
 }
@@ -58,7 +57,11 @@ pub struct PlayerNotification
     pub message: String,
 }
 
-
+pub struct ShotEvent {
+    pub position: Point2<f32>,
+    pub velocity: Vector2<f32>,
+    pub bullet_time_limit_secs: f32,
+}
 
 #[derive(Copy, Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub enum ErrorKind {
