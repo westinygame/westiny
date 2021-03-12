@@ -3,26 +3,20 @@ use amethyst::ecs::prelude::{Component, DenseVecStorage};
 use std::time::Duration;
 
 #[derive(Debug)]
-pub struct TimeLimit
+pub struct Lifespan
 {
-    pub time_to_live: Duration,
-    pub timing_start: Duration,
+    pub living_until: Duration,
 }
 
-impl Component for TimeLimit {
+impl Component for Lifespan {
     type Storage = DenseVecStorage<Self>;
 }
 
-impl TimeLimit
+impl Lifespan
 {
     pub fn new(secs_to_live: f32, timing_start: Duration) -> Self {
-        TimeLimit {
-            time_to_live: Duration::from_secs_f32(secs_to_live),
-            timing_start
+        Lifespan {
+            living_until: timing_start + Duration::from_secs_f32(secs_to_live),
         }
-    }
-
-    pub fn timing_end(&self) -> Duration {
-        self.timing_start + self.time_to_live
     }
 }

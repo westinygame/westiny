@@ -1,6 +1,6 @@
 pub use bounding_circle::BoundingCircle;
 pub use damage::Damage;
-pub use time_limit::TimeLimit;
+pub use time_limit::Lifespan;
 pub use eliminate::Eliminated;
 pub use health::Health;
 pub use input::{Input, InputFlags};

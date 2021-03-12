@@ -60,7 +60,7 @@ fn main() -> amethyst::Result<()> {
         .with(systems::ProjectileCollisionSystem, "projectile_collision", &["physics"])
         .with(systems::ProjectileCollisionHandler, "projectile_collision_handler", &["projectile_collision"])
         .with(systems::CollisionHandlerForObstacles, "collision_handler", &["collision"])
-        .with(systems::TimingSystem, "timing", &["collision"])
+        .with(systems::LifespanSystem, "timing", &["collision"])
         .with(systems::ShooterSystem, "shooter", &["command_transformer"])
         .with_system_desc(systems::HealthSystemDesc::default(), "health", &["projectile_collision_handler"])
         .with(systems::DeathSystem, "death", &["health"])

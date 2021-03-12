@@ -1,16 +1,16 @@
 use amethyst::shred::{System, ReadExpect};
 use amethyst::core::Time;
 use amethyst::core::ecs::{ReadStorage, Join, Entities, Write};
-use crate::components::TimeLimit;
+use crate::components::Lifespan;
 use crate::events::EntityDelete;
 use amethyst::shrev::EventChannel;
 
-pub struct TimingSystem;
+pub struct LifespanSystem;
 
-impl<'s> System<'s> for TimingSystem {
+impl<'s> System<'s> for LifespanSystem {
     type SystemData = (
         ReadExpect<'s, Time>,
-        ReadStorage<'s, TimeLimit>,
+        ReadStorage<'s, Lifespan>,
         Write<'s, EventChannel<EntityDelete>>,
         Entities<'s>,
     );
@@ -25,7 +25,7 @@ impl<'s> System<'s> for TimingSystem {
 
         let abs_time = time.absolute_time();
         for (limit, entity) in (&time_limits, &entities).join() {
-            if abs_time >= limit.timing_end() {
+            if abs_time >= limit.living_until {
                 delete_event_channel.single_write(EntityDelete{ entity_id: entity });
             }
         }
