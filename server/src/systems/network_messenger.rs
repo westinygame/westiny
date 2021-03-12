@@ -69,7 +69,7 @@ impl NetworkMessageReceiverSystem {
         let handle = registry.find_by_addr(&addr).ok_or(anyhow::anyhow!("Could not find address {} in registry", addr))?;
         let player_name = handle.player_name.clone();
         let id = registry.remove(addr)?;
-        client_event_channel.single_write(ClientNetworkEvent::ClientDisconnected(id, player_name.to_string()));
+        client_event_channel.single_write(ClientNetworkEvent::ClientDisconnected(id, player_name));
         Ok(())
     }
 
