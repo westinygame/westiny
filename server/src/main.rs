@@ -13,7 +13,6 @@ use westiny_common::{
 };
 pub mod resources;
 pub mod systems;
-pub mod entities;
 pub mod components;
 pub mod server_state;
 

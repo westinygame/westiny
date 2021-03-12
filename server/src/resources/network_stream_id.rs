@@ -3,6 +3,7 @@
 pub enum StreamId {
     EntityStateUpdate,
     HealthUpdate,
+    ShotEvent,
 }
 
 impl Into<Option<u8>> for StreamId {

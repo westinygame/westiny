@@ -10,7 +10,7 @@ use std::net::SocketAddr;
 use derive_new::new;
 
 use westiny_common::{
-    network::{PacketType, EntityState, EntityHealth, NetworkEntityDelete, PlayerNotification},
+    network::{PacketType, EntityState, EntityHealth, NetworkEntityDelete, PlayerNotification, ShotEvent},
     deserialize,
     events::AppEvent,
 };
@@ -30,9 +30,10 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
         Write<'s, EventChannel<EntityHealth>>,
         Write<'s, EventChannel<NetworkEntityDelete>>,
         Write<'s, EventChannel<PlayerNotification>>,
+        Write<'s, EventChannel<ShotEvent>>,
     );
 
-    fn run(&mut self, (net_event_ch, mut app_event, mut entity_state_update_channel, mut entity_health_channel, mut entity_delete_channel, mut message_channel): Self::SystemData) {
+    fn run(&mut self, (net_event_ch, mut app_event, mut entity_state_update_channel, mut entity_health_channel, mut entity_delete_channel, mut message_channel, mut shot_event_channel): Self::SystemData) {
         for event in net_event_ch.read(&mut self.reader) {
             match event {
                 NetworkSimulationEvent::Connect(addr) => log::debug!(
@@ -43,9 +44,9 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
                     log::debug!(
                         "Disconnect event from {:?}",
                         addr
-                        );
+                    );
 
-                    message_channel.single_write(PlayerNotification{message: "Server is unavailable!".to_string()});
+                    message_channel.single_write(PlayerNotification { message: "Server is unavailable!".to_string() });
                     app_event.single_write(AppEvent::Disconnect);
                 },
                 NetworkSimulationEvent::Message(addr, payload) => {
@@ -54,7 +55,8 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
                                                &mut entity_state_update_channel,
                                                &mut entity_health_channel,
                                                &mut entity_delete_channel,
-                                               &mut message_channel) {
+                                               &mut message_channel,
+                                               &mut shot_event_channel, ) {
                         Ok(_) => log::debug!("Message from {} processed successfully.", addr),
                         Err(e) => {
                             log::error!("Could not process message! {:?}, payload: {:02x?}", e, payload)
@@ -76,6 +78,7 @@ impl NetworkMessageReceiverSystem {
         entity_health_channel: &mut EventChannel<EntityHealth>,
         entity_delete_channel: &mut EventChannel<NetworkEntityDelete>,
         message_channel: &mut EventChannel<PlayerNotification>,
+        shot_event_channel: &mut EventChannel<ShotEvent>,
     ) -> Result<()> {
 
         log::debug!("Message: {:02x?}", payload);
@@ -94,12 +97,15 @@ impl NetworkMessageReceiverSystem {
                 entity_health_channel.single_write(health_update);
                 Ok(())
             }
-            PacketType::Notification(notification) =>
-            {
+            PacketType::Notification(notification) => {
                 log::info!("PlayerNotification: {}", notification.message);
                 message_channel.single_write(notification);
                 Ok(())
-
+            }
+            PacketType::ShotEvent(shot) => {
+                log::debug!("Shot event {:?}", shot);
+                shot_event_channel.single_write(shot);
+                Ok(())
             }
             _ => Err(anyhow::anyhow!(
                 "Unexpected message from {}, payload={:02x?}",

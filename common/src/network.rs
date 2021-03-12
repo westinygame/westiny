@@ -57,6 +57,8 @@ pub struct PlayerNotification
     pub message: String,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(test, derive(PartialEq))]
 pub struct ShotEvent {
     pub position: Point2<f32>,
     pub velocity: Vector2<f32>,

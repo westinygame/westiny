@@ -24,6 +24,9 @@ use crate::systems::{
     CameraMovementSystem,
     CursorPosUpdateSystem,
     PhysicsSystem,
+    ShooterSystemDesc,
+    TimingSystem,
+    HealthUpdateSystemDesc
 };
 use crate::resources::{initialize_audio, initialize_hud, NotificationBar, initialize_sprite_resource, SpriteResource, PlayerNetworkId};
 use crate::entities::initialize_tilemap;
@@ -32,9 +35,9 @@ use westiny_common::{
     components::BoundingCircle,
     events::{AppEvent, WestinyEvent},
     network::ClientInitialData,
-    systems::HealthUpdateSystemDesc,
     resources::{AudioQueue, Seed, map::build_map}
 };
+use westiny_common::components::Projectile;
 
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState {
@@ -72,6 +75,8 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         let sprite_resource = initialize_sprite_resource(&mut world);
 
+        // TODO remove when collision is turned on
+        world.register::<Projectile>();
         let dispatcher_builder = DispatcherBuilder::new();
 
         let network_message_receiver_sys = NetworkMessageReceiverSystemDesc::default().build(&mut world);
@@ -79,6 +84,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         let entity_delete_system = NetworkEntityDeleteSystemDesc::default().build(&mut world);
         let health_update_system = HealthUpdateSystemDesc::default().build(&mut world);
         let notification_bar_sys = NotificationBarSystemDesc::default().build(&mut world);
+        let shooter_system = ShooterSystemDesc::default().build(&mut world);
 
         let mut dispatcher = dispatcher_builder
             .with(network_message_receiver_sys, "network_message_receiver", &[])
@@ -88,6 +94,8 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
             .with(InputStateSystem, "input_state_system", &["cursor_pos_update_system"])
             .with(PhysicsSystem, "physics", &[])
             .with(health_update_system, "health_update", &["network_message_receiver"])
+            .with(shooter_system, "shooter", &["network_message_receiver"])
+            .with(TimingSystem, "timing", &["shooter"])
             .with(entity_delete_system, "entity_delete", &["network_entity_update", "physics"])
             .with(AudioPlayerSystem, "audio_player_system", &["cursor_pos_update_system"])
             .with(HudUpdateSystem, "hud_update_system", &["health_update"])

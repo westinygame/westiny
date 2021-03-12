@@ -5,9 +5,9 @@ use amethyst::{
 };
 use derive_new::new;
 use westiny_common::network::EntityState;
-use amethyst::core::ecs::{WriteStorage, Join, Entities, WriteExpect, LazyUpdate};
+use amethyst::core::ecs::{WriteStorage, Join, Entities, LazyUpdate};
 use westiny_common::components::{NetworkId, EntityType};
-use westiny_common::resources::{AudioQueue, SpriteId, SoundId};
+use westiny_common::resources::SpriteId;
 use amethyst::core::Transform;
 use std::collections::HashMap;
 use amethyst::shred::ReadExpect;
@@ -31,7 +31,6 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
         WriteStorage<'s, SpriteRender>,
         Entities<'s>,
         ReadExpect<'s, resources::SpriteResource>,
-        WriteExpect<'s, AudioQueue>,
         ReadExpect<'s, resources::PlayerNetworkId>,
         Read<'s, LazyUpdate>,
     );
@@ -44,7 +43,6 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
                mut sprite_renders,
                entities,
                sprite_resource,
-               mut audio,
                player_net_id,
                lazy,
            ): Self::SystemData) {
@@ -71,7 +69,6 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
 
             let sprite_id = match net_id.entity_type {
                 EntityType::Player => SpriteId::Player,
-                EntityType::Bullet => {audio.play(SoundId::SingleShot, 1.0); SpriteId::Bullet},
                 EntityType::Corpse => {
                     // TODO constants should be used instead of magic numbers
                     transform.set_translation_z(-0.9);
