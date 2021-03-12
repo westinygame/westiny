@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 use amethyst::ecs::{Read, System, ReadStorage, ReadExpect, Entities, WriteStorage, WriteExpect};
+=======
+use amethyst::derive::SystemDesc;
+use amethyst::ecs::{Read, System, SystemData, ReadStorage, ReadExpect, Entities, WriteStorage, WriteExpect};
+>>>>>>> 12ef34a (Add handle server's ShotEvent on client)
 use amethyst::core::{Transform, Time, math::{Vector3, Vector2}};
 use amethyst::ecs::prelude::{LazyUpdate, Join};
 
@@ -62,7 +67,6 @@ impl<'s> System<'s> for ShooterSystem {
                         bullet_time_limit_secs: weapon.details.bullet_time_limit,
                     })).expect("ShotEvent's serialization failed");
 
-                    log::info!("Sending");
                     client_registry.get_clients().iter().map(|handle| handle.addr).for_each(|addr| {
                         net.send_with_requirements(addr,
                                                    &payload,

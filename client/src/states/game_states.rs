@@ -25,8 +25,8 @@ use crate::systems::{
     CursorPosUpdateSystem,
     PhysicsSystem,
     ShooterSystemDesc,
-    TimingSystem,
-    HealthUpdateSystemDesc
+    LifespanSystem,
+    HealthUpdateSystemDesc,
 };
 use crate::resources::{initialize_audio, initialize_hud, NotificationBar, initialize_sprite_resource, SpriteResource, PlayerNetworkId};
 use crate::entities::initialize_tilemap;
@@ -95,7 +95,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
             .with(PhysicsSystem, "physics", &[])
             .with(health_update_system, "health_update", &["network_message_receiver"])
             .with(shooter_system, "shooter", &["network_message_receiver"])
-            .with(TimingSystem, "timing", &["shooter"])
+            .with(LifespanSystem, "lifespan", &["shooter"])
             .with(entity_delete_system, "entity_delete", &["network_entity_update", "physics"])
             .with(AudioPlayerSystem, "audio_player_system", &["cursor_pos_update_system"])
             .with(HudUpdateSystem, "hud_update_system", &["health_update"])
