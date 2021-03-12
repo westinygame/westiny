@@ -48,8 +48,6 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
            ): Self::SystemData) {
         let mut entity_states: HashMap<_, _> = events.read(&mut self.reader).flat_map(|vec| vec.iter()).map(|entity_state| (entity_state.network_id, entity_state)).collect();
 
-
-
         for (net_id, transform) in (&network_ids, &mut transforms).join() {
             if let Some(state) = entity_states.get(net_id) {
                 update_transform(transform, &state);
@@ -75,8 +73,6 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
                     SpriteId::Corpse
                 },
             };
-
-
 
             entities.build_entity()
                 .with(net_id, &mut network_ids)

@@ -71,7 +71,7 @@ impl ShooterSystem {
         let transform = {
             let mut transform = Transform::default();
             transform.set_translation_xyz(pos.x, pos.y, 0.0);
-            transform.set_rotation_2d(velocity.angle(&Vector2::new(0.0, 1.0)));
+            westiny_common::utilities::set_rotation_toward_vector(&mut transform, velocity);
             transform
         };
 

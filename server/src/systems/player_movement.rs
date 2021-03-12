@@ -54,21 +54,13 @@ pub fn move_directions_from_input(input: &Input) -> Vec<MoveDirection>
 }
 
 
-pub fn angle_toward_point(
-    transform: &Transform,
+pub fn rotate_toward_point(
+    transform: &mut Transform,
     point: &Point2<f32>
-) ->  f32 {
-
+) {
     // Calculate the vector from player position to mouse cursor
     let direction = point.to_homogeneous() - transform.translation();
-
-    let base_vector = Vector2::new(0.0, -1.0);
-    let mut angle = base_vector.angle(&direction.xy());
-
-    if direction.x < 0.0 {
-        angle = 2.0 * std::f32::consts::PI - angle;
-    }
-    angle
+    westiny_common::utilities::set_rotation_toward_vector(transform, &direction);
 }
 
 const PLAYER_MAX_WALK_SPEED: f32 = 64.0;
