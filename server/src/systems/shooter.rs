@@ -55,7 +55,7 @@ impl<'s> System<'s> for ShooterSystem {
                     spawn_bullet(bullet_transform.clone(),
                                  velocity.clone(),
                                  time.absolute_time(),
-                                 weapon.details.bullet_time_limit,
+                                 weapon.bullet_lifespan_sec(),
                                  bullet_builder);
 
                     weapon.last_shot_time = time.absolute_time_seconds();
@@ -64,7 +64,7 @@ impl<'s> System<'s> for ShooterSystem {
                     let payload = serialize(&PacketType::ShotEvent(ShotEvent {
                         position: Point2::new(bullet_transform.translation().x, bullet_transform.translation().y),
                         velocity,
-                        bullet_time_limit_secs: weapon.details.bullet_time_limit,
+                        bullet_time_limit_secs: weapon.bullet_lifespan_sec(),
                     })).expect("ShotEvent's serialization failed");
 
                     client_registry.get_clients().iter().map(|handle| handle.addr).for_each(|addr| {
@@ -88,7 +88,7 @@ mod test {
     use super::*;
     use amethyst_test::prelude::*;
     use amethyst::prelude::{World, WorldExt, Builder};
-    use crate::components::{Input, InputFlags, weapon, Velocity, Projectile, TimeLimit};
+    use crate::components::{Input, InputFlags, weapon, Velocity, Projectile, Lifespan};
     use std::net::SocketAddr;
     use amethyst::Error;
     use amethyst::core::num::Bounded;
@@ -113,7 +113,7 @@ mod test {
                 world.register::<Damage>();
                 world.register::<Velocity>();
                 world.register::<Projectile>();
-                world.register::<TimeLimit>();
+                world.register::<Lifespan>();
             })
             .with_setup(|world: &mut World| {
                 let input = Input {
@@ -123,7 +123,7 @@ mod test {
 
                 let gun = weapon::WeaponDetails {
                     damage: 5,
-                    bullet_time_limit: 0.6,
+                    bullet_distance_limit: 120.0,
                     fire_rate: f32::max_value(),
                     magazine_size: 6,
                     reload_time: 1.0,

@@ -127,7 +127,7 @@ impl SpawnSystem {
         // TODO define these values in RON resource files. PREFAB?
         let revolver = weapon::WeaponDetails {
             damage: 5,
-            bullet_time_limit: 0.6,
+            bullet_distance_limit: 120.0,
             fire_rate: 7.2,
             magazine_size: 6,
             reload_time: 1.0,
