@@ -7,11 +7,21 @@ use thiserror::Error;
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
 pub struct ClientID(pub u32);
 
+#[derive(Eq, PartialEq, Debug, Clone)]
+pub struct PlayerName(pub String);
+
+impl fmt::Display for PlayerName {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)?;
+        Ok(())
+    }
+}
+
 pub struct ClientHandle {
     pub id: ClientID,
     pub addr: SocketAddr,
     /// Right now it is used as a user_name, but no further authentication done.
-    pub player_name: String,
+    pub player_name: PlayerName,
 }
 
 pub struct ClientRegistry {
@@ -50,7 +60,7 @@ impl ClientRegistry {
         }
 
         match self.find_by_addr_or_name(&addr, player_name) {
-            Some(h) if h.player_name == player_name && &h.addr == addr => Ok(h.id),
+            Some(h) if h.player_name.0 == player_name && &h.addr == addr => Ok(h.id),
             Some(_) => Err(AddError::Unauthorized),
             None => Ok(self.add_new_client(*addr, player_name)),
         }
@@ -88,7 +98,7 @@ impl ClientRegistry {
         self.clients.push(ClientHandle {
             id: id,
             addr,
-            player_name: player_name.into(),
+            player_name: PlayerName(player_name.into()),
         });
         id
     }
@@ -96,7 +106,7 @@ impl ClientRegistry {
     fn find_by_addr_or_name(&self, addr: &SocketAddr, name: &str) -> Option<&ClientHandle> {
         self.clients
             .iter()
-            .find(|&handle| &handle.addr == addr || handle.player_name == name)
+            .find(|&handle| &handle.addr == addr || handle.player_name.0 == name)
     }
 }
 
@@ -107,7 +117,7 @@ impl fmt::Display for ClientRegistry {
             write!(
                 f,
                 "\n  - ID={}, address={}, player_name={}",
-                handle.id.0, handle.addr, handle.player_name
+                handle.id.0, handle.addr, handle.player_name.0
             )?;
         }
         Ok(())
@@ -135,7 +145,7 @@ mod test {
         assert!(result.is_ok());
         let handle = reg.find_client(result.unwrap()).expect("client not found");
         assert_eq!(handle.addr, address);
-        assert_eq!(handle.player_name, "NariFeco");
+        assert_eq!(handle.player_name.0, "NariFeco");
 
         let handle_by_addr = reg.find_by_addr(&address).expect("client by address is not found");
         assert_eq!(handle.player_name, handle_by_addr.player_name);
@@ -160,10 +170,10 @@ mod test {
         let handle_two = reg.find_client(two_id).expect("player two not found");
 
         assert_eq!(handle_one.addr, address_one);
-        assert_eq!(handle_one.player_name, "NariFeco");
+        assert_eq!(handle_one.player_name.0, "NariFeco");
 
         assert_eq!(handle_two.addr, address_two);
-        assert_eq!(handle_two.player_name, "BananJoe");
+        assert_eq!(handle_two.player_name.0, "BananJoe");
 
         assert_eq!(reg.client_count(), 2);
     }

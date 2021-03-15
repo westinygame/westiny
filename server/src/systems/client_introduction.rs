@@ -11,7 +11,7 @@ use amethyst::{
 use derive_new::new;
 
 use westiny_common::{
-    network::{ClientInitialData, PacketType},
+    network::{ClientInitialData, PacketType, PlayerNotification},
     serialize,
     resources::{EntityDelete},
 };
@@ -124,14 +124,38 @@ impl<'s> System<'s> for ClientIntroductionSystem {
                         &serialize(&connection_response).unwrap(),
                         DeliveryRequirement::Reliable,
                         UrgencyRequirement::OnTick,
-                    )
+                    );
+
+                    broadcast_notification(
+                        &mut net,
+                        &client_registry,
+                        PlayerNotification{message: format!("{} joined.", &client_handle.player_name)});
                 }
-                ClientNetworkEvent::ClientDisconnected(client_id) => {
+                ClientNetworkEvent::ClientDisconnected(client_id, player_name) => {
                     log::debug!("Removing disconnecting client's player entity [client_id: {:?}]", client_id);
                     Self::despawn_player(&entities, &mut entity_delete_channel, &client, client_id);
+
+                    broadcast_notification(
+                        &mut net,
+                        &client_registry,
+                        PlayerNotification{message: format!("{} left the game.", &player_name)});
                 }
             }
         }
+    }
+}
+
+fn broadcast_notification(
+    net: &mut TransportResource,
+    client_registry: &ClientRegistry,
+    notification: PlayerNotification)
+{
+    let msg = serialize(&PacketType::Notification(notification)).expect("PlayerNotification could not be serialized");
+    for &handle in client_registry.get_clients().iter() {
+        net.send_with_requirements(handle.addr,
+                                   &msg,
+                                   DeliveryRequirement::Reliable,
+                                   UrgencyRequirement::OnTick)
     }
 }
 
@@ -150,5 +174,4 @@ impl ClientIntroductionSystem {
         }
     }
 }
-
 

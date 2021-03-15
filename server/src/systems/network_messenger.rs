@@ -10,8 +10,8 @@ use std::net::SocketAddr;
 use derive_new::new;
 
 use westiny_common::{
-    network::PacketType,
-    deserialize
+    network::{PacketType},
+    deserialize,
 };
 
 use crate::resources::{ClientRegistry, ClientNetworkEvent, NetworkCommand};
@@ -66,8 +66,10 @@ impl NetworkMessageReceiverSystem {
         client_event_channel: &mut EventChannel<ClientNetworkEvent>,
     ) -> Result<()> {
         log::info!("Disconnecting {:?}", addr);
+        let handle = registry.find_by_addr(&addr).ok_or(anyhow::anyhow!("Could not find address {} in registry", addr))?;
+        let player_name = handle.player_name.clone();
         let id = registry.remove(addr)?;
-        client_event_channel.single_write(ClientNetworkEvent::ClientDisconnected(id));
+        client_event_channel.single_write(ClientNetworkEvent::ClientDisconnected(id, player_name));
         Ok(())
     }
 
@@ -169,7 +171,7 @@ mod test {
 
                 let events: Vec<&ClientNetworkEvent> = client_net_ec.read(&mut reader_id).collect();
                 assert_eq!(1, events.len(), "There should be exactly 1 ClientNetworkEvent on channel");
-                assert!(matches!(events[0], ClientNetworkEvent::ClientDisconnected(_)));
+                assert!(matches!(events[0], ClientNetworkEvent::ClientDisconnected(_, _)));
             })
             .run()
     }

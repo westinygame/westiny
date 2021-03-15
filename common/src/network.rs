@@ -18,6 +18,7 @@ pub enum PacketType {
     EntityStateUpdate(Vec<EntityState>),
     EntityDelete(NetworkEntityDelete),
     EntityHealthUpdate(EntityHealth),
+    Notification(PlayerNotification)
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -49,6 +50,15 @@ pub struct EntityHealth
     pub network_id: NetworkId,
     pub health: Health,
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(test, derive(PartialEq))]
+pub struct PlayerNotification
+{
+    pub message: String,
+}
+
+
 
 #[derive(Copy, Clone, Serialize, Deserialize, Debug, PartialEq)]
 pub enum ErrorKind {
