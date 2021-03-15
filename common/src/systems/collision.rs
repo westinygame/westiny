@@ -1,12 +1,28 @@
 use amethyst::ecs::{System, ReadStorage, WriteStorage, Entities, Write, WriteExpect, ReadExpect};
-use amethyst::core::{Transform};
+use amethyst::core::{Transform, SystemBundle};
 use amethyst::ecs::prelude::Join;
-
-use westiny_common::collision::{Collider, check_body_collision, check_projectile_collision};
-use westiny_common::components::{Velocity, BoundingCircle, Projectile};
-use crate::resources::collision::{Collision, Collisions, ProjectileCollision, ProjectileCollisions};
-use westiny_common::events::EntityDelete;
 use amethyst::shrev::EventChannel;
+
+use crate::collision::{Collider, check_body_collision, check_projectile_collision};
+use crate::components::{Velocity, BoundingCircle, Projectile, Damage, Health};
+use crate::resources::collision::{Collision, Collisions, ProjectileCollision, ProjectileCollisions};
+use crate::events::{EntityDelete, DamageEvent};
+use amethyst::core::ecs::{World, DispatcherBuilder};
+
+pub struct CollisionBundle;
+
+impl<'s, 'b> SystemBundle<'s, 'b> for CollisionBundle {
+    fn build(self, world: &mut World, dispatcher: &mut DispatcherBuilder<'s, 'b>) -> amethyst::Result<()> {
+        world.insert(Collisions::default());
+        world.insert(ProjectileCollisions::default());
+
+        dispatcher.add(CollisionSystem, "collision", &["physics"]);
+        dispatcher.add(ProjectileCollisionSystem, "projectile_collision", &["physics"]);
+        dispatcher.add(ProjectileCollisionHandler, "projectile_collision_handler", &["projectile_collision"]);
+        dispatcher.add(CollisionHandlerForObstacles, "collision_handler", &["collision"]);
+        Ok(())
+    }
+}
 
 pub struct CollisionSystem;
 
@@ -36,8 +52,6 @@ impl<'s> System<'s> for CollisionSystem {
                     Collider{transform: moving_transform, bound: moving_bounds},
                     Collider{transform: standing_transform, bound: standing_bounds})
                 {
-                    log::debug!("Collision {}", collision);
-
                     collision_resource.0.push(Collision{collider: moving_id, collidee: standing_id, vector: collision});
                 }
             }
@@ -101,8 +115,7 @@ impl<'s> System<'s> for ProjectileCollisionSystem {
     }
 }
 
-use crate::resources::DamageEvent;
-use crate::components;
+
 
 pub struct ProjectileCollisionHandler;
 
@@ -111,8 +124,8 @@ impl<'s> System<'s> for ProjectileCollisionHandler {
         ReadExpect<'s, ProjectileCollisions>,
         Write<'s, EventChannel<EntityDelete>>,
         Write<'s, EventChannel<DamageEvent>>,
-        ReadStorage<'s, components::Health>,
-        ReadStorage<'s, components::Damage>,
+        ReadStorage<'s, Health>,
+        ReadStorage<'s, Damage>,
         );
 
     // Here Projectile components are not explicitly filtered. ProjectCollisionSystem is expected
@@ -125,6 +138,7 @@ impl<'s> System<'s> for ProjectileCollisionHandler {
                     damage_event.single_write(DamageEvent { damage: *damage, target: collision.target })
             }}
 
+            log::info!("Delete entity. Collision");
             entity_delete_channel.single_write(EntityDelete{entity_id: collision.projectile})
         }
 

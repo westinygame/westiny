@@ -27,6 +27,7 @@ use crate::systems::{
     ShooterSystemDesc,
     LifespanSystem,
     HealthUpdateSystemDesc,
+    CollisionBundle,
 };
 use crate::resources::{initialize_audio, initialize_hud, NotificationBar, initialize_sprite_resource, SpriteResource, PlayerNetworkId};
 use crate::entities::initialize_tilemap;
@@ -38,6 +39,7 @@ use westiny_common::{
     resources::{AudioQueue, Seed, map::build_map}
 };
 use westiny_common::components::Projectile;
+use amethyst::core::SystemBundle;
 
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState {
@@ -77,7 +79,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
 
         // TODO remove when collision is turned on
         world.register::<Projectile>();
-        let dispatcher_builder = DispatcherBuilder::new();
+        let mut dispatcher_builder = DispatcherBuilder::new();
 
         let network_message_receiver_sys = NetworkMessageReceiverSystemDesc::default().build(&mut world);
         let network_entity_update_sys = NetworkEntityStateUpdateSystemDesc::default().build(&mut world);
@@ -86,7 +88,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         let notification_bar_sys = NotificationBarSystemDesc::default().build(&mut world);
         let shooter_system = ShooterSystemDesc::default().build(&mut world);
 
-        let mut dispatcher = dispatcher_builder
+        dispatcher_builder = dispatcher_builder
             .with(network_message_receiver_sys, "network_message_receiver", &[])
             .with(network_entity_update_sys, "network_entity_update", &[])
             .with(CameraMovementSystem, "camera_movement_system", &["network_entity_update"])
@@ -96,12 +98,20 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
             .with(health_update_system, "health_update", &["network_message_receiver"])
             .with(shooter_system, "shooter", &["network_message_receiver"])
             .with(LifespanSystem, "lifespan", &["shooter"])
-            .with(entity_delete_system, "entity_delete", &["network_entity_update", "physics"])
             .with(AudioPlayerSystem, "audio_player_system", &["cursor_pos_update_system"])
             .with(HudUpdateSystem, "hud_update_system", &["health_update"])
+<<<<<<< HEAD
             .with(notification_bar_sys, "notification_bar", &["network_message_receiver"])
             .with_pool((*world.read_resource::<ArcThreadPool>()).clone())
             .build();
+=======
+            .with_pool((*world.read_resource::<ArcThreadPool>()).clone());
+
+        CollisionBundle.build(world, &mut dispatcher_builder).expect("Unable to build CollisionBundle");
+        dispatcher_builder.add(entity_delete_system, "entitiy_delete", &["network_entity_update", "projectile_collision_handler"]);
+
+        let mut dispatcher= dispatcher_builder.build();
+>>>>>>> 2ab9124 (Run colision system bundle on client)
         dispatcher.setup(world);
 
         self.dispatcher = Some(dispatcher);

@@ -4,6 +4,7 @@ pub use cursor_pos::CursorPosition;
 mod audio;
 mod cursor_pos;
 pub mod map;
+pub mod collision;
 
 use std::fmt::{Display, Formatter};
 use std::net::SocketAddr;
