@@ -18,3 +18,4 @@ ron = "0.6.4"
 
 [dev-dependencies]
 proptest = "0.10.1"
+westiny_test = { path = "../test" }

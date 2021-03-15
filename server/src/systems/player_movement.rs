@@ -117,6 +117,7 @@ fn as_vector2(move_dir: MoveDirection) -> Vector2<f32> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use westiny_test::f32_eq;
     use std::f32::consts::PI;
     use amethyst::core::Transform;
 
@@ -124,12 +125,6 @@ mod test {
     const FACING_DOWN: f32 = 0.0;
     const FACING_LEFT: f32 = -PI/2.0;
     const FACING_RIGHT: f32 = PI/2.0;
-
-    #[inline]
-    fn f32_eq(f1: f32, f2: f32) -> bool {
-        const F32_ALLOWED_DIFF: f32 = 0.00001;
-        (f1 - f2).abs() < F32_ALLOWED_DIFF
-    }
 
     mod test_rotate_toward_mouse {
         use super::*;
