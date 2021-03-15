@@ -43,12 +43,12 @@ impl<'s> System<'s> for ShooterSystem {
     );
 
     fn run(&mut self, (shot_event_channel, time, lazy, entities, mut audio): Self::SystemData) {
-        let current_time = time.absolute_time();
         let events = shot_event_channel.read(&mut self.shot_reader);
-        if events.len() > 0 {
-            audio.play(SoundId::SingleShot, 1.0);
+        if events.len() == 0 {
+            return;
         }
-
+        let current_time = time.absolute_time();
+        audio.play(SoundId::SingleShot, 1.0);
         events.for_each(|shot_event|
                 self.spawn_bullet(
                 &shot_event.position,
