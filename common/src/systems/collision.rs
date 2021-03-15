@@ -138,7 +138,6 @@ impl<'s> System<'s> for ProjectileCollisionHandler {
                     damage_event.single_write(DamageEvent { damage: *damage, target: collision.target })
             }}
 
-            log::info!("Delete entity. Collision");
             entity_delete_channel.single_write(EntityDelete{entity_id: collision.projectile})
         }
 

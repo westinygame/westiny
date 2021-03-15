@@ -4,11 +4,7 @@ use amethyst::{
     ecs::prelude::Builder,
 };
 
-<<<<<<< HEAD
-use crate::components::{Velocity, Projectile, TimeLimit};
-=======
 use crate::components::{Velocity, Projectile, Lifespan};
->>>>>>> 12ef34a (Add handle server's ShotEvent on client)
 use std::time::Duration;
 
 pub fn spawn_bullet<B: Builder>(

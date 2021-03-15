@@ -26,7 +26,6 @@ impl<'s> System<'s> for LifespanSystem {
         let abs_time = time.absolute_time();
         for (limit, entity) in (&time_limits, &entities).join() {
             if abs_time >= limit.living_until {
-                log::info!("Delete entity. Lifespan");
                 delete_event_channel.single_write(EntityDelete{ entity_id: entity });
             }
         }

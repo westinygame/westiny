@@ -1,9 +1,4 @@
-<<<<<<< HEAD
 use amethyst::ecs::{Read, System, ReadStorage, ReadExpect, Entities, WriteStorage, WriteExpect};
-=======
-use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Read, System, SystemData, ReadStorage, ReadExpect, Entities, WriteStorage, WriteExpect};
->>>>>>> 12ef34a (Add handle server's ShotEvent on client)
 use amethyst::core::{Transform, Time, math::{Vector3, Vector2}};
 use amethyst::ecs::prelude::{LazyUpdate, Join};
 
