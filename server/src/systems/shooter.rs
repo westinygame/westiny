@@ -55,6 +55,7 @@ impl<'s> System<'s> for ShooterSystem {
 
                     weapon.last_shot_time = time.absolute_time_seconds();
                     weapon.input_lifted = false;
+                    weapon.bullets_left_in_magazine -= 1;
 
                     let payload = serialize(&PacketType::ShotEvent(ShotEvent {
                         position: Point2::new(bullet_transform.translation().x, bullet_transform.translation().y),
