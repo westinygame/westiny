@@ -33,16 +33,12 @@ mod test {
             assert_eq!(expected, actual, "With Player entity")
         }
 
-        for i in 0..1000 {
-            let actual = supplier.next(EntityType::Corpse);
-            let expected = NetworkId { entity_type: EntityType::Corpse, id: i};
-            assert_eq!(expected, actual, "With Corpse entity")
-        }
+        // TODO place here another network EntitiyType when we have other than the Player
 
         for i in 1000..1100 {
             let actual = supplier.next(EntityType::Player);
             let expected = NetworkId { entity_type: EntityType::Player, id: i};
-            assert_eq!(expected, actual, "With Player entity after bullet")
+            assert_eq!(expected, actual, "With Player entity")
         }
     }
 }
