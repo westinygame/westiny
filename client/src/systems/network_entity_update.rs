@@ -6,9 +6,9 @@ use amethyst::{
     prelude::Builder
 };
 use derive_new::new;
-use amethyst::core::ecs::{ReadStorage, WriteStorage, Join, Entities, LazyUpdate, world::LazyBuilder};
 use westiny_common::network::{EntityState, PlayerDeath};
 use westiny_common::components::{NetworkId, EntityType, Lifespan};
+use amethyst::core::ecs::{ReadStorage, WriteStorage, Join, Entities, LazyUpdate};
 use westiny_common::resources::SpriteId;
 use amethyst::core::{Transform, Time};
 use std::collections::HashMap;
@@ -103,8 +103,8 @@ impl<'s> NetworkEntityStateUpdateSystem {
     ) -> anyhow::Result<()> {
         deaths.into_iter().for_each(|death| {
             let transform = {
-                let mut transform = Transform::default();
-                transform.set_translation_xyz(death.position.x, death.position.y, -0.9);
+                let mut transform = as_transform(&death.position);
+                transform.set_translation_z(CORPSE_HEIGHT);
                 transform
             };
             lazy.create_entity(entities)
@@ -116,21 +116,6 @@ impl<'s> NetworkEntityStateUpdateSystem {
         Ok(())
     }
 }
-
-fn spawn_entity(
-    builder: LazyBuilder,
-    net_id: NetworkId,
-    transform: Transform,
-    sprite_resource: &resources::SpriteResource,
-    sprite_id: SpriteId)
-{
-    builder
-        .with(net_id)
-        .with(transform)
-        .with(sprite_resource.sprite_render_for(sprite_id))
-        .build();
-}
-
 
 fn update_transform(transform: &mut Transform, entity_state: &EntityState) {
     transform.set_translation_x(entity_state.position.x);
