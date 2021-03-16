@@ -67,11 +67,6 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
 
             let sprite_id = match net_id.entity_type {
                 EntityType::Player => SpriteId::Player,
-                EntityType::Corpse => {
-                    // TODO constants should be used instead of magic numbers
-                    transform.set_translation_z(-0.9);
-                    SpriteId::Corpse
-                },
             };
 
             entities.build_entity()

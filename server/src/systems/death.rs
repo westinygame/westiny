@@ -1,10 +1,14 @@
-use amethyst::core::ecs::{System, ReadStorage, Entities, Join, Write, ReadExpect, LazyUpdate, WriteExpect};
-use crate::components::{Eliminated, Player, Client, EntityType};
+use amethyst::core::ecs::{System, ReadStorage, Entities, Write, ReadExpect, Join};
+use crate::components::{Eliminated, Player, Client};
 use amethyst::shrev::EventChannel;
-use amethyst::core::Transform;
-use crate::resources::{ClientRegistry, NetworkIdSupplier};
-use amethyst::prelude::Builder;
 use westiny_common::events::EntityDelete;
+use crate::resources::{ClientRegistry, StreamId};
+use amethyst::core::Transform;
+use amethyst::shred::WriteExpect;
+use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
+use westiny_common::serialize;
+use westiny_common::network::{PacketType, PlayerDeath};
+use amethyst::core::math::Point2;
 
 
 /// Game logic related to player death
@@ -19,8 +23,7 @@ impl<'s> System<'s> for DeathSystem {
         ReadExpect<'s, ClientRegistry>,
         Entities<'s>,
         Write<'s, EventChannel<EntityDelete>>,
-        ReadExpect<'s, LazyUpdate>,
-        WriteExpect<'s, NetworkIdSupplier>,
+        WriteExpect<'s, TransportResource>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -31,19 +34,31 @@ impl<'s> System<'s> for DeathSystem {
             client_registry,
             entities,
             mut entity_delete_event_channel,
-            lazy,
-            mut network_id_supplier,
+            mut net,
         ) = data;
 
         for (_eliminated, _player, transform, entity, client) in (&eliminates, &players, &transforms, &entities, &clients).join() {
-            log::info!("{} died", client_registry.find_client(client.id).unwrap().player_name);
+            let player_name = client_registry.find_client(client.id).unwrap().player_name.clone();
+            log::info!("{} died", player_name);
             // Dead player must be removed
             entity_delete_event_channel.single_write(EntityDelete {entity_id: entity});
 
-            lazy.create_entity(&entities)
-                .with(transform.clone())
-                .with(network_id_supplier.next(EntityType::Corpse))
-                .build();
+            let death_event_msg = serialize(&PacketType::PlayerDeath(
+                    PlayerDeath {
+                        player_name,
+                        position: Point2 {
+                            coords: transform.translation().xy()
+                        }
+                    }
+            )).expect("Could not serialize PlayerDeath");
+
+            client_registry.get_clients().iter().for_each(|&handle| {
+                net.send_with_requirements(
+                    handle.addr,
+                    &death_event_msg,
+                    DeliveryRequirement::ReliableSequenced(StreamId::PlayerDeath.into()),
+                UrgencyRequirement::OnTick);
+            })
         }
     }
 }

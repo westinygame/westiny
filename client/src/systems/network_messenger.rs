@@ -98,13 +98,17 @@ impl NetworkMessageReceiverSystem {
                 Ok(())
             }
             PacketType::Notification(notification) => {
-                log::info!("PlayerNotification: {}", notification.message);
                 message_channel.single_write(notification);
                 Ok(())
             }
             PacketType::ShotEvent(shot) => {
                 log::debug!("Shot event {:?}", shot);
                 shot_event_channel.single_write(shot);
+                Ok(())
+            }
+            PacketType::PlayerDeath(death) => {
+                let notification = PlayerNotification { message: format!("{} died.", death.player_name) };
+                message_channel.single_write(notification);
                 Ok(())
             }
             _ => Err(anyhow::anyhow!(

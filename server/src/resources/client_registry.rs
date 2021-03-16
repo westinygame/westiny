@@ -1,21 +1,12 @@
 use std::fmt;
 use std::net::SocketAddr;
 use thiserror::Error;
+use westiny_common::PlayerName;
 
 /// An ID that uniquely identifies a network client.
 /// Can be used in game logic to match relevant entities to network clients.
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
 pub struct ClientID(pub u32);
-
-#[derive(Eq, PartialEq, Debug, Clone)]
-pub struct PlayerName(pub String);
-
-impl fmt::Display for PlayerName {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)?;
-        Ok(())
-    }
-}
 
 pub struct ClientHandle {
     pub id: ClientID,
