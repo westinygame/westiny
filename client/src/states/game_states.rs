@@ -100,18 +100,13 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
             .with(LifespanSystem, "lifespan", &["shooter"])
             .with(AudioPlayerSystem, "audio_player_system", &["cursor_pos_update_system"])
             .with(HudUpdateSystem, "hud_update_system", &["health_update"])
-<<<<<<< HEAD
             .with(notification_bar_sys, "notification_bar", &["network_message_receiver"])
-            .with_pool((*world.read_resource::<ArcThreadPool>()).clone())
-            .build();
-=======
             .with_pool((*world.read_resource::<ArcThreadPool>()).clone());
 
         CollisionBundle.build(world, &mut dispatcher_builder).expect("Unable to build CollisionBundle");
         dispatcher_builder.add(entity_delete_system, "entitiy_delete", &["network_entity_update", "projectile_collision_handler"]);
 
         let mut dispatcher= dispatcher_builder.build();
->>>>>>> 2ab9124 (Run colision system bundle on client)
         dispatcher.setup(world);
 
         self.dispatcher = Some(dispatcher);
