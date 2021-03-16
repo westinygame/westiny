@@ -3,7 +3,7 @@ use amethyst::core::Transform;
 use amethyst::prelude::*;
 use log::info;
 
-use westiny_common::components::{Input, Health, Player, NetworkId};
+use westiny_common::components::{Input, Health, Player, NetworkId, BoundingCircle};
 use crate::resources::SpriteResource;
 use westiny_common::resources::SpriteId;
 
@@ -23,6 +23,7 @@ pub fn initialize_player<B: Builder>(builder: B,
         .with(Player)
         .with(Health(100))
         .with(Input::default())
+        .with(BoundingCircle{radius: 8.0})
         .build();
 
     info!("Player created.");

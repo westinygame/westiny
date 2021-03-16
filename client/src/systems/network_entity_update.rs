@@ -6,7 +6,7 @@ use amethyst::{
 use derive_new::new;
 use westiny_common::network::{EntityState, PlayerDeath};
 use amethyst::core::ecs::{WriteStorage, Join, Entities, LazyUpdate, ReadStorage};
-use westiny_common::components::{NetworkId, EntityType, Lifespan};
+use westiny_common::components::{NetworkId, EntityType, Lifespan, BoundingCircle};
 use westiny_common::resources::SpriteId;
 use amethyst::core::{Transform, Time};
 use std::collections::HashMap;
@@ -75,11 +75,16 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
             let mut transform = Transform::default();
             update_transform(&mut transform, &entity_state);
 
+            let mut entity_builder = lazy.create_entity(&entities);
+
             let sprite_id = match net_id.entity_type {
-                EntityType::Player => SpriteId::Player,
+                EntityType::Player => {
+                    entity_builder = entity_builder.with(BoundingCircle { radius: 8.0 });
+                    SpriteId::Player
+                },
             };
 
-            lazy.create_entity(&entities)
+            entity_builder
                 .with(net_id)
                 .with(transform)
                 .with(sprite_resource.sprite_render_for(sprite_id))
