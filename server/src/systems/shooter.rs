@@ -30,10 +30,8 @@ impl<'s> System<'s> for ShooterSystem {
 
     fn run(&mut self, (entities, transforms, players, inputs, bounds, mut weapons, time, lazy_update, client_registry, mut net): Self::SystemData) {
         for (_player, input, player_transform, player_bound, mut weapon) in (&players, &inputs, &transforms, &bounds, &mut weapons).join() {
-            if input.flags.intersects(InputFlags::SHOOT)
-            {
-                if weapon.is_allowed_to_shoot(time.absolute_time_seconds())
-                {
+            if input.flags.intersects(InputFlags::SHOOT) {
+                if weapon.is_allowed_to_shoot(time.absolute_time_seconds()) {
                     let mut bullet_transform = Transform::default();
                     bullet_transform.set_translation(*player_transform.translation());
                     bullet_transform.set_rotation(*player_transform.rotation());
@@ -57,6 +55,11 @@ impl<'s> System<'s> for ShooterSystem {
                     weapon.input_lifted = false;
                     weapon.bullets_left_in_magazine -= 1;
 
+                    // Temporary auto-reload
+                    if weapon.bullets_left_in_magazine <= 0 && weapon.is_allowed_to_reload() {
+                        weapon.reload_started_at = Some(time.absolute_time());
+                    }
+
                     let payload = serialize(&PacketType::ShotEvent(ShotEvent {
                         position: Point2::new(bullet_transform.translation().x, bullet_transform.translation().y),
                         velocity,
@@ -70,10 +73,15 @@ impl<'s> System<'s> for ShooterSystem {
                                                    UrgencyRequirement::OnTick);
                     })
                 }
-            }
-            else
-            {
+            } else {
                 weapon.input_lifted = true;
+            }
+
+            if let Some(reload_start) = weapon.reload_started_at {
+                if time.absolute_time_seconds() >= reload_start.as_secs_f64() + weapon.details.reload_time as f64 {
+                    weapon.bullets_left_in_magazine = weapon.details.magazine_size;
+                    weapon.reload_started_at = None;
+                }
             }
         }
     }

@@ -1,5 +1,6 @@
 
 use amethyst::ecs::prelude::{Component, DenseVecStorage};
+use std::time::Duration;
 
 #[derive(PartialEq)]
 pub enum Shot
@@ -41,7 +42,7 @@ pub struct Weapon
     /// Content of the weapon magazine
     pub bullets_left_in_magazine: u32,
     /// When reload is started. Defined only while reloading.
-    pub reload_started_at: Option<f32>,
+    pub reload_started_at: Option<Duration>,
     /// Flag required for single/burst shot weapons
     pub input_lifted: bool,
     /// Static details of the weapon.
@@ -81,5 +82,9 @@ impl Weapon
 
     pub fn bullet_lifespan_sec(&self) -> f32 {
         self.details.bullet_distance_limit / self.details.bullet_speed
+    }
+
+    pub fn is_allowed_to_reload(&self) -> bool {
+        self.reload_started_at.is_none()
     }
 }
