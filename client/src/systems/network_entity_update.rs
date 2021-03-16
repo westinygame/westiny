@@ -67,14 +67,10 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
             let mut transform = Transform::default();
             update_transform(&mut transform, &entity_state);
 
+
+            // Yeah it looks silly but there will be more network entities
             match net_id.entity_type {
-                EntityType::Player => {
-                        create_character(lazy.create_entity(&entities), ||{ lazy.create_entity(&entities)}, &sprite_resource, net_id, transform);
-                }
-                EntityType::Corpse => {
-                    transform.set_translation_z(CORPSE_HEIGHT);
-                    spawn_entity(lazy.create_entity(&entities), net_id, transform, &sprite_resource, SpriteId::Corpse);
-                },
+                EntityType::Player => create_character(lazy.create_entity(&entities), ||{ lazy.create_entity(&entities)}, &sprite_resource, net_id, transform)
             };
         }
     }

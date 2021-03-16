@@ -1,6 +1,7 @@
-use super::{ClientID, PlayerName};
+use super::ClientID;
 
 use westiny_common::components::Input;
+use westiny_common::PlayerName;
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum ClientNetworkEvent {

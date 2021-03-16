@@ -22,6 +22,7 @@ pub enum MoveDirection {
 }
 
 pub use serialization::{serialize, deserialize};
+use std::fmt;
 
 
 #[derive(Deserialize)]
@@ -34,5 +35,15 @@ impl Into<LaminarConfig> for NetworkConfig {
         let mut laminar = LaminarConfig::default();
         laminar.heartbeat_interval = Some(Duration::from_secs(self.hartbeat_interval as u64));
         laminar
+    }
+}
+
+#[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize)]
+pub struct PlayerName(pub String);
+
+impl fmt::Display for PlayerName {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)?;
+        Ok(())
     }
 }
