@@ -11,9 +11,10 @@ use westiny_common::{
     utilities::read_ron,
     NetworkConfig,
 };
+use crate::systems::CollisionBundle;
+
 pub mod resources;
 pub mod systems;
-pub mod entities;
 pub mod components;
 pub mod server_state;
 
@@ -57,10 +58,8 @@ fn main() -> amethyst::Result<()> {
         .with_system_desc(systems::CommandTransformerSystemDesc::default(), "command_transformer", &["msg_receiver"])
         .with(systems::PlayerMovementSystem, "player_movement", &["command_transformer"])
         .with(systems::PhysicsSystem, "physics", &["player_movement"])
-        .with(systems::CollisionSystem, "collision", &["physics"])
-        .with(systems::ProjectileCollisionSystem, "projectile_collision", &["physics"])
-        .with(systems::ProjectileCollisionHandler, "projectile_collision_handler", &["projectile_collision"])
-        .with(systems::CollisionHandlerForObstacles, "collision_handler", &["collision"])
+        .with_bundle(CollisionBundle)?
+        .with(systems::LifespanSystem, "timing", &["collision"])
         .with(systems::ShooterSystem, "shooter", &["command_transformer"])
         .with_system_desc(systems::HealthSystemDesc::default(), "health", &["projectile_collision_handler"])
         .with(systems::DeathSystem, "death", &["health"])

@@ -1,10 +1,10 @@
 use amethyst::core::ecs::{System, ReadStorage, Entities, Join, Write, ReadExpect, LazyUpdate, WriteExpect};
 use crate::components::{Eliminated, Player, Client, EntityType};
 use amethyst::shrev::EventChannel;
-use westiny_common::resources::EntityDelete;
 use amethyst::core::Transform;
 use crate::resources::{ClientRegistry, NetworkIdSupplier};
 use amethyst::prelude::Builder;
+use westiny_common::events::EntityDelete;
 
 
 /// Game logic related to player death

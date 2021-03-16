@@ -7,7 +7,7 @@ use amethyst::{
 use derive_new::new;
 use westiny_common::components::{NetworkId, Health};
 use westiny_common::network::{EntityHealth, PacketType};
-use crate::resources::{DamageEvent, ClientRegistry, StreamId, ClientID};
+use crate::resources::{ClientRegistry, StreamId, ClientID};
 use amethyst::core::ecs::{ReadExpect, WriteExpect, Entity};
 use crate::components::{Client, Eliminated};
 use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
@@ -15,6 +15,7 @@ use westiny_common::serialize;
 
 use anyhow;
 use amethyst::core::Time;
+use westiny_common::events::DamageEvent;
 
 #[derive(SystemDesc, new)]
 #[system_desc(name(HealthSystemDesc))]

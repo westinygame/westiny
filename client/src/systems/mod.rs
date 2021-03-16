@@ -7,6 +7,7 @@ pub use notification_bar::NotificationBarSystemDesc;
 pub use network_entity_delete::NetworkEntityDeleteSystemDesc;
 pub use network_entity_update::NetworkEntityStateUpdateSystemDesc;
 pub use network_messenger::NetworkMessageReceiverSystemDesc;
+pub use shooter::ShooterSystemDesc;
 pub use westiny_common::systems::*;
 
 mod audio_player;
@@ -19,3 +20,4 @@ mod input_state;
 mod camera_movement;
 mod cursor_pos_update;
 pub mod client_connect;
+mod shooter;

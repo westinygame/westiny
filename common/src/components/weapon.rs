@@ -28,8 +28,8 @@ pub struct WeaponDetails
     /// 0 is the perfect gun, always shooting where pointed
     /// 10 is a dumb shotgun
     pub spread: f32,
-    /// Shooting distance, bullets disappear after
-    pub distance: f32,
+    /// Shooting time, bullets disappear after
+    pub bullet_distance_limit: f32,
     pub bullet_speed: f32,
     pub shot: Shot
 }
@@ -77,5 +77,9 @@ impl Weapon
             && input_ok
             && self.bullets_left_in_magazine > 0
             && current_absolute_time > self.last_shot_time + shoot_interval
+    }
+
+    pub fn bullet_lifespan_sec(&self) -> f32 {
+        self.details.bullet_distance_limit / self.details.bullet_speed
     }
 }

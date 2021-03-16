@@ -12,6 +12,5 @@ pub struct NetworkId {
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum EntityType {
     Player,
-    Bullet,
     Corpse,
 }

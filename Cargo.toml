@@ -7,6 +7,6 @@ readme = "README.md"
 license-file = "LICENSE"
 
 [workspace]
-members = [ ".", "server", "common", "client"]
+members = [ ".", "server", "common", "client", "test"]
 # Add everything to default-members as well, e.g. cargo test will execute them as well.
-default-members = [ ".", "server", "common", "client"]
+default-members = [ ".", "server", "common", "client", "test"]

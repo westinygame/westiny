@@ -1,7 +1,6 @@
 use amethyst::prelude::*;
 use amethyst::core::Time;
 use crate::resources::{ClientRegistry, NetworkIdSupplier};
-use crate::resources::collision;
 
 use log::info;
 use std::path::PathBuf;
@@ -46,8 +45,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
         let seed = Seed(MAGIC_SEED);
         data.world.insert(ClientRegistry::new(16));
         data.world.insert(NetworkIdSupplier::new());
-        data.world.insert(collision::Collisions::default());
-        data.world.insert(collision::ProjectileCollisions::default());
+
         data.world.insert(seed);
 
         data.world.register::<Projectile>();

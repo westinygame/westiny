@@ -1,11 +1,10 @@
 pub use audio::{SoundId, AudioQueue};
-pub use entity_delete::EntityDelete;
 pub use cursor_pos::CursorPosition;
 
 mod audio;
-mod entity_delete;
 mod cursor_pos;
 pub mod map;
+pub mod collision;
 
 use std::fmt::{Display, Formatter};
 use std::net::SocketAddr;

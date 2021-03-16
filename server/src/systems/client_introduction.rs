@@ -13,7 +13,7 @@ use derive_new::new;
 use westiny_common::{
     network::{ClientInitialData, PacketType, PlayerNotification},
     serialize,
-    resources::{EntityDelete},
+    events::EntityDelete,
 };
 
 use crate::{

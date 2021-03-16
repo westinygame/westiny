@@ -5,9 +5,9 @@ use amethyst::{
 };
 use derive_new::new;
 use westiny_common::network::EntityState;
-use amethyst::core::ecs::{WriteStorage, Join, Entities, WriteExpect, LazyUpdate};
+use amethyst::core::ecs::{WriteStorage, Join, Entities, LazyUpdate};
 use westiny_common::components::{NetworkId, EntityType};
-use westiny_common::resources::{AudioQueue, SpriteId, SoundId};
+use westiny_common::resources::SpriteId;
 use amethyst::core::Transform;
 use std::collections::HashMap;
 use amethyst::shred::ReadExpect;
@@ -31,7 +31,6 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
         WriteStorage<'s, SpriteRender>,
         Entities<'s>,
         ReadExpect<'s, resources::SpriteResource>,
-        WriteExpect<'s, AudioQueue>,
         ReadExpect<'s, resources::PlayerNetworkId>,
         Read<'s, LazyUpdate>,
     );
@@ -44,13 +43,10 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
                mut sprite_renders,
                entities,
                sprite_resource,
-               mut audio,
                player_net_id,
                lazy,
            ): Self::SystemData) {
         let mut entity_states: HashMap<_, _> = events.read(&mut self.reader).flat_map(|vec| vec.iter()).map(|entity_state| (entity_state.network_id, entity_state)).collect();
-
-
 
         for (net_id, transform) in (&network_ids, &mut transforms).join() {
             if let Some(state) = entity_states.get(net_id) {
@@ -71,15 +67,12 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
 
             let sprite_id = match net_id.entity_type {
                 EntityType::Player => SpriteId::Player,
-                EntityType::Bullet => {audio.play(SoundId::SingleShot, 1.0); SpriteId::Bullet},
                 EntityType::Corpse => {
                     // TODO constants should be used instead of magic numbers
                     transform.set_translation_z(-0.9);
                     SpriteId::Corpse
                 },
             };
-
-
 
             entities.build_entity()
                 .with(net_id, &mut network_ids)

@@ -71,7 +71,6 @@ mod tests {
 
     fn entity_type_strategy() -> impl Strategy<Value = EntityType> {
         prop_oneof![
-            Just(EntityType::Bullet),
             Just(EntityType::Player),
         ]
     }

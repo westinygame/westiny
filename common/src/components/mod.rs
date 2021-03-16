@@ -1,6 +1,6 @@
 pub use bounding_circle::BoundingCircle;
 pub use damage::Damage;
-pub use distance_limit::DistanceLimit;
+pub use time_limit::Lifespan;
 pub use eliminate::Eliminated;
 pub use health::Health;
 pub use input::{Input, InputFlags};
@@ -17,7 +17,7 @@ mod bounding_circle;
 mod velocity;
 pub mod weapon;
 mod health;
-mod distance_limit;
+mod time_limit;
 mod projectile;
 mod damage;
 mod eliminate;

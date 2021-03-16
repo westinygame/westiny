@@ -20,12 +20,11 @@ impl<'s> System<'s> for PlayerMovementSystem {
 
     fn run(&mut self, (mut transforms, mut velocities, players, inputs): Self::SystemData) {
         for (_player, input, mut velocity, transform) in (&players, &inputs, &mut velocities, &mut transforms).join() {
-            let angle = angle_toward_point(&transform, &input.cursor);
+            rotate_toward_point(transform, &input.cursor);
 
             let move_inputs = move_directions_from_input(&input);
             log::debug!("{:?} {}", input, move_inputs.len());
 
-            transform.set_rotation_2d(angle);
             update_velocity(&transform, &move_inputs, &mut velocity);
         }
     }
@@ -54,21 +53,14 @@ pub fn move_directions_from_input(input: &Input) -> Vec<MoveDirection>
 }
 
 
-pub fn angle_toward_point(
-    transform: &Transform,
+pub fn rotate_toward_point(
+    transform: &mut Transform,
     point: &Point2<f32>
-) ->  f32 {
-
+) {
+    use westiny_common::utilities::set_rotation_toward_vector;
     // Calculate the vector from player position to mouse cursor
-    let direction = point.to_homogeneous() - transform.translation();
-
-    let base_vector = Vector2::new(0.0, -1.0);
-    let mut angle = base_vector.angle(&direction.xy());
-
-    if direction.x < 0.0 {
-        angle = 2.0 * std::f32::consts::PI - angle;
-    }
-    angle
+    let direction: Vector2<f32> = (point.to_homogeneous() - transform.translation()).xy();
+    set_rotation_toward_vector(transform, &direction);
 }
 
 const PLAYER_MAX_WALK_SPEED: f32 = 64.0;
@@ -125,6 +117,7 @@ fn as_vector2(move_dir: MoveDirection) -> Vector2<f32> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use westiny_test::f32_eq;
     use std::f32::consts::PI;
     use amethyst::core::Transform;
 
@@ -132,12 +125,6 @@ mod test {
     const FACING_DOWN: f32 = 0.0;
     const FACING_LEFT: f32 = -PI/2.0;
     const FACING_RIGHT: f32 = PI/2.0;
-
-    #[inline]
-    fn f32_eq(f1: f32, f2: f32) -> bool {
-        const F32_ALLOWED_DIFF: f32 = 0.00001;
-        (f1 - f2).abs() < F32_ALLOWED_DIFF
-    }
 
     mod test_rotate_toward_mouse {
         use super::*;
@@ -148,14 +135,13 @@ mod test {
                     #[test]
                     fn $name() {
                         let player = $player_coord;
-                        let transform = &mut Transform::default();
+                        let mut transform = &mut Transform::default();
                         transform.set_translation_x(player.0);
                         transform.set_translation_y(player.1);
 
                         let cursor_pos = Point2::new($cursor_coord.0, $cursor_coord.1);
 
-                        let angle = angle_toward_point(transform, &cursor_pos);
-                        transform.set_rotation_2d(angle);
+                        rotate_toward_point(&mut transform, &cursor_pos);
 
                         let angle = transform.rotation().axis().map(|vec| vec.z).unwrap_or(1.0) * transform.rotation().angle();
 

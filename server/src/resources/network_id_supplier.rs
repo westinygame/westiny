@@ -34,9 +34,9 @@ mod test {
         }
 
         for i in 0..1000 {
-            let actual = supplier.next(EntityType::Bullet);
-            let expected = NetworkId { entity_type: EntityType::Bullet, id: i};
-            assert_eq!(expected, actual, "With Bullet entity")
+            let actual = supplier.next(EntityType::Corpse);
+            let expected = NetworkId { entity_type: EntityType::Corpse, id: i};
+            assert_eq!(expected, actual, "With Corpse entity")
         }
 
         for i in 1000..1100 {
