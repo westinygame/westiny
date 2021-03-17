@@ -7,7 +7,7 @@ use amethyst::{
 };
 use derive_new::new;
 use westiny_common::network::EntityState;
-use amethyst::core::ecs::{ReadStorage, WriteStorage, Join, Entities, WriteExpect, LazyUpdate, world::LazyBuilder};
+use amethyst::core::ecs::{ReadStorage, WriteStorage, Join, Entities, LazyUpdate, world::LazyBuilder};
 use westiny_common::components::{NetworkId, EntityType};
 use westiny_common::resources::SpriteId;
 use amethyst::core::Transform;
@@ -16,6 +16,8 @@ use amethyst::shred::ReadExpect;
 
 use crate::resources;
 use crate::entities::{create_player, create_character};
+
+const CORPSE_HEIGHT: f32 = 0.1;
 
 #[derive(SystemDesc, new)]
 #[system_desc(name(NetworkEntityStateUpdateSystemDesc))]
@@ -70,8 +72,7 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
                         create_character(lazy.create_entity(&entities), ||{ lazy.create_entity(&entities)}, &sprite_resource, net_id, transform);
                 }
                 EntityType::Corpse => {
-                    // TODO constants should be used instead of magic numbers
-                    transform.set_translation_z(-0.9);
+                    transform.set_translation_z(CORPSE_HEIGHT);
                     spawn_entity(lazy.create_entity(&entities), net_id, transform, &sprite_resource, SpriteId::Corpse);
                 },
             };

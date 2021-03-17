@@ -168,19 +168,33 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
     }
 }
 
+const CAMERA_ALTITUDE: f32 = 3.0;
+const CAMERA_DEPTH_VISION: f32 = CAMERA_ALTITUDE + 1.0;
+
+fn create_camera(width: f32, height: f32) -> Camera {
+    Camera::orthographic(
+        -width / 2.0,
+        width / 2.0,
+        -height / 2.0,
+        height / 2.0,
+        0.125, // minimum distance from camera
+        CAMERA_DEPTH_VISION,
+        )
+}
+
 pub fn init_camera(world: &mut World, dimensions: &ScreenDimensions) {
     let mut transform = Transform::default();
     transform.set_translation_xyz(
         dimensions.width() * 0.5,
         dimensions.height() * 0.5,
-        1.0);
+        CAMERA_ALTITUDE);
 
     // Zoom-in
     transform.set_scale(Vector3::new(0.25, 0.25, 1.0));
 
     world
         .create_entity()
-        .with(Camera::standard_2d(dimensions.width(), dimensions.height()))
+        .with(create_camera(dimensions.width(), dimensions.height()))
         .with(transform)
         .build();
 }
