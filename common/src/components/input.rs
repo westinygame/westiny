@@ -6,13 +6,21 @@ use bitflags;
 
 bitflags::bitflags! {
     #[derive(Serialize, Deserialize)]
-    pub struct InputFlags: u8 {
-        const NOP = 0b0000_00000;
-        const FORWARD = 0b0000_00001;
-        const BACKWARD = 0b0000_0010;
-        const LEFT = 0b0000_0100;
-        const RIGHT = 0b0000_1000;
-        const SHOOT = 0b0001_0000;
+    pub struct InputFlags: u16 {
+        const NOP =      0b0000_0000_0000_0000;
+        const FORWARD =  0b0000_0000_0000_0001;
+        const BACKWARD = 0b0000_0000_0000_0010;
+        const LEFT =     0b0000_0000_0000_0100;
+        const RIGHT =    0b0000_0000_0000_1000;
+        const SHOOT =    0b0000_0000_0001_0000;
+        //const USE =    0b0000_0000_0010_0000;
+        const RUN =      0b0000_0000_0100_0000;
+        const RELOAD =   0b0000_0000_1000_0000;
+        const SELECT1 =  0b0000_0001_0000_0000;
+        const SELECT2 =  0b0000_0010_0000_0000;
+        const SELECT3 =  0b0000_0100_0000_0000;
+        const SELECT4 =  0b0000_1000_0000_0000;
+        const SELECT5 =  0b0001_0000_0000_0000;
     }
 
 }

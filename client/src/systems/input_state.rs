@@ -11,12 +11,25 @@ use westiny_common::components::{InputFlags, Input};
 use westiny_common::resources::{ServerAddress, CursorPosition};
 use westiny_common::{network, serialize};
 
+const INPUT_FLAG_MAPPING : [(InputFlags, ActionBinding); 12] = [
+    (InputFlags::FORWARD,  ActionBinding::Forward),
+    (InputFlags::BACKWARD, ActionBinding::Backward),
+    (InputFlags::LEFT,     ActionBinding::StrafeLeft),
+    (InputFlags::RIGHT,    ActionBinding::StrafeRight),
+    (InputFlags::SHOOT,    ActionBinding::Shoot),
+    (InputFlags::RUN,      ActionBinding::Run),
+    (InputFlags::RELOAD,   ActionBinding::Reload),
+    (InputFlags::SELECT1,  ActionBinding::Select1),
+    (InputFlags::SELECT2,  ActionBinding::Select2),
+    (InputFlags::SELECT3,  ActionBinding::Select3),
+    (InputFlags::SELECT4,  ActionBinding::Select4),
+    (InputFlags::SELECT5,  ActionBinding::Select5),
+];
+
 fn update_input_keys(input: &mut Input, handler: &InputHandler<MovementBindingTypes>) {
-    input.flags.set(InputFlags::FORWARD, handler.action_is_down(&ActionBinding::Forward).unwrap_or(false));
-    input.flags.set(InputFlags::BACKWARD, handler.action_is_down(&ActionBinding::Backward).unwrap_or(false));
-    input.flags.set(InputFlags::LEFT, handler.action_is_down(&ActionBinding::StrafeLeft).unwrap_or(false));
-    input.flags.set(InputFlags::RIGHT, handler.action_is_down(&ActionBinding::StrafeRight).unwrap_or(false));
-    input.flags.set(InputFlags::SHOOT, handler.action_is_down(&ActionBinding::Shoot).unwrap_or(false));
+    for (flag, binding) in INPUT_FLAG_MAPPING.iter() {
+        input.flags.set(*flag, handler.action_is_down(binding).unwrap_or(false));
+    }
 }
 
 fn update_input_cursor(input: &mut Input, cursor: &CursorPosition) {

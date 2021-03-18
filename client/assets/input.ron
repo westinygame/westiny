@@ -9,5 +9,12 @@
         StrafeRight: [ [Key(D)] ],
         Shoot: [ [Mouse(Left)] ],
         Use: [ [Mouse(Right)] ],
+        Run: [ [Key(LShift)] ],
+        Reload: [ [Key(R)] ],
+        Select1: [ [Key(Key1)] ],
+        Select2: [ [Key(Key2)] ],
+        Select3: [ [Key(Key3)] ],
+        Select4: [ [Key(Key4)] ],
+        Select5: [ [Key(Key5)] ],
     },
 )
