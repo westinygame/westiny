@@ -11,6 +11,13 @@ pub enum ActionBinding {
     StrafeRight,
     Shoot,
     Use,
+    Run,
+    Reload,
+    Select1,
+    Select2,
+    Select3,
+    Select4,
+    Select5,
 }
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq, Serialize, Deserialize)]
