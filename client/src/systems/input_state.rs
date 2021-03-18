@@ -11,12 +11,13 @@ use westiny_common::components::{InputFlags, Input};
 use westiny_common::resources::{ServerAddress, CursorPosition};
 use westiny_common::{network, serialize};
 
-const INPUT_FLAG_MAPPING : [(InputFlags, ActionBinding); 12] = [
+const INPUT_FLAG_MAPPING : [(InputFlags, ActionBinding); 13] = [
     (InputFlags::FORWARD,  ActionBinding::Forward),
     (InputFlags::BACKWARD, ActionBinding::Backward),
     (InputFlags::LEFT,     ActionBinding::StrafeLeft),
     (InputFlags::RIGHT,    ActionBinding::StrafeRight),
     (InputFlags::SHOOT,    ActionBinding::Shoot),
+    (InputFlags::USE,      ActionBinding::Use),
     (InputFlags::RUN,      ActionBinding::Run),
     (InputFlags::RELOAD,   ActionBinding::Reload),
     (InputFlags::SELECT1,  ActionBinding::Select1),
