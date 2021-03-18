@@ -2,10 +2,12 @@ use amethyst::{
     derive::SystemDesc,
     ecs::{System, SystemData, Read},
     shrev::{ReaderId, EventChannel},
+    core::math::Point2,
+    prelude::Builder
 };
 use derive_new::new;
 use westiny_common::network::EntityState;
-use amethyst::core::ecs::{WriteStorage, Join, Entities, LazyUpdate};
+use amethyst::core::ecs::{ReadStorage, WriteStorage, Join, Entities, LazyUpdate, world::LazyBuilder};
 use westiny_common::components::{NetworkId, EntityType};
 use westiny_common::resources::SpriteId;
 use amethyst::core::Transform;
@@ -13,8 +15,9 @@ use std::collections::HashMap;
 use amethyst::shred::ReadExpect;
 
 use crate::resources;
-use crate::entities::initialize_player;
-use amethyst::renderer::SpriteRender;
+use crate::entities::{create_player, create_character};
+
+const CORPSE_HEIGHT: f32 = 0.1;
 
 #[derive(SystemDesc, new)]
 #[system_desc(name(NetworkEntityStateUpdateSystemDesc))]
@@ -26,9 +29,8 @@ pub struct NetworkEntityStateUpdateSystem {
 impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
     type SystemData = (
         Read<'s, EventChannel<Vec<EntityState>>>,
-        WriteStorage<'s, NetworkId>,
+        ReadStorage<'s, NetworkId>,
         WriteStorage<'s, Transform>,
-        WriteStorage<'s, SpriteRender>,
         Entities<'s>,
         ReadExpect<'s, resources::SpriteResource>,
         ReadExpect<'s, resources::PlayerNetworkId>,
@@ -38,9 +40,8 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
     fn run(&mut self,
            (
                events,
-               mut network_ids,
+               network_ids,
                mut transforms,
-               mut sprite_renders,
                entities,
                sprite_resource,
                player_net_id,
@@ -57,34 +58,53 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
 
         // if it is this player
         if let Some(&new_state) = entity_states.get(&player_net_id.0) {
-            initialize_player(lazy.create_entity(&entities), &sprite_resource, player_net_id.0, new_state.position.clone());
+            create_player(||{ lazy.create_entity(&entities) }, &sprite_resource, player_net_id.0, as_transform(&new_state.position));
             entity_states.remove(&player_net_id.0);
         }
+
 
         for (net_id, entity_state) in entity_states {
             let mut transform = Transform::default();
             update_transform(&mut transform, &entity_state);
 
-            let sprite_id = match net_id.entity_type {
-                EntityType::Player => SpriteId::Player,
+            match net_id.entity_type {
+                EntityType::Player => {
+                        create_character(lazy.create_entity(&entities), ||{ lazy.create_entity(&entities)}, &sprite_resource, net_id, transform);
+                }
                 EntityType::Corpse => {
-                    // TODO constants should be used instead of magic numbers
-                    transform.set_translation_z(-0.9);
-                    SpriteId::Corpse
+                    transform.set_translation_z(CORPSE_HEIGHT);
+                    spawn_entity(lazy.create_entity(&entities), net_id, transform, &sprite_resource, SpriteId::Corpse);
                 },
             };
-
-            entities.build_entity()
-                .with(net_id, &mut network_ids)
-                .with(transform, &mut transforms)
-                .with(sprite_resource.sprite_render_for(sprite_id), &mut sprite_renders)
-                .build();
         }
     }
 }
+
+fn spawn_entity(
+    builder: LazyBuilder,
+    net_id: NetworkId,
+    transform: Transform,
+    sprite_resource: &resources::SpriteResource,
+    sprite_id: SpriteId)
+{
+    builder
+        .with(net_id)
+        .with(transform)
+        .with(sprite_resource.sprite_render_for(sprite_id))
+        .build();
+}
+
 
 fn update_transform(transform: &mut Transform, entity_state: &EntityState) {
     transform.set_translation_x(entity_state.position.x);
     transform.set_translation_y(entity_state.position.y);
     transform.set_rotation_2d(entity_state.rotation);
 }
+
+fn as_transform(pos: &Point2<f32>) -> Transform
+{
+    let mut transform = Transform::default();
+    transform.set_translation_xyz(pos.x, pos.y, 0.0);
+    transform
+}
+
