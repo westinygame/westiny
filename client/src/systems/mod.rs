@@ -1,6 +1,7 @@
 pub use audio_player::AudioPlayerSystem;
 pub use camera_movement::CameraMovementSystem;
 pub use cursor_pos_update::CursorPosUpdateSystem;
+pub use health::HealthUpdateSystemDesc;
 pub use hud_update::HudUpdateSystem;
 pub use input_state::InputStateSystem;
 pub use notification_bar::NotificationBarSystemDesc;
@@ -11,6 +12,7 @@ pub use shooter::ShooterSystemDesc;
 pub use westiny_common::systems::*;
 
 mod audio_player;
+mod health;
 mod hud_update;
 mod network_messenger;
 mod network_entity_update;
