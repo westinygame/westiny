@@ -13,14 +13,14 @@ const CHARACTER_HEIGHT : f32 = 1.8;
 pub fn create_hand_for_character<B: Builder>(
     builder: B,
     sprite_resource: &SpriteResource,
-    entity: Entity
+    parent: Entity
     ) -> Entity
 {
     let mut hand_transform = Transform::default();
     hand_transform.set_translation_xyz(-3., -6., -0.3); // relative to parent
 
     builder
-        .with(Parent{entity})
+        .with(Parent{entity: parent})
         .with(hand_transform)
         .with(sprite_resource.sprite_render_for(SpriteId::HandWithPistol))
         .build()
