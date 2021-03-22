@@ -4,7 +4,7 @@ use amethyst::prelude::*;
 use amethyst::ecs::Entity;
 use log::info;
 
-use westiny_common::components::{Input, Health, Player, NetworkId};
+use westiny_common::components::{Input, Health, Player, NetworkId, BoundingCircle};
 use crate::resources::SpriteResource;
 use westiny_common::resources::SpriteId;
 
@@ -39,6 +39,7 @@ pub fn create_character<B: Builder, F: Fn() -> B>(
         .with(network_id)
         .with(sprite_resource.sprite_render_for(SpriteId::Player))
         .with(transform)
+        .with(BoundingCircle{radius: 8.0})
         .build();
 
     create_hand_for_character(factory(), &sprite_resource, entity);

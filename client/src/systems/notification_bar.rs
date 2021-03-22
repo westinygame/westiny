@@ -32,6 +32,7 @@ impl<'s> System<'s> for NotificationBarSystem {
     {
         let current_time = time.absolute_time_seconds();
         for notification in notifications.read(&mut self.notification_reader) {
+            log::info!("PlayerNotification: {}", notification.message);
             bar.show_message(&notification.message, &mut ui_texts, current_time + NOTIFICATION_VISIBILITY_SECONDS);
         }
 

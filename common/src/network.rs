@@ -4,6 +4,7 @@ use std::fmt::{Display, Debug, Formatter};
 use crate::components::{Input, NetworkId, Health};
 use amethyst::core::math::{Point2, Vector2};
 use crate::resources::Seed;
+use crate::PlayerName;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(test, derive(Clone, PartialEq))]
@@ -20,6 +21,7 @@ pub enum PacketType {
     EntityHealthUpdate(EntityHealth),
     Notification(PlayerNotification),
     ShotEvent(ShotEvent),
+    PlayerDeath(PlayerDeath),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -52,8 +54,7 @@ pub struct EntityHealth {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[cfg_attr(test, derive(PartialEq))]
-pub struct PlayerNotification
-{
+pub struct PlayerNotification {
     pub message: String,
 }
 
@@ -63,6 +64,13 @@ pub struct ShotEvent {
     pub position: Point2<f32>,
     pub velocity: Vector2<f32>,
     pub bullet_time_limit_secs: f32,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(test, derive(PartialEq))]
+pub struct PlayerDeath {
+    pub player_name: PlayerName,
+    pub position: Point2<f32>,
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize, Debug, PartialEq)]

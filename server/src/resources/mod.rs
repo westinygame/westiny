@@ -1,4 +1,4 @@
-pub(crate) use client_registry::{ClientID, PlayerName};
+pub(crate) use client_registry::ClientID;
 pub(crate) use event::{ClientNetworkEvent, NetworkCommand};
 pub(crate) use network_stream_id::StreamId;
 
