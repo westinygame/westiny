@@ -5,10 +5,10 @@ use amethyst::{
 };
 
 use derive_new::new;
-use westiny_common::components::{NetworkId, Health};
-use westiny_common::network::{EntityHealth, PacketType};
+use westiny_common::components::Health;
+use westiny_common::network::PacketType;
 use crate::resources::{ClientRegistry, StreamId, ClientID};
-use amethyst::core::ecs::{ReadExpect, WriteExpect, Entity};
+use amethyst::core::ecs::{ReadExpect, WriteExpect};
 use crate::components::{Client, Eliminated};
 use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
 use westiny_common::serialize;
@@ -16,6 +16,7 @@ use westiny_common::serialize;
 use anyhow;
 use amethyst::core::Time;
 use westiny_common::events::DamageEvent;
+use westiny_common::network::PlayerUpdate;
 
 #[derive(SystemDesc, new)]
 #[system_desc(name(HealthSystemDesc))]
@@ -28,7 +29,6 @@ impl<'s> System<'s> for HealthSystem {
     type SystemData = (
         Read<'s, EventChannel<DamageEvent>>,
         WriteStorage<'s, Health>,
-        ReadStorage<'s, NetworkId>,
         ReadStorage<'s, Client>,
         WriteStorage<'s, Eliminated>,
         ReadExpect<'s, ClientRegistry>,
@@ -40,7 +40,6 @@ impl<'s> System<'s> for HealthSystem {
         let (
             damage_event_channel,
             mut healths,
-            net_ids,
             clients,
             mut eliminates,
             client_registry,
@@ -61,7 +60,7 @@ impl<'s> System<'s> for HealthSystem {
                 }
                 if let Some(client) = clients.get(damage_event.target) {
                     log::debug!("Client [id: {:?}] took {} damage", client.id, damage_event.damage.0);
-                    if let Err(err) = HealthSystem::notify_client(&net_ids, &client_registry, &mut transport, damage_event.target, health.clone(), &client.id) {
+                    if let Err(err) = HealthSystem::notify_client(&client_registry, &mut transport, health.clone(), &client.id) {
                         log::error!("Error while sending Health update to client: {}", err);
                     }
                 }
@@ -71,40 +70,22 @@ impl<'s> System<'s> for HealthSystem {
 }
 
 impl HealthSystem {
-    fn notify_client(net_ids: &ReadStorage<'_, NetworkId>,
-                     client_registry: &ClientRegistry,
+    fn notify_client(client_registry: &ClientRegistry,
                      transport: &mut TransportResource,
-                     target_entity: Entity,
                      new_health: Health,
                      client: &ClientID) -> anyhow::Result<()> {
         let client_handle = {
-            // could not convert with '?' even after .ok_or(...)
-            let result = client_registry.find_client(*client);
-            if result.is_none() {
-                return Err(anyhow::anyhow!("Client [id: {:?}] not found in registry", client));
-            }
-            result.unwrap()
+            client_registry.find_client(*client)
+                .ok_or(anyhow::anyhow!("Client [id: {:?}] not found in registry", client))?
         };
 
-        let &network_id = {
-            let result = net_ids.get(target_entity);
-            if result.is_none() {
-                return Err(anyhow::anyhow!("Network id not found for client's player entity [client_id: {:?}]"));
-            }
-            result.unwrap()
-        };
-
-        let payload = serialize(&PacketType::EntityHealthUpdate(
-            EntityHealth {
-                network_id,
-                health: new_health
-            }
-        )).map_err(|err| anyhow::Error::new(err))?;
+        let payload = serialize(&PacketType::PlayerUpdate(PlayerUpdate::HealthUpdate(new_health)))
+            .map_err(|err| anyhow::Error::new(err))?;
 
         transport.send_with_requirements(
             client_handle.addr,
             &payload,
-            DeliveryRequirement::ReliableSequenced(StreamId::HealthUpdate.into()),
+            DeliveryRequirement::ReliableSequenced(StreamId::PlayerUpdate.into()),
             UrgencyRequirement::OnTick
         );
 

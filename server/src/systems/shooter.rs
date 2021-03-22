@@ -2,14 +2,14 @@ use amethyst::ecs::{Read, System, ReadStorage, ReadExpect, Entities, WriteStorag
 use amethyst::core::{Transform, Time, math::{Vector3, Vector2}};
 use amethyst::ecs::prelude::{LazyUpdate, Join};
 
-use westiny_common::components::{weapon::Weapon, Player, Input, InputFlags, BoundingCircle};
-use crate::components::Damage;
+use westiny_common::components::{weapon::Weapon, Input, InputFlags, BoundingCircle};
+use crate::components::{Damage, Client};
 use westiny_common::entities::spawn_bullet;
 use amethyst::prelude::Builder;
-use crate::resources::{ClientRegistry, StreamId};
+use crate::resources::{ClientRegistry, StreamId, ClientID};
 use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
 use westiny_common::serialize;
-use westiny_common::network::{PacketType, ShotEvent};
+use westiny_common::network::{PacketType, ShotEvent, PlayerUpdate};
 use amethyst::core::math::Point2;
 
 pub struct ShooterSystem;
@@ -18,18 +18,18 @@ impl<'s> System<'s> for ShooterSystem {
     type SystemData = (
         Entities<'s>,
         ReadStorage<'s, Transform>,
-        ReadStorage<'s, Player>,
         ReadStorage<'s, Input>,
         ReadStorage<'s, BoundingCircle>,
         WriteStorage<'s, Weapon>,
+        ReadStorage<'s, Client>,
         Read<'s, Time>,
         ReadExpect<'s, LazyUpdate>,
         ReadExpect<'s, ClientRegistry>,
         WriteExpect<'s, TransportResource>
     );
 
-    fn run(&mut self, (entities, transforms, players, inputs, bounds, mut weapons, time, lazy_update, client_registry, mut net): Self::SystemData) {
-        for (_player, input, player_transform, player_bound, mut weapon) in (&players, &inputs, &transforms, &bounds, &mut weapons).join() {
+    fn run(&mut self, (entities, transforms, inputs, bounds, mut weapons, clients, time, lazy_update, client_registry, mut net): Self::SystemData) {
+        for (input, player_transform, bound, mut weapon, client) in (&inputs, &transforms, (&bounds).maybe(), &mut weapons, (&clients).maybe()).join() {
             if input.flags.intersects(InputFlags::SHOOT) {
                 if weapon.is_allowed_to_shoot(time.absolute_time_seconds()) {
                     let mut bullet_transform = Transform::default();
@@ -39,7 +39,9 @@ impl<'s> System<'s> for ShooterSystem {
                     let direction3d = (bullet_transform.rotation() * Vector3::y()).normalize();
                     let direction2d = Vector2::new(-direction3d.x, -direction3d.y);
 
-                    *bullet_transform.translation_mut() -= direction3d * player_bound.radius;
+                    if let Some(bound) = bound {
+                        *bullet_transform.translation_mut() -= direction3d * bound.radius;
+                    }
 
                     let velocity = direction2d * weapon.details.bullet_speed;
                     let bullet_builder = lazy_update.create_entity(&entities)
@@ -54,6 +56,15 @@ impl<'s> System<'s> for ShooterSystem {
                     weapon.last_shot_time = time.absolute_time_seconds();
                     weapon.input_lifted = false;
                     weapon.bullets_left_in_magazine -= 1;
+
+                    if let Some(client) = client {
+                        if let Err(err) = Self::send_ammo_update(&client.id,
+                                                                 &client_registry,
+                                                                 weapon.bullets_left_in_magazine,
+                                                                 &mut net) {
+                            log::error!("Failed to send ammo update to client {:?}. Error: {}", client.id, err);
+                        }
+                    }
 
                     // Temporary auto-reload
                     if weapon.bullets_left_in_magazine <= 0 && weapon.is_allowed_to_reload() {
@@ -81,9 +92,38 @@ impl<'s> System<'s> for ShooterSystem {
                 if time.absolute_time_seconds() >= reload_start.as_secs_f64() + weapon.details.reload_time as f64 {
                     weapon.bullets_left_in_magazine = weapon.details.magazine_size;
                     weapon.reload_started_at = None;
+
+                    if let Some(client) = client {
+                        if let Err(err) = Self::send_ammo_update(&client.id,
+                                                                 &client_registry,
+                                                                 weapon.bullets_left_in_magazine,
+                                                                 &mut net) {
+                            log::error!("Failed to send AmmoUpdate to client {:?}. Error: {}", client.id, err);
+                        }
+                    }
                 }
             }
         }
+    }
+}
+
+impl ShooterSystem {
+    fn send_ammo_update(
+        client_id: &ClientID,
+        client_registry: &ClientRegistry,
+        ammo_in_magazine: u32,
+        net: &mut TransportResource,
+    ) -> anyhow::Result<()> {
+        let payload = serialize(&PacketType::PlayerUpdate(PlayerUpdate::AmmoUpdate{ammo_in_magazine}))
+            .map_err(|err| anyhow::anyhow!("Failed to serialize AmmoUpdate: {}", err))?;
+        let address = client_registry.find_client(*client_id).map(|handle| handle.addr)
+            .ok_or(anyhow::anyhow!("Client with id {:?} not found in registry", client_id))?;
+        net.send_with_requirements(address,
+                                   &payload,
+                                   DeliveryRequirement::ReliableSequenced(StreamId::PlayerUpdate.into()),
+                                   UrgencyRequirement::OnTick
+        );
+        Ok(())
     }
 }
 
@@ -108,7 +148,6 @@ mod test {
 
         AmethystApplication::blank()
             .with_setup(|world: &mut World| {
-                world.register::<Player>();
                 world.register::<Input>();
                 world.register::<Transform>();
                 world.register::<BoundingCircle>();
@@ -137,7 +176,6 @@ mod test {
                 };
 
                 world.create_entity()
-                    .with(Player)
                     .with(input)
                     .with(Transform::default())
                     .with(BoundingCircle { radius: 1.0 })

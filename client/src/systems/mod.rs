@@ -9,6 +9,7 @@ pub use network_entity_update::NetworkEntityStateUpdateSystemDesc;
 pub use network_messenger::NetworkMessageReceiverSystemDesc;
 pub use shooter::ShooterSystemDesc;
 pub use westiny_common::systems::*;
+pub use player_update::PlayerUpdateSystemDesc;
 
 mod audio_player;
 mod hud_update;
@@ -21,3 +22,4 @@ mod camera_movement;
 mod cursor_pos_update;
 pub mod client_connect;
 mod shooter;
+mod player_update;

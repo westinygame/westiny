@@ -15,9 +15,8 @@ use std::collections::HashMap;
 use std::time::Duration;
 use amethyst::shred::ReadExpect;
 
-use crate::resources;
 use crate::entities::{create_player, create_character};
-use crate::resources::SpriteResource;
+use crate::resources;
 
 const CORPSE_HEIGHT: f32 = 0.1;
 
@@ -97,7 +96,7 @@ impl<'s> NetworkEntityStateUpdateSystem {
     fn handle_deaths<D: IntoIterator<Item=&'s PlayerDeath>>(
         deaths: D,
         lazy: &LazyUpdate,
-        sprite_resource: &SpriteResource,
+        sprite_resource: &resources::SpriteResource,
         entities: &Entities<'_>,
         current_time: Duration,
     ) -> anyhow::Result<()> {

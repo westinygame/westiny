@@ -2,7 +2,7 @@
 use amethyst::ecs::prelude::{Component, DenseVecStorage};
 use std::time::Duration;
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Shot
 {
     /// one shot per click (even when player holds down the button)

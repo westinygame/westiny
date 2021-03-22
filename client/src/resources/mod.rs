@@ -1,5 +1,5 @@
 pub use audio::{initialize_audio, Sounds};
-pub use hud::{format_health, Hud, initialize_hud};
+pub use hud::{format_health, format_ammo, Hud, initialize_hud};
 pub use network_stream_id::StreamId;
 pub use notification_bar::{NotificationBar};
 pub use sprite_resource::{initialize_sprite_resource, SpriteResource};
