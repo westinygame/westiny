@@ -51,6 +51,9 @@ impl<'s> System<'s> for PlayerUpdateSystem {
                     log::debug!("Health updated to {:?}", new_health);
                 }
                 PlayerUpdate::AmmoUpdate { ammo_in_magazine} => {
+                    if ammo_in_magazine > &weapon.bullets_left_in_magazine {
+                        audio.play(SoundId::WeaponReady, 1.0);
+                    }
                     weapon.bullets_left_in_magazine = *ammo_in_magazine;
                     log::debug!("Ammo updated to {:?}", ammo_in_magazine);
                 }
