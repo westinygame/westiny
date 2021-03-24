@@ -26,10 +26,17 @@ use crate::systems::{
     PhysicsSystem,
     ShooterSystemDesc,
     LifespanSystem,
-    HealthUpdateSystemDesc,
+    PlayerUpdateSystemDesc,
     CollisionBundle,
 };
-use crate::resources::{initialize_audio, initialize_hud, NotificationBar, initialize_sprite_resource, SpriteResource, PlayerNetworkId};
+use crate::resources::{
+    initialize_audio,
+    initialize_hud,
+    NotificationBar,
+    initialize_sprite_resource,
+    SpriteResource,
+    PlayerNetworkId
+};
 use crate::entities::initialize_tilemap;
 
 use westiny_common::{
@@ -84,7 +91,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         let network_message_receiver_sys = NetworkMessageReceiverSystemDesc::default().build(&mut world);
         let network_entity_update_sys = NetworkEntityStateUpdateSystemDesc::default().build(&mut world);
         let entity_delete_system = NetworkEntityDeleteSystemDesc::default().build(&mut world);
-        let health_update_system = HealthUpdateSystemDesc::default().build(&mut world);
+        let player_update_system = PlayerUpdateSystemDesc::default().build(&mut world);
         let notification_bar_sys = NotificationBarSystemDesc::default().build(&mut world);
         let shooter_system = ShooterSystemDesc::default().build(&mut world);
 
@@ -95,11 +102,11 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
             .with(CursorPosUpdateSystem, "cursor_pos_update_system", &["camera_movement_system"])
             .with(InputStateSystem, "input_state_system", &["cursor_pos_update_system"])
             .with(PhysicsSystem, "physics", &[])
-            .with(health_update_system, "health_update", &["network_message_receiver"])
+            .with(player_update_system, "player_update", &["network_message_receiver"])
             .with(shooter_system, "shooter", &["network_message_receiver"])
             .with(LifespanSystem, "lifespan", &["shooter"])
             .with(AudioPlayerSystem, "audio_player_system", &["cursor_pos_update_system"])
-            .with(HudUpdateSystem, "hud_update_system", &["health_update"])
+            .with(HudUpdateSystem, "hud_update_system", &["player_update"])
             .with(notification_bar_sys, "notification_bar", &["network_message_receiver"])
             .with_pool((*world.read_resource::<ArcThreadPool>()).clone());
 

@@ -4,11 +4,12 @@ use amethyst::prelude::*;
 use amethyst::ecs::Entity;
 use log::info;
 
-use westiny_common::components::{Input, Health, Player, NetworkId, BoundingCircle};
+use westiny_common::components::{Input, Health, Player, NetworkId, BoundingCircle, weapon};
 use crate::resources::SpriteResource;
 use westiny_common::resources::SpriteId;
+use westiny_common::components::weapon::Weapon;
 
-const CHARACTER_HEIGHT : f32 = 1.8;
+pub const CHARACTER_HEIGHT : f32 = 1.8;
 
 pub fn create_hand_for_character<B: Builder>(
     builder: B,
@@ -54,10 +55,22 @@ pub fn create_player<B: Builder, F>(
     ) -> Entity
 where F: Fn () -> B
 {
+    let revolver = weapon::WeaponDetails {
+        damage: 5,
+        bullet_distance_limit: 120.0,
+        fire_rate: 7.2,
+        magazine_size: 6,
+        reload_time: 1.0,
+        spread: 2.0,
+        shot: weapon::Shot::Single,
+        bullet_speed: 200.0,
+    };
+
     let builder = factory()
         .with(Player)
         .with(Health(100))
-        .with(Input::default());
+        .with(Input::default())
+        .with(Weapon::new(revolver));
     let entity = create_character(builder, factory, sprite_resource, network_id, transform);
     info!("Player created.");
     entity

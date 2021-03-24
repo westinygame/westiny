@@ -10,7 +10,7 @@ use std::net::SocketAddr;
 use derive_new::new;
 
 use westiny_common::{
-    network::{PacketType, EntityState, EntityHealth, NetworkEntityDelete, PlayerNotification, ShotEvent},
+    network::{PacketType, EntityState, NetworkEntityDelete, PlayerNotification, ShotEvent, PlayerUpdate},
     deserialize,
     events::AppEvent,
 };
@@ -28,7 +28,7 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
         Read<'s, EventChannel<NetworkSimulationEvent>>,
         Write<'s, EventChannel<AppEvent>>,
         Write<'s, EventChannel<Vec<EntityState>>>,
-        Write<'s, EventChannel<EntityHealth>>,
+        Write<'s, EventChannel<PlayerUpdate>>,
         Write<'s, EventChannel<NetworkEntityDelete>>,
         Write<'s, EventChannel<PlayerNotification>>,
         Write<'s, EventChannel<ShotEvent>>,
@@ -39,7 +39,7 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
         let (net_event_ch,
         mut app_event,
         mut entity_state_update_channel,
-        mut entity_health_channel,
+        mut player_update_channel,
         mut entity_delete_channel,
         mut message_channel,
         mut shot_event_channel,
@@ -63,11 +63,11 @@ impl<'s> System<'s> for NetworkMessageReceiverSystem {
                     match self.process_payload(&addr,
                                                &payload,
                                                &mut entity_state_update_channel,
-                                               &mut entity_health_channel,
+                                               &mut player_update_channel,
                                                &mut entity_delete_channel,
                                                &mut message_channel,
                                                &mut shot_event_channel,
-                                               &mut death_event_channel,) {
+                                               &mut death_event_channel) {
                         Ok(_) => log::debug!("Message from {} processed successfully.", addr),
                         Err(e) => {
                             log::error!("Could not process message! {:?}, payload: {:02x?}", e, payload)
@@ -86,7 +86,7 @@ impl NetworkMessageReceiverSystem {
         addr: &SocketAddr,
         payload: &[u8],
         entity_update_channel: &mut EventChannel<Vec<EntityState>>,
-        entity_health_channel: &mut EventChannel<EntityHealth>,
+        player_update_channel: &mut EventChannel<PlayerUpdate>,
         entity_delete_channel: &mut EventChannel<NetworkEntityDelete>,
         message_channel: &mut EventChannel<PlayerNotification>,
         shot_event_channel: &mut EventChannel<ShotEvent>,
@@ -104,9 +104,8 @@ impl NetworkMessageReceiverSystem {
                 entity_delete_channel.single_write(delete);
                 Ok(())
             }
-            PacketType::EntityHealthUpdate(health_update) => {
-                log::debug!("Network entity health change, entity_id={:?}, health={:?}", health_update.network_id, health_update.health);
-                entity_health_channel.single_write(health_update);
+            PacketType::PlayerUpdate(player_update) => {
+                player_update_channel.single_write(player_update);
                 Ok(())
             }
             PacketType::Notification(notification) => {

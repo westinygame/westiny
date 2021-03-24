@@ -18,7 +18,7 @@ pub enum PacketType {
     },
     EntityStateUpdate(Vec<EntityState>),
     EntityDelete(NetworkEntityDelete),
-    EntityHealthUpdate(EntityHealth),
+    PlayerUpdate(PlayerUpdate),
     Notification(PlayerNotification),
     ShotEvent(ShotEvent),
     PlayerDeath(PlayerDeath),
@@ -47,13 +47,6 @@ pub struct NetworkEntityDelete {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[cfg_attr(test, derive(PartialEq))]
-pub struct EntityHealth {
-    pub network_id: NetworkId,
-    pub health: Health,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-#[cfg_attr(test, derive(PartialEq))]
 pub struct PlayerNotification {
     pub message: String,
 }
@@ -71,6 +64,15 @@ pub struct ShotEvent {
 pub struct PlayerDeath {
     pub player_name: PlayerName,
     pub position: Point2<f32>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(test, derive(PartialEq))]
+pub enum PlayerUpdate {
+    HealthUpdate(Health),
+    AmmoUpdate {
+        ammo_in_magazine: u32,
+    }
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize, Debug, PartialEq)]
