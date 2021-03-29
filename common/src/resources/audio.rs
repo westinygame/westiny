@@ -3,6 +3,8 @@
 #[repr(usize)]
 pub enum SoundId {
     SingleShot = 0,
+    WeaponReady = 1,
+    Ouch = 2,
 }
 
 #[derive(Default)]
