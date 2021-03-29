@@ -56,9 +56,7 @@ impl Weapon {
 }
 
 mod weapon_details {
-    use amethyst::{Error, assets};
     use serde::Deserialize;
-    use amethyst::core::ecs::DenseVecStorage;
 
     #[derive(Debug, PartialEq, Deserialize, Clone)]
     pub enum Shot {

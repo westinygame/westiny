@@ -1,6 +1,6 @@
 use amethyst::core::ecs::World;
 use crate::components::weapon::WeaponDetails;
-use std::path::PathBuf;
+use std::path::Path;
 use crate::utilities::read_ron;
 
 pub struct GunResource {
@@ -16,14 +16,13 @@ pub enum GunId {
 const WEAPON_ASSET_DIR: &'static str = "assets/weapons/";
 
 impl GunResource {
-    pub fn initialize<P: Into<PathBuf>>(world: &mut World, resources_path: P) -> anyhow::Result<()>{
-        let path = resources_path.into().join(WEAPON_ASSET_DIR);
+    pub fn initialize<P: AsRef<Path>>(world: &mut World, resources_path: P) -> anyhow::Result<()>{
+        let path = resources_path.as_ref().join(WEAPON_ASSET_DIR);
 
         let revolver: WeaponDetails = read_ron(&path.join("revolver.ron"))?;
         // other weapons here
 
-        let this = GunResource { weapons: [revolver]};
-        world.insert(this);
+        world.insert(GunResource { weapons: [revolver]});
         Ok(())
     }
 

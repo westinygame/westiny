@@ -18,11 +18,13 @@ pub mod systems;
 pub mod components;
 pub mod server_state;
 
+pub const RESOURCES_RELATIVE_PATH: &'static str = "../resources";
+
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
 
-    let app_root = application_root_dir().map(|path| path.join(".."))?;
-    let resources_dir = app_root.join("resources");
+    let app_root = application_root_dir()?;
+    let resources_dir = app_root.join(RESOURCES_RELATIVE_PATH);
 
     let server_port: u16 = {
         let ron_path = resources_dir.join("server_network.ron");

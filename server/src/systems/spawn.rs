@@ -9,6 +9,7 @@ use amethyst::core::ecs::shrev::EventChannel;
 use westiny_common::events::EntityDelete;
 use derive_new::new;
 use crate::resources::ClientRegistry;
+use westiny_common::resources::weapon::{GunResource, GunId};
 
 pub struct RespawnSystem;
 
@@ -84,6 +85,7 @@ impl<'s> System<'s> for SpawnSystem {
         Entities<'s>,
         ReadExpect<'s, LazyUpdate>,
         ReadExpect<'s, ClientRegistry>,
+        ReadExpect<'s, GunResource>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -94,6 +96,7 @@ impl<'s> System<'s> for SpawnSystem {
             entities,
             lazy,
             client_registry,
+            gun_resource,
         ) = data;
 
         for spawn_event in spawn_event_channel.read(&mut self.reader) {
@@ -102,6 +105,7 @@ impl<'s> System<'s> for SpawnSystem {
                                       &entities,
                                       spawn_event.client,
                                       spawn_event.network_id,
+                                      &gun_resource,
                                       &lazy);
             log::info!("Player created for {}", client_registry.find_client(spawn_event.client.id).unwrap().player_name);
         }
@@ -114,27 +118,13 @@ impl SpawnSystem {
         entities: &Entities<'_>,
         client: components::Client,
         network_id: components::NetworkId,
+        gun_resource: &GunResource,
         lazy_update: &LazyUpdate,
     ) {
-        use components::weapon;
-
         let transform = {
             let mut t = Transform::default();
             t.set_translation_xyz(initial_pos.x, initial_pos.y, 0.0);
             t
-        };
-
-        // TODO define these values in RON resource files. PREFAB?
-        let revolver = weapon::WeaponDetails {
-            damage: 5,
-            bullet_distance_limit: 120.0,
-            fire_rate: 7.2,
-            magazine_size: 6,
-            reload_time: 1.0,
-            spread: 2.0,
-            shot: weapon::Shot::Single,
-            bullet_speed: 200.0,
-            pellet_number: 1,
         };
 
         lazy_update
@@ -146,7 +136,7 @@ impl SpawnSystem {
             .with(components::Health(100))
             .with(components::Input::default())
             .with(components::Velocity::default())
-            .with(components::weapon::Weapon::new(revolver))
+            .with(components::weapon::Weapon::new(gun_resource.get_gun(GunId::Revolver)))
             .with(components::BoundingCircle { radius: 8.0 })
             .with(components::Respawn {respawn_duration: Duration::from_secs(5)})
             .build();
@@ -219,6 +209,7 @@ mod test {
     use amethyst::ecs::World;
     use amethyst::core::Transform;
     use crate::resources::ClientID;
+    use amethyst::utils::application_root_dir;
 
     fn create_testworld() -> World {
         let mut world = World::new();
@@ -232,6 +223,10 @@ mod test {
         world.register::<BoundingCircle>();
         world.register::<Health>();
         world.register::<Respawn>();
+
+        let resources_path = application_root_dir().unwrap().join("../resources");
+
+        GunResource::initialize(&mut world, &resources_path).expect(&format!("Resources path: {}", resources_path.as_os_str().to_str().unwrap()));
         world
     }
 
@@ -246,6 +241,7 @@ mod test {
                 &world.entities(),
                 Client{id: cli_id},
                 NetworkId {id: 0, entity_type: EntityType::Player},
+                &world.read_resource::<GunResource>(),
                 &world.read_resource::<LazyUpdate>(),
             );
         }
@@ -268,6 +264,7 @@ mod test {
                 &world.entities(),
                 Client {id: ClientID(42)},
                 NetworkId {id: 0, entity_type: EntityType::Player},
+                &world.read_resource::<GunResource>(),
                 &world.read_resource::<LazyUpdate>(),
             );
             SpawnSystem::spawn_player(
@@ -275,6 +272,7 @@ mod test {
                 &world.entities(),
                 Client {id: ClientID(43)},
                 NetworkId { id: 1, entity_type: EntityType::Player},
+                &world.read_resource::<GunResource>(),
                 &world.read_resource::<LazyUpdate>(),
             );
         }
