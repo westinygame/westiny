@@ -5,6 +5,7 @@ mod audio;
 mod cursor_pos;
 pub mod map;
 pub mod collision;
+pub mod weapon;
 
 use std::fmt::{Display, Formatter};
 use std::net::SocketAddr;

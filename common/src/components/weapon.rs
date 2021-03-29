@@ -1,42 +1,9 @@
 
 use amethyst::ecs::prelude::{Component, DenseVecStorage};
 use std::time::Duration;
+pub use weapon_details::*;
 
-#[derive(Debug, PartialEq)]
-pub enum Shot
-{
-    /// one shot per click (even when player holds down the button)
-    Single,
-    /// N shot per click
-    #[allow(dead_code)] // Please remove this allow when using Burst
-    Burst(u32),
-    /// constant shooting, it will shoot while mouse button held down
-    #[allow(dead_code)] // Please remove this allow when using Auto
-    Auto
-}
-
-pub struct WeaponDetails
-{
-    /// Fire rate per seconds [1/s]
-    pub fire_rate: f32,
-    /// Number of bullets in a single magazine. 0 mean infinite (e.g. laser pistol)
-    pub magazine_size: u32,
-    /// When magazine_size > 0, amount of time required to reload [seconds]
-    pub reload_time: f32,
-    /// Damage caused by single bullet
-    pub damage: u16,
-    /// Bullet spread [degree]
-    /// 0 is the perfect gun, always shooting where pointed
-    /// 10 is a dumb shotgun
-    pub spread: f32,
-    /// Shooting time, bullets disappear after
-    pub bullet_distance_limit: f32,
-    pub bullet_speed: f32,
-    pub shot: Shot
-}
-
-pub struct Weapon
-{
+pub struct Weapon {
     /// Time::absolute_time()
     pub last_shot_time: f64,
     /// Content of the weapon magazine
@@ -53,8 +20,7 @@ impl Component for Weapon {
     type Storage = DenseVecStorage<Self>;
 }
 
-impl Weapon
-{
+impl Weapon {
     pub fn new(details: WeaponDetails) -> Self {
         Weapon {
             last_shot_time: 0.0,
@@ -86,5 +52,45 @@ impl Weapon
 
     pub fn is_allowed_to_reload(&self) -> bool {
         self.reload_started_at.is_none()
+    }
+}
+
+mod weapon_details {
+    use amethyst::{Error, assets};
+    use serde::Deserialize;
+    use amethyst::core::ecs::DenseVecStorage;
+
+    #[derive(Debug, PartialEq, Deserialize, Clone)]
+    pub enum Shot {
+        /// one shot per click (even when player holds down the button)
+        Single,
+        /// N shot per click
+        #[allow(dead_code)] // Please remove this allow when using Burst
+        Burst(u32),
+        /// constant shooting, it will shoot while mouse button held down
+        #[allow(dead_code)] // Please remove this allow when using Auto
+        Auto
+    }
+
+    #[derive(Deserialize, Clone)]
+    pub struct WeaponDetails {
+        /// Fire rate per seconds [1/s]
+        pub fire_rate: f32,
+        /// Number of bullets in a single magazine. 0 mean infinite (e.g. laser pistol)
+        pub magazine_size: u32,
+        /// When magazine_size > 0, amount of time required to reload [seconds]
+        pub reload_time: f32,
+        /// Damage caused by single bullet
+        pub damage: u16,
+        /// Bullet spread [degree]
+        /// 0 is the perfect gun, always shooting where pointed
+        /// 10 is a dumb shotgun
+        pub spread: f32,
+        /// Shooting time, bullets disappear after
+        pub bullet_distance_limit: f32,
+        pub bullet_speed: f32,
+        pub shot: Shot,
+        /// Number of pellets when shot
+        pub pellet_number: u32,
     }
 }

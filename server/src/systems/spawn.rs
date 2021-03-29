@@ -134,6 +134,7 @@ impl SpawnSystem {
             spread: 2.0,
             shot: weapon::Shot::Single,
             bullet_speed: 200.0,
+            pellet_number: 1,
         };
 
         lazy_update

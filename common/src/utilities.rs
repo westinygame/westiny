@@ -3,7 +3,7 @@ use std::io::Read;
 use amethyst::core::Transform;
 use amethyst::core::math::Vector2;
 
-pub fn read_ron<T>(ron_path: & std::path::Path) -> std::result::Result<T, Box<dyn std::error::Error>>
+pub fn read_ron<T>(ron_path: & std::path::Path) -> anyhow::Result<T>
     where T: for<'a> Deserialize<'a> {
 
     let content = {
