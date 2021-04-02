@@ -1,15 +1,15 @@
 use amethyst::{
     derive::SystemDesc,
-    ecs::{System, SystemData, Read, ReadStorage, WriteStorage, ReadExpect, WriteExpect, Join},
+    ecs::{System, SystemData, Read, ReadStorage, WriteStorage, ReadExpect, WriteExpect, Write, Join},
     shrev::{ReaderId, EventChannel},
 };
 
 use derive_new::new;
 use westiny_common::components::{Health, NetworkId};
-use westiny_common::network::PlayerUpdate;
-use westiny_common::resources::{AudioQueue, SoundId};
+use westiny_common::network::{PlayerUpdate, PlayerNotification};
 use crate::resources::PlayerNetworkId;
 use crate::components::WeaponInfo;
+use westiny_common::resources::{AudioQueue, SoundId};
 
 #[derive(new, SystemDesc)]
 #[system_desc(name(PlayerUpdateSystemDesc))]
@@ -26,9 +26,10 @@ impl<'s> System<'s> for PlayerUpdateSystem {
         WriteStorage<'s, WeaponInfo>,
         ReadExpect<'s, PlayerNetworkId>,
         WriteExpect<'s, AudioQueue>,
-        );
+        Write<'s, EventChannel<PlayerNotification>>,
+    );
 
-    fn run(&mut self, (player_updates_channel, net_ids, mut healths, mut weapons, player_net_id, mut audio): Self::SystemData) {
+    fn run(&mut self, (player_updates_channel, net_ids, mut healths, mut weapons, player_net_id, mut audio, mut notification): Self::SystemData) {
         let updates = player_updates_channel.read(&mut self.reader);
         if updates.len() == 0 { return; }
 
@@ -63,6 +64,8 @@ impl<'s> System<'s> for PlayerUpdateSystem {
                     weapon_info.magazine_size = *magazine_size;
                     weapon_info.bullets_in_magazine = *ammo_in_magazine;
                     log::debug!("Weapon updated");
+
+                    notification.single_write(PlayerNotification { message: format!("Weapon: {}.", name) })
                 }
             }
         }
