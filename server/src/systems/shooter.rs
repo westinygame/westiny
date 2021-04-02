@@ -3,7 +3,7 @@ use amethyst::core::{Transform, Time, math::{Vector3, Vector2}};
 use amethyst::ecs::prelude::{LazyUpdate, Join};
 
 use westiny_common::components::{weapon::Weapon, Input, InputFlags, BoundingCircle};
-use crate::components::{Damage, Client};
+use crate::components::{Damage, Client, Holster};
 use westiny_common::entities::spawn_bullet;
 use amethyst::prelude::Builder;
 use crate::resources::{ClientRegistry, StreamId, ClientID};
@@ -22,6 +22,7 @@ impl<'s> System<'s> for ShooterSystem {
         ReadStorage<'s, Input>,
         ReadStorage<'s, BoundingCircle>,
         WriteStorage<'s, Weapon>,
+        ReadStorage<'s, Holster>,
         ReadStorage<'s, Client>,
         Read<'s, Time>,
         ReadExpect<'s, LazyUpdate>,
@@ -29,7 +30,7 @@ impl<'s> System<'s> for ShooterSystem {
         WriteExpect<'s, TransportResource>
     );
 
-    fn run(&mut self, (entities, transforms, inputs, bounds, mut weapons, clients, time, lazy_update, client_registry, mut net): Self::SystemData) {
+    fn run(&mut self, (entities, transforms, inputs, bounds, mut weapons, _holsters, clients, time, lazy_update, client_registry, mut net): Self::SystemData) {
         for (input, player_transform, bound, mut weapon, client) in (&inputs, &transforms, (&bounds).maybe(), &mut weapons, (&clients).maybe()).join() {
             if input.flags.intersects(InputFlags::SHOOT) {
                 if weapon.is_allowed_to_shoot(time.absolute_time_seconds()) {

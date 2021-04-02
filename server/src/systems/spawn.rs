@@ -139,6 +139,7 @@ impl SpawnSystem {
             .with(components::weapon::Weapon::new(gun_resource.get_gun(GunId::Revolver)))
             .with(components::BoundingCircle { radius: 8.0 })
             .with(components::Respawn {respawn_duration: Duration::from_secs(5)})
+            .with(components::Holster::new(&gun_resource))
             .build();
     }
 
@@ -223,6 +224,7 @@ mod test {
         world.register::<BoundingCircle>();
         world.register::<Health>();
         world.register::<Respawn>();
+        world.register::<Holster>();
 
         let resources_path = application_root_dir().unwrap().join("../resources");
 
