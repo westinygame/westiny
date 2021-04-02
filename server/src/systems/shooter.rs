@@ -11,6 +11,7 @@ use amethyst::network::simulation::{TransportResource, DeliveryRequirement, Urge
 use westiny_common::serialize;
 use westiny_common::network::{PacketType, ShotEvent, PlayerUpdate};
 use amethyst::core::math::Point2;
+use std::time::Duration;
 
 pub struct ShooterSystem;
 
@@ -32,80 +33,19 @@ impl<'s> System<'s> for ShooterSystem {
         for (input, player_transform, bound, mut weapon, client) in (&inputs, &transforms, (&bounds).maybe(), &mut weapons, (&clients).maybe()).join() {
             if input.flags.intersects(InputFlags::SHOOT) {
                 if weapon.is_allowed_to_shoot(time.absolute_time_seconds()) {
-                    let mut bullet_transform = Transform::default();
-                    bullet_transform.set_translation(*player_transform.translation());
-                    bullet_transform.set_rotation(*player_transform.rotation());
-
-                    let direction3d = (bullet_transform.rotation() * Vector3::y()).normalize();
-                    let direction2d = Vector2::new(-direction3d.x, -direction3d.y);
-
-                    if let Some(bound) = bound {
-                        *bullet_transform.translation_mut() -= direction3d * bound.radius;
-                    }
-
-                    let velocity = direction2d * weapon.details.bullet_speed;
-                    let bullet_builder = lazy_update.create_entity(&entities)
-                        .with(Damage(weapon.details.damage));
-
-                    spawn_bullet(bullet_transform.clone(),
-                                 velocity.clone(),
-                                 time.absolute_time(),
-                                 weapon.bullet_lifespan_sec(),
-                                 bullet_builder);
-
-                    weapon.last_shot_time = time.absolute_time_seconds();
-                    weapon.input_lifted = false;
-                    weapon.bullets_left_in_magazine -= 1;
-
-                    if let Some(client) = client {
-                        if let Err(err) = Self::send_ammo_update(&client.id,
-                                                                 &client_registry,
-                                                                 weapon.bullets_left_in_magazine,
-                                                                 &mut net) {
-                            log::error!("Failed to send ammo update to client {:?}. Error: {}", client.id, err);
-                        }
-                    }
-
-                    // Temporary auto-reload
-                    if weapon.bullets_left_in_magazine <= 0 && weapon.is_allowed_to_reload() {
-                        weapon.reload_started_at = Some(time.absolute_time());
-                    }
-
-                    let payload = serialize(&PacketType::ShotEvent(ShotEvent {
-                        position: Point2::new(bullet_transform.translation().x, bullet_transform.translation().y),
-                        velocity,
-                        bullet_time_limit_secs: weapon.bullet_lifespan_sec(),
-                    })).expect("ShotEvent's serialization failed");
-
-                    client_registry.get_clients().iter().map(|handle| handle.addr).for_each(|addr| {
-                        net.send_with_requirements(addr,
-                                                   &payload,
-                                                   DeliveryRequirement::ReliableSequenced(StreamId::ShotEvent.into()),
-                                                   UrgencyRequirement::OnTick);
-                    })
+                    Self::shoot(&entities, &time, &lazy_update, &client_registry, &mut net, player_transform, bound, &mut weapon, client);
                 }
             } else {
                 weapon.input_lifted = true;
             }
 
             if let Some(reload_start) = weapon.reload_started_at {
-                if time.absolute_time_seconds() >= reload_start.as_secs_f64() + weapon.details.reload_time as f64 {
-                    weapon.bullets_left_in_magazine = weapon.details.magazine_size;
-                    weapon.reload_started_at = None;
-
-                    if let Some(client) = client {
-                        if let Err(err) = Self::send_ammo_update(&client.id,
-                                                                 &client_registry,
-                                                                 weapon.bullets_left_in_magazine,
-                                                                 &mut net) {
-                            log::error!("Failed to send AmmoUpdate to client {:?}. Error: {}", client.id, err);
-                        }
-                    }
-                }
+                Self::check_reload_finish(&time, &client_registry, &mut net, weapon, client, &reload_start)
             }
         }
     }
 }
+
 
 impl ShooterSystem {
     fn send_ammo_update(
@@ -124,6 +64,97 @@ impl ShooterSystem {
                                    UrgencyRequirement::OnTick
         );
         Ok(())
+    }
+
+    fn shoot(entities: &Entities,
+             time: &Time,
+             lazy_update: &LazyUpdate,
+             client_registry: &ClientRegistry,
+             mut net: &mut TransportResource,
+             player_transform: &Transform,
+             bound: Option<&BoundingCircle>,
+             mut weapon: &mut Weapon,
+             client: Option<&Client>) {
+        let mut bullet_transform = Transform::default();
+        bullet_transform.set_translation(*player_transform.translation());
+        bullet_transform.set_rotation(*player_transform.rotation());
+
+        let direction3d = (bullet_transform.rotation() * Vector3::y()).normalize();
+        let direction2d = Vector2::new(-direction3d.x, -direction3d.y);
+
+        if let Some(bound) = bound {
+            *bullet_transform.translation_mut() -= direction3d * bound.radius;
+        }
+
+        let velocity = direction2d * weapon.details.bullet_speed;
+        let bullet_builder = lazy_update.create_entity(&entities)
+            .with(Damage(weapon.details.damage));
+
+        spawn_bullet(bullet_transform.clone(),
+                     velocity.clone(),
+                     time.absolute_time(),
+                     weapon.bullet_lifespan_sec(),
+                     bullet_builder);
+
+        weapon.last_shot_time = time.absolute_time_seconds();
+        weapon.input_lifted = false;
+        weapon.bullets_left_in_magazine -= 1;
+
+        if let Some(client) = client {
+            if let Err(err) = Self::send_ammo_update(&client.id,
+                                                     &client_registry,
+                                                     weapon.bullets_left_in_magazine,
+                                                     &mut net) {
+                log::error!("Failed to send ammo update to client {:?}. Error: {}", client.id, err);
+            }
+        }
+
+        // Temporary auto-reload
+        if weapon.bullets_left_in_magazine <= 0 && weapon.is_allowed_to_reload() {
+            weapon.reload_started_at = Some(time.absolute_time());
+        }
+
+        Self::broadcast_shot_event(client_registry, net, &mut weapon, &mut bullet_transform, &velocity)
+    }
+
+    fn broadcast_shot_event(client_registry: &ClientRegistry,
+                            net: &mut TransportResource,
+                            weapon: &mut Weapon,
+                            bullet_transform: &mut Transform,
+                            velocity: &Vector2<f32>) {
+        let payload = serialize(&PacketType::ShotEvent(ShotEvent {
+            position: Point2::new(bullet_transform.translation().x, bullet_transform.translation().y),
+            velocity: *velocity,
+            bullet_time_limit_secs: weapon.bullet_lifespan_sec(),
+        })).expect("ShotEvent's serialization failed");
+
+        client_registry.get_clients().iter().map(|handle| handle.addr).for_each(|addr| {
+            net.send_with_requirements(addr,
+                                       &payload,
+                                       DeliveryRequirement::ReliableSequenced(StreamId::ShotEvent.into()),
+                                       UrgencyRequirement::OnTick);
+        })
+    }
+
+    fn check_reload_finish(time: &Time,
+                           client_registry: &ClientRegistry,
+                           mut net: &mut TransportResource,
+                           weapon: &mut Weapon,
+                           client: Option<&Client>,
+                           reload_start: &Duration) {
+        if time.absolute_time_seconds() >= reload_start.as_secs_f64() + weapon.details.reload_time as f64 {
+            weapon.bullets_left_in_magazine = weapon.details.magazine_size;
+            weapon.reload_started_at = None;
+
+            if let Some(client) = client {
+                if let Err(err) = Self::send_ammo_update(&client.id,
+                                                         &client_registry,
+                                                         weapon.bullets_left_in_magazine,
+                                                         &mut net) {
+                    log::error!("Failed to send AmmoUpdate to client {:?}. Error: {}", client.id, err);
+                }
+            }
+        }
     }
 }
 
