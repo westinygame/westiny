@@ -5,10 +5,11 @@ use amethyst::{
 };
 
 use derive_new::new;
-use westiny_common::components::{weapon::Weapon, Health, NetworkId};
+use westiny_common::components::{Health, NetworkId};
 use westiny_common::network::PlayerUpdate;
 use westiny_common::resources::{AudioQueue, SoundId};
 use crate::resources::PlayerNetworkId;
+use crate::components::WeaponInfo;
 
 #[derive(new, SystemDesc)]
 #[system_desc(name(PlayerUpdateSystemDesc))]
@@ -22,7 +23,7 @@ impl<'s> System<'s> for PlayerUpdateSystem {
         Read<'s, EventChannel<PlayerUpdate>>,
         ReadStorage<'s, NetworkId>,
         WriteStorage<'s, Health>,
-        WriteStorage<'s, Weapon>,
+        WriteStorage<'s, WeaponInfo>,
         ReadExpect<'s, PlayerNetworkId>,
         WriteExpect<'s, AudioQueue>,
         );
@@ -31,7 +32,7 @@ impl<'s> System<'s> for PlayerUpdateSystem {
         let updates = player_updates_channel.read(&mut self.reader);
         if updates.len() == 0 { return; }
 
-        let (health, weapon, _) = {
+        let (health, weapon_info, _) = {
             if let Some(player) = (&mut healths, &mut weapons, &net_ids).join()
                 .find(|(_, _, &net_id)| net_id == player_net_id.0) {
                 player
@@ -51,11 +52,17 @@ impl<'s> System<'s> for PlayerUpdateSystem {
                     log::debug!("Health updated to {:?}", new_health);
                 }
                 PlayerUpdate::AmmoUpdate { ammo_in_magazine} => {
-                    if ammo_in_magazine > &weapon.bullets_left_in_magazine {
+                    if ammo_in_magazine > &weapon_info.bullets_in_magazine {
                         audio.play(SoundId::WeaponReady, 1.0);
                     }
-                    weapon.bullets_left_in_magazine = *ammo_in_magazine;
+                    weapon_info.bullets_in_magazine = *ammo_in_magazine;
                     log::debug!("Ammo updated to {:?}", ammo_in_magazine);
+                }
+                PlayerUpdate::WeaponSwitch {name, magazine_size, ammo_in_magazine} => {
+                    weapon_info.name = name.clone();
+                    weapon_info.magazine_size = *magazine_size;
+                    weapon_info.bullets_in_magazine = *ammo_in_magazine;
+                    log::debug!("Weapon updated");
                 }
             }
         }

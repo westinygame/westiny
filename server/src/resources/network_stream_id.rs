@@ -2,7 +2,9 @@
 #[repr(u8)]
 pub enum StreamId {
     EntityStateUpdate,
-    PlayerUpdate,
+    HealthUpdate,
+    AmmoUpdate,
+    WeaponSwitch,
     ShotEvent,
     PlayerDeath,
 }

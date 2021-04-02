@@ -7,8 +7,7 @@ use log::info;
 use westiny_common::components::{Input, Health, Player, NetworkId, BoundingCircle};
 use crate::resources::SpriteResource;
 use westiny_common::resources::SpriteId;
-use westiny_common::components::weapon::Weapon;
-use westiny_common::resources::weapon::{GunResource, GunId};
+use crate::components::WeaponInfo;
 
 pub const CHARACTER_HEIGHT : f32 = 1.8;
 
@@ -53,15 +52,20 @@ pub fn create_player<B: Builder, F>(
     sprite_resource: &SpriteResource,
     network_id: NetworkId,
     transform: Transform,
-    gun_resource: &GunResource,
     ) -> Entity
 where F: Fn () -> B
 {
+
     let builder = factory()
         .with(Player)
         .with(Health(100))
         .with(Input::default())
-        .with(Weapon::new(gun_resource.get_gun(GunId::Revolver)));
+        // TODO WeaponInfo should be received within SpawnEvent
+        .with(WeaponInfo {
+            magazine_size: 6,
+            bullets_in_magazine: 6,
+            name: "Revolver".to_string()
+        });
     let entity = create_character(builder, factory, sprite_resource, network_id, transform);
     info!("Player created.");
     entity

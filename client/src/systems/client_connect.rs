@@ -93,7 +93,6 @@ mod test {
     use std::net::SocketAddr;
     use amethyst::Error;
     use amethyst::prelude::*;
-    use amethyst::core::math::Point2;
     use amethyst_test::prelude::*;
     use westiny_common::components::{NetworkId, EntityType};
     use westiny_common::resources::Seed;
@@ -139,7 +138,6 @@ mod test {
             Ok(
                 network::ClientInitialData {
                     player_network_id: NetworkId::new(EntityType::Player, 0),
-                    initial_pos: Point2::from([0.0, 0.0]),
                     seed: Seed(100),
                 }
             )

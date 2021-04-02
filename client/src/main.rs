@@ -21,6 +21,7 @@ mod resources;
 mod entities;
 mod states;
 mod bindings;
+mod components;
 
 #[cfg(test)]
 mod test_helpers;

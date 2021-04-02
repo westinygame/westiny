@@ -2,8 +2,7 @@ use amethyst::ecs::{Read, System, ReadStorage, ReadExpect, Entities, WriteStorag
 use amethyst::core::{Transform, Time, math::{Vector3, Vector2}};
 use amethyst::ecs::prelude::{LazyUpdate, Join};
 
-use westiny_common::components::{weapon::Weapon, Input, InputFlags, BoundingCircle};
-use crate::components::{Damage, Client, Holster};
+use crate::components::{Damage, Client, weapon::Weapon, weapon::Holster, Input, InputFlags, BoundingCircle};
 use westiny_common::entities::spawn_bullet;
 use amethyst::prelude::Builder;
 use crate::resources::{ClientRegistry, StreamId, ClientID};
@@ -21,7 +20,6 @@ impl<'s> System<'s> for ShooterSystem {
         ReadStorage<'s, Transform>,
         ReadStorage<'s, Input>,
         ReadStorage<'s, BoundingCircle>,
-        WriteStorage<'s, Weapon>,
         WriteStorage<'s, Holster>,
         ReadStorage<'s, Client>,
         Read<'s, Time>,
@@ -30,17 +28,35 @@ impl<'s> System<'s> for ShooterSystem {
         WriteExpect<'s, TransportResource>
     );
 
-    fn run(&mut self, (entities, transforms, inputs, bounds, mut weapons, mut holsters, clients, time, lazy_update, client_registry, mut net): Self::SystemData) {
-        for (input, player_transform, bound, mut weapon, holster, client) in (&inputs, &transforms, (&bounds).maybe(), &mut weapons, &mut holsters, (&clients).maybe()).join() {
-
+    fn run(&mut self, (entities, transforms, inputs, bounds, mut holsters, clients, time, lazy_update, client_registry, mut net): Self::SystemData) {
+        for (input, player_transform, bound, holster, client) in (&inputs, &transforms, (&bounds).maybe(), &mut holsters, (&clients).maybe()).join() {
             if let Some(selected_slot) = Self::selected_slot(&input) {
                 if holster.active_slot() != selected_slot {
-                    if let Some(weapon_details) = holster.switch(selected_slot) {
-                        weapon.details = weapon_details.clone();
-                        // TODO Send PlayerUpdate on weapon switch
+                    if let Some(gun_name) = holster.switch(selected_slot) {
+                        let gun = holster.active_gun_mut();
+                        if gun.reload_started_at.is_some() {
+                            // if last switch from this happened mid-reload, restart it
+                            gun.reload_started_at = Some(time.absolute_real_time());
+                        }
+
+                        if let Some(client) = client.and_then(|client| client_registry.find_client(client.id)) {
+                            let payload_packet = PacketType::PlayerUpdate(PlayerUpdate::WeaponSwitch {
+                                name: gun_name.to_string(),
+                                magazine_size: gun.details.magazine_size,
+                                ammo_in_magazine: gun.bullets_left_in_magazine,
+                            });
+
+                            let payload = serialize(&payload_packet).expect(&format!("Failed to serialize 'WeaponSwitch' packet: {:?}", payload_packet));
+                            net.send_with_requirements(client.addr,
+                                                       &payload,
+                                                       DeliveryRequirement::ReliableSequenced(StreamId::WeaponSwitch.into()),
+                                                       UrgencyRequirement::OnTick);
+                        }
                     }
                 }
             }
+
+            let mut weapon = holster.active_gun_mut();
 
             if input.flags.intersects(InputFlags::SHOOT) {
                 if weapon.is_allowed_to_shoot(time.absolute_time_seconds()) {
@@ -71,7 +87,7 @@ impl ShooterSystem {
             .ok_or(anyhow::anyhow!("Client with id {:?} not found in registry", client_id))?;
         net.send_with_requirements(address,
                                    &payload,
-                                   DeliveryRequirement::ReliableSequenced(StreamId::PlayerUpdate.into()),
+                                   DeliveryRequirement::ReliableSequenced(StreamId::AmmoUpdate.into()),
                                    UrgencyRequirement::OnTick
         );
         Ok(())
@@ -190,6 +206,7 @@ mod test {
     use amethyst::Error;
     use amethyst::core::num::Bounded;
     use westiny_common::deserialize;
+    use crate::components::weapon::WeaponDetails;
 
     #[test]
     fn broadcast_shot_event() -> anyhow::Result<(), Error>{
@@ -204,7 +221,7 @@ mod test {
                 world.register::<Input>();
                 world.register::<Transform>();
                 world.register::<BoundingCircle>();
-                world.register::<Weapon>();
+                world.register::<Holster>();
 
                 world.register::<Damage>();
                 world.register::<Velocity>();
@@ -217,7 +234,7 @@ mod test {
                     cursor: Point2::new(0.0, 0.0),
                 };
 
-                let gun = weapon::WeaponDetails {
+                let gun = WeaponDetails {
                     damage: 5,
                     bullet_distance_limit: 120.0,
                     fire_rate: f32::max_value(),
@@ -229,11 +246,17 @@ mod test {
                     pellet_number: 1,
                 };
 
+                let guns = [
+                    (Weapon::new(gun.clone()), "Weapon1"),
+                    (Weapon::new(gun.clone()), "Weapon2"),
+                    (Weapon::new(gun), "Weapon3"),
+                ];
+
                 world.create_entity()
                     .with(input)
                     .with(Transform::default())
                     .with(BoundingCircle { radius: 1.0 })
-                    .with(Weapon::new(gun))
+                    .with(Holster::new_with_guns(guns))
                     .build();
             })
             .with_resource(client_registry)

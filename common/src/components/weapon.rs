@@ -1,7 +1,55 @@
-
-use amethyst::ecs::prelude::{Component, DenseVecStorage};
+use amethyst::ecs::{Component, DenseVecStorage};
 use std::time::Duration;
 pub use weapon_details::*;
+use crate::resources::weapon::{GunResource, GunId};
+
+const NUMBER_OF_SLOTS: usize = 3;
+
+/// This is the first approach of the inventory. For now it stores fix number of guns
+#[derive(Component)]
+#[storage(DenseVecStorage)]
+pub struct Holster {
+    guns: [(Weapon, &'static str); NUMBER_OF_SLOTS],
+    selected: usize
+}
+
+impl Holster {
+    pub fn new(gun_resource: &GunResource) -> Self {
+        let guns = [
+            (Weapon::new(gun_resource.get_gun(GunId::Revolver)), "Revolver"),
+            (Weapon::new(gun_resource.get_gun(GunId::Shotgun)), "Shotgun"),
+            (Weapon::new(gun_resource.get_gun(GunId::Rifle)), "Rifle")
+        ];
+
+        Holster { guns, selected: 0 }
+    }
+
+    pub fn new_with_guns(guns: [(Weapon, &'static str); NUMBER_OF_SLOTS]) -> Self {
+        Holster {
+            guns,
+            selected: 0
+        }
+    }
+
+    pub fn switch(&mut self, slot: usize) -> Option<&'static str> {
+        if let Some(newly_selected) = self.guns.get(slot) {
+            self.selected = slot;
+            Some(newly_selected.1)
+        } else { None }
+    }
+
+    pub fn active_slot(&self) -> usize {
+        self.selected
+    }
+
+    pub fn active_gun(&self) -> &Weapon {
+        &self.guns[self.selected].0
+    }
+
+    pub fn active_gun_mut(&mut self) -> &mut Weapon {
+        &mut self.guns[self.selected].0
+    }
+}
 
 pub struct Weapon {
     /// Time::absolute_time()
@@ -14,10 +62,6 @@ pub struct Weapon {
     pub input_lifted: bool,
     /// Static details of the weapon.
     pub details: WeaponDetails,
-}
-
-impl Component for Weapon {
-    type Storage = DenseVecStorage<Self>;
 }
 
 impl Weapon {
