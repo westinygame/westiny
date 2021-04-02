@@ -4,13 +4,15 @@ use std::path::Path;
 use crate::utilities::read_ron;
 
 pub struct GunResource {
-    weapons: [WeaponDetails; 1],
+    weapons: [WeaponDetails; 3],
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 #[repr(usize)]
 pub enum GunId {
     Revolver = 0,
+    Shotgun,
+    Rifle,
 }
 
 const WEAPON_ASSET_DIR: &'static str = "assets/weapons/";
@@ -20,9 +22,11 @@ impl GunResource {
         let path = resources_path.as_ref().join(WEAPON_ASSET_DIR);
 
         let revolver: WeaponDetails = read_ron(&path.join("revolver.ron"))?;
+        let shotgun: WeaponDetails = read_ron(&path.join("shotgun.ron"))?;
+        let rifle: WeaponDetails = read_ron(&path.join("rifle.ron"))?;
         // other weapons here
 
-        world.insert(GunResource { weapons: [revolver]});
+        world.insert(GunResource { weapons: [revolver, shotgun, rifle]});
         Ok(())
     }
 
