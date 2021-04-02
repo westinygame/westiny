@@ -70,7 +70,7 @@ mod weapon_details {
         Auto
     }
 
-    #[derive(Deserialize, Clone)]
+    #[derive(Deserialize, Clone, PartialEq)]
     pub struct WeaponDetails {
         /// Fire rate per seconds [1/s]
         pub fire_rate: f32,

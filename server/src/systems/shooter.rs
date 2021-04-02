@@ -22,7 +22,7 @@ impl<'s> System<'s> for ShooterSystem {
         ReadStorage<'s, Input>,
         ReadStorage<'s, BoundingCircle>,
         WriteStorage<'s, Weapon>,
-        ReadStorage<'s, Holster>,
+        WriteStorage<'s, Holster>,
         ReadStorage<'s, Client>,
         Read<'s, Time>,
         ReadExpect<'s, LazyUpdate>,
@@ -30,8 +30,18 @@ impl<'s> System<'s> for ShooterSystem {
         WriteExpect<'s, TransportResource>
     );
 
-    fn run(&mut self, (entities, transforms, inputs, bounds, mut weapons, _holsters, clients, time, lazy_update, client_registry, mut net): Self::SystemData) {
-        for (input, player_transform, bound, mut weapon, client) in (&inputs, &transforms, (&bounds).maybe(), &mut weapons, (&clients).maybe()).join() {
+    fn run(&mut self, (entities, transforms, inputs, bounds, mut weapons, mut holsters, clients, time, lazy_update, client_registry, mut net): Self::SystemData) {
+        for (input, player_transform, bound, mut weapon, holster, client) in (&inputs, &transforms, (&bounds).maybe(), &mut weapons, &mut holsters, (&clients).maybe()).join() {
+
+            if let Some(selected_slot) = Self::selected_slot(&input) {
+                if holster.active_slot() != selected_slot {
+                    if let Some(weapon_details) = holster.switch(selected_slot) {
+                        weapon.details = weapon_details.clone();
+                        // TODO Send PlayerUpdate on weapon switch
+                    }
+                }
+            }
+
             if input.flags.intersects(InputFlags::SHOOT) {
                 if weapon.is_allowed_to_shoot(time.absolute_time_seconds()) {
                     Self::shoot(&entities, &time, &lazy_update, &client_registry, &mut net, player_transform, bound, &mut weapon, client);
@@ -156,6 +166,17 @@ impl ShooterSystem {
                 }
             }
         }
+    }
+
+    fn selected_slot(input: &Input) -> Option<usize> {
+        input.get_selection().and_then(|&select| {
+            match select {
+                InputFlags::SELECT1 => Some(0_usize),
+                InputFlags::SELECT2 => Some(1_usize),
+                InputFlags::SELECT3 => Some(2_usize),
+                _ => None
+            }
+        })
     }
 }
 
