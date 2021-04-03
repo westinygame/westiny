@@ -6,8 +6,7 @@ use log::info;
 use std::path::PathBuf;
 use derive_new::new;
 use westiny_common::resources::map::build_map;
-use westiny_common::components::Projectile;
-use westiny_common::resources::Seed;
+use westiny_common::resources::{Seed, weapon::GunResource};
 use westiny_common::events::WestinyEvent;
 
 #[derive(new)]
@@ -48,7 +47,7 @@ impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
 
         data.world.insert(seed);
 
-        data.world.register::<Projectile>();
+        GunResource::initialize(data.world, self.resources.clone()).expect("Unable to initialize gun assets");
 
         self.place_objects(data.world, seed);
     }

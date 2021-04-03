@@ -17,6 +17,7 @@ use amethyst::shred::ReadExpect;
 
 use crate::entities::{create_player, create_character};
 use crate::resources;
+use westiny_common::resources::weapon::GunResource;
 
 const CORPSE_HEIGHT: f32 = 0.1;
 
@@ -38,6 +39,7 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
         WriteStorage<'s, Transform>,
         Entities<'s>,
         ReadExpect<'s, resources::SpriteResource>,
+        ReadExpect<'s, GunResource>,
         ReadExpect<'s, resources::PlayerNetworkId>,
         ReadExpect<'s, LazyUpdate>,
         ReadExpect<'s, Time>,
@@ -51,6 +53,7 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
                mut transforms,
                entities,
                sprite_resource,
+               gun_resource,
                player_net_id,
                lazy,
                time,
@@ -69,7 +72,7 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
 
         // if it is this player
         if let Some(&new_state) = entity_states.get(&player_net_id.0) {
-            create_player(||{ lazy.create_entity(&entities) }, &sprite_resource, player_net_id.0, as_transform(&new_state.position));
+            create_player(||{ lazy.create_entity(&entities) }, &sprite_resource, player_net_id.0, as_transform(&new_state.position), &gun_resource);
             entity_states.remove(&player_net_id.0);
         }
 

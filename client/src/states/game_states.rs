@@ -45,8 +45,8 @@ use westiny_common::{
     network::ClientInitialData,
     resources::{AudioQueue, Seed, map::build_map}
 };
-use westiny_common::components::Projectile;
 use amethyst::core::SystemBundle;
+use westiny_common::resources::weapon::GunResource;
 
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState {
@@ -83,9 +83,8 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         let mut world = data.world;
 
         let sprite_resource = initialize_sprite_resource(&mut world);
+        GunResource::initialize(&mut world, &self.resource_dir).expect("Gun assets could not be loaded");
 
-        // TODO remove when collision is turned on
-        world.register::<Projectile>();
         let mut dispatcher_builder = DispatcherBuilder::new();
 
         let network_message_receiver_sys = NetworkMessageReceiverSystemDesc::default().build(&mut world);
