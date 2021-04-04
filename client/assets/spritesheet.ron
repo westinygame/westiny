@@ -65,5 +65,33 @@ List((
             width: 9,
             height: 15,
         ),
+        // 9: hand
+        (
+            x: 57,
+            y: 16,
+            width: 7,
+            height: 12,
+        ),
+        // 10: pistol
+        (
+            x: 0,
+            y: 34,
+            width: 3,
+            height: 6,
+        ),
+        // 11: rifle
+        (
+            x: 3,
+            y: 34,
+            width: 3,
+            height: 9,
+        ),
+        // 12: shotgun
+        (
+            x: 6,
+            y: 34,
+            width: 3,
+            height: 7,
+        ),
     ],
 ))

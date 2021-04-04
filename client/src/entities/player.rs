@@ -11,6 +11,22 @@ use crate::components::WeaponInfo;
 
 pub const CHARACTER_HEIGHT : f32 = 1.8;
 
+pub fn create_weapon<B: Builder>(
+    builder: B,
+    sprite_resource: &SpriteResource,
+    hand_entity: Entity
+    ) -> Entity
+{
+    let mut transform = Transform::default();
+    transform.set_translation_xyz(3.0, -5.0, 1.05);
+
+    builder
+        .with(Parent{entity: hand_entity})
+        .with(transform)
+        .with(sprite_resource.sprite_render_for(SpriteId::Pistol))
+        .build()
+}
+
 pub fn create_hand_for_character<B: Builder>(
     builder: B,
     sprite_resource: &SpriteResource,
@@ -23,7 +39,7 @@ pub fn create_hand_for_character<B: Builder>(
     builder
         .with(Parent{entity: parent})
         .with(hand_transform)
-        .with(sprite_resource.sprite_render_for(SpriteId::HandWithPistol))
+        .with(sprite_resource.sprite_render_for(SpriteId::Hand))
         .build()
 }
 
@@ -43,7 +59,8 @@ pub fn create_character<B: Builder, F: Fn() -> B>(
         .with(BoundingCircle{radius: 8.0})
         .build();
 
-    create_hand_for_character(factory(), &sprite_resource, entity);
+    let hand = create_hand_for_character(factory(), &sprite_resource, entity);
+    create_weapon(factory(), &sprite_resource, hand);
     entity
 }
 

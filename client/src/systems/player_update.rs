@@ -1,13 +1,16 @@
 use amethyst::{
+    core::transform::Parent,
     derive::SystemDesc,
-    ecs::{System, SystemData, Read, ReadStorage, WriteStorage, ReadExpect, WriteExpect, Write, Join},
+    ecs::{System, SystemData, Read, ReadStorage, WriteStorage, ReadExpect, WriteExpect, Write, Join, Entities, Entity},
+    renderer::SpriteRender,
     shrev::{ReaderId, EventChannel},
 };
 
 use derive_new::new;
 use westiny_common::components::{Health, NetworkId};
 use westiny_common::network::{PlayerUpdate, PlayerNotification};
-use crate::resources::PlayerNetworkId;
+use westiny_common::resources::SpriteId;
+use crate::resources::{PlayerNetworkId, SpriteResource};
 use crate::components::WeaponInfo;
 use westiny_common::resources::{AudioQueue, SoundId};
 
@@ -27,15 +30,19 @@ impl<'s> System<'s> for PlayerUpdateSystem {
         ReadExpect<'s, PlayerNetworkId>,
         WriteExpect<'s, AudioQueue>,
         Write<'s, EventChannel<PlayerNotification>>,
+        Entities<'s>,
+        ReadStorage<'s, Parent>,
+        WriteStorage<'s, SpriteRender>,
+        ReadExpect<'s, SpriteResource>,
     );
 
-    fn run(&mut self, (player_updates_channel, net_ids, mut healths, mut weapons, player_net_id, mut audio, mut notification): Self::SystemData) {
+    fn run(&mut self, (player_updates_channel, net_ids, mut healths, mut weapons, player_net_id, mut audio, mut notification, entities, parents, mut sprites, sprite_resource): Self::SystemData) {
         let updates = player_updates_channel.read(&mut self.reader);
         if updates.len() == 0 { return; }
 
-        let (health, weapon_info, _) = {
-            if let Some(player) = (&mut healths, &mut weapons, &net_ids).join()
-                .find(|(_, _, &net_id)| net_id == player_net_id.0) {
+        let (entity, health, weapon_info, _) = {
+            if let Some(player) = (&entities, &mut healths, &mut weapons, &net_ids).join()
+                .find(|(_, _, _, &net_id)| net_id == player_net_id.0) {
                 player
             } else {
                 log::error!("Player update received while player entity does not exist or does not have the required components");
@@ -64,10 +71,41 @@ impl<'s> System<'s> for PlayerUpdateSystem {
                     weapon_info.magazine_size = *magazine_size;
                     weapon_info.bullets_in_magazine = *ammo_in_magazine;
                     log::debug!("Weapon updated");
-
+                    if let Some(weapon_sprite_entity) = get_weapon_sprite_entity(&entity, &parents, &entities)
+                    {
+                        if let Some(sprite) = sprites.get_mut(weapon_sprite_entity)
+                        {
+                            let sprite_id = sprite_id_for_weapon(name);
+                            *sprite = sprite_resource.sprite_render_for(sprite_id);
+                        }
+                    }
                     notification.single_write(PlayerNotification { message: format!("Weapon: {}.", name) })
                 }
             }
         }
+    }
+}
+
+fn get_transform_child_of(parent_id: &Entity, parents: &ReadStorage<'_, Parent>, entities: &Entities<'_>) -> Option<Entity>
+{
+    (entities, parents).join().find(|(_, parent)| parent.entity == *parent_id).map(|(id, _)| id)
+}
+
+fn get_weapon_sprite_entity(character: &Entity, parents: &ReadStorage<'_, Parent>, entities: &Entities<'_>) -> Option<Entity>
+{
+    if let Some(hand) = get_transform_child_of(character, &parents, &entities) {
+        return get_transform_child_of(&hand, &parents, &entities);
+    }
+    log::debug!("Could not find weapon entity for character!");
+    None 
+}
+
+fn sprite_id_for_weapon(weapon_name: &String) -> SpriteId
+{
+    match weapon_name.as_str() {
+        "Revolver" => SpriteId::Pistol,
+        "Shotgun" => SpriteId::Shotgun,
+        "Rifle" => SpriteId::Rifle,
+        _ => SpriteId::Pistol,
     }
 }
