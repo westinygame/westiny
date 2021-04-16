@@ -85,7 +85,7 @@ impl HealthSystem {
         transport.send_with_requirements(
             client_handle.addr,
             &payload,
-            DeliveryRequirement::ReliableSequenced(StreamId::PlayerUpdate.into()),
+            DeliveryRequirement::ReliableSequenced(StreamId::HealthUpdate.into()),
             UrgencyRequirement::OnTick
         );
 

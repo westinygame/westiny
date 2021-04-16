@@ -9,7 +9,7 @@ use amethyst::core::ecs::shrev::EventChannel;
 use westiny_common::events::EntityDelete;
 use derive_new::new;
 use crate::resources::ClientRegistry;
-use westiny_common::resources::weapon::{GunResource, GunId};
+use westiny_common::resources::weapon::GunResource;
 
 pub struct RespawnSystem;
 
@@ -136,9 +136,9 @@ impl SpawnSystem {
             .with(components::Health(100))
             .with(components::Input::default())
             .with(components::Velocity::default())
-            .with(components::weapon::Weapon::new(gun_resource.get_gun(GunId::Revolver)))
             .with(components::BoundingCircle { radius: 8.0 })
             .with(components::Respawn {respawn_duration: Duration::from_secs(5)})
+            .with(components::weapon::Holster::new(&gun_resource))
             .build();
     }
 
@@ -203,13 +203,14 @@ pub struct SpawnPlayerEvent {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::components::{Client, EntityType, Health, Respawn, weapon::Weapon, BoundingCircle, Input, NetworkId, Player, Velocity,
+    use crate::components::{Client, EntityType, Health, Respawn, BoundingCircle, Input, NetworkId, Player, Velocity,
     };
     use amethyst::ecs::prelude::*;
     use amethyst::ecs::World;
     use amethyst::core::Transform;
     use crate::resources::ClientID;
     use amethyst::utils::application_root_dir;
+    use crate::components::weapon::Holster;
 
     fn create_testworld() -> World {
         let mut world = World::new();
@@ -219,10 +220,10 @@ mod test {
         world.register::<Player>();
         world.register::<Input>();
         world.register::<Velocity>();
-        world.register::<Weapon>();
         world.register::<BoundingCircle>();
         world.register::<Health>();
         world.register::<Respawn>();
+        world.register::<Holster>();
 
         let resources_path = application_root_dir().unwrap().join("../resources");
 

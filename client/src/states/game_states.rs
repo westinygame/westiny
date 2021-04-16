@@ -46,7 +46,6 @@ use westiny_common::{
     resources::{AudioQueue, Seed, map::build_map}
 };
 use amethyst::core::SystemBundle;
-use westiny_common::resources::weapon::GunResource;
 
 // later, other states like "MenuState", "PauseState" can be added.
 pub struct PlayState {
@@ -83,7 +82,6 @@ impl State<GameData<'static, 'static>, WestinyEvent> for PlayState {
         let mut world = data.world;
 
         let sprite_resource = initialize_sprite_resource(&mut world);
-        GunResource::initialize(&mut world, &self.resource_dir).expect("Gun assets could not be loaded");
 
         let mut dispatcher_builder = DispatcherBuilder::new();
 

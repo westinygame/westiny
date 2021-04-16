@@ -4,6 +4,14 @@ use serde::{Serialize, Deserialize};
 
 use bitflags;
 
+const SELECTIONS: [InputFlags; 5] = [
+    InputFlags::SELECT1,
+    InputFlags::SELECT2,
+    InputFlags::SELECT3,
+    InputFlags::SELECT4,
+    InputFlags::SELECT5,
+];
+
 bitflags::bitflags! {
     #[derive(Serialize, Deserialize)]
     pub struct InputFlags: u16 {
@@ -30,6 +38,13 @@ pub struct Input
 {
     pub flags : InputFlags,
     pub cursor : Point2<f32>
+}
+
+impl Input {
+    /// returns the first SELECT value if any of them is active. Otherwise returns None
+    pub fn get_selection(&self) -> Option<&InputFlags> {
+        SELECTIONS.iter().find(|&select| self.flags.intersects(*select))
+    }
 }
 
 impl Default for Input

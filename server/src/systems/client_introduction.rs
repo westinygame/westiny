@@ -1,5 +1,4 @@
 use amethyst::{
-    core::math::Point2,
     derive::SystemDesc,
     ecs::{
         Entities, Join, Read, ReadExpect, ReadStorage, System, SystemData, WriteExpect,
@@ -115,7 +114,6 @@ impl<'s> System<'s> for ClientIntroductionSystem {
                         PacketType::ConnectionResponse(Ok(ClientInitialData {
                             player_network_id: entity_network_id,
                             // TODO initial_pos should not be sent here. On the client side it will be processed from EntityStateUpdate messages anyway.
-                            initial_pos: Point2::from([0.0, 0.0]),
                             seed: *seed
                         })
                     );

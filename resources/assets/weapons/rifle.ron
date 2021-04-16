@@ -1,0 +1,11 @@
+(
+    fire_rate: 1.0,
+    magazine_size: 1,
+    reload_time: 3.0,
+    damage: 50,
+    spread: 0.7,
+    bullet_distance_limit: 200.0,
+    bullet_speed: 250.0,
+    shot: Single,
+    pellet_number: 1,
+)
