@@ -19,7 +19,7 @@ pub fn create_hand_for_character<B: Builder>(
     ) -> Entity
 {
     let mut hand_transform = Transform::default();
-    hand_transform.set_translation_xyz(-3., -6., -0.3); // relative to parent
+    hand_transform.set_translation_xyz(Meter(-0.25).into_pixel(), Meter(-0.2).into_pixel(), -0.3); // relative to parent
 
     builder
         .with(Parent{entity: parent})
