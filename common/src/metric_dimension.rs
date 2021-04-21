@@ -30,7 +30,7 @@ impl_trait!{ impl Div::div::<Second> for Meter -> MeterPerSec }
 impl_trait!{ impl Mul::mul::<MeterPerSec> for Second -> Meter }
 impl_trait!{ impl Div::div::<MeterPerSec> for Meter -> Second }
 
-const PIXEL_PER_METER: u16 = 16;
+const PIXEL_PER_METER: u16 = 32;
 
 pub mod length {
     use std::ops::{Mul, Neg};

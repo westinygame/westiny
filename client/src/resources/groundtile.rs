@@ -6,7 +6,7 @@ use amethyst::core::math::Point3;
 pub struct GroundTile;
 impl Tile for GroundTile {
     fn sprite(&self, point: Point3<u32>, _: &World) -> Option<usize> {
-        Some(((point.x + point.y) % 2) as usize * 2)
+        Some(((point.x + point.y) % 2) as usize)
     }
 }
 

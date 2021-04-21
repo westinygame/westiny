@@ -1,69 +1,55 @@
 List((
-    texture_width: 64,
-    texture_height: 64,
+    texture_width: 128,
+    texture_height: 128,
     sprites: [
-        // 0: barren
+        // 0: grass
         (
             x: 0,
             y: 0,
-            width: 16,
-            height: 16,
+            width: 32,
+            height: 32,
         ),
-        // 1: default
-        (
-            x: 16,
-            y: 0,
-            width: 16,
-            height: 16,
-        ),
-        // 2: grass
+        // 1: barren
         (
             x: 32,
             y: 0,
-            width: 16,
-            height: 16,
+            width: 32,
+            height: 32,
         ),
-        // 3: player
+        // 2: player
         (
-            x: 48,
+            x: 64,
             y: 0,
-            width: 16,
-            height: 16,
+            width: 32,
+            height: 32,
         ),
-        // 4: shooting player
+        // 3: barrel
         (
             x: 0,
-            y: 16,
-            width: 16,
-            height: 18,
+            y: 32,
+            width: 32,
+            height: 32,
+        ),
+        // 4: corpse
+        (
+            x: 32,
+            y: 32,
+            width: 32,
+            height: 32,
         ),
         // 5: bullet
         (
-            x: 16,
-            y: 16,
-            width: 1,
-            height: 3,
+            x: 96,
+            y: 0,
+            width: 2,
+            height: 4,
         ),
-        // 6: barrel
+        // 6: hand with pistol
         (
-            x: 17,
-            y: 16,
-            width: 16,
-            height: 16,
-        ),
-        // 7: corpse
-        (
-            x: 33,
-            y: 16,
-            width: 16,
-            height: 16,
-        ),
-        // 8: hand with pistol
-        (
-            x: 48,
-            y: 16,
-            width: 9,
-            height: 15,
+            x: 98,
+            y: 0,
+            width: 18,
+            height: 26,
         ),
     ],
 ))
