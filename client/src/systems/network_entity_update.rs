@@ -17,6 +17,8 @@ use amethyst::shred::ReadExpect;
 
 use crate::entities::{create_player, create_character};
 use crate::resources;
+use westiny_common::metric_dimension::Second;
+use westiny_common::metric_dimension::length::Meter;
 
 const CORPSE_HEIGHT: f32 = 0.1;
 
@@ -73,7 +75,6 @@ impl<'s> System<'s> for NetworkEntityStateUpdateSystem {
             entity_states.remove(&player_net_id.0);
         }
 
-
         for (net_id, entity_state) in entity_states {
             let mut transform = Transform::default();
             update_transform(&mut transform, &entity_state);
@@ -109,7 +110,7 @@ impl<'s> NetworkEntityStateUpdateSystem {
             lazy.create_entity(entities)
                 .with(transform)
                 .with(sprite_resource.sprite_render_for(SpriteId::Corpse))
-                .with(Lifespan::new(60.0, current_time))
+                .with(Lifespan::new(Second(60.0), current_time))
                 .build();
         });
         Ok(())
@@ -117,15 +118,15 @@ impl<'s> NetworkEntityStateUpdateSystem {
 }
 
 fn update_transform(transform: &mut Transform, entity_state: &EntityState) {
-    transform.set_translation_x(entity_state.position.x);
-    transform.set_translation_y(entity_state.position.y);
+    transform.set_translation_x(entity_state.position.x.into_pixel());
+    transform.set_translation_y(entity_state.position.y.into_pixel());
     transform.set_rotation_2d(entity_state.rotation);
 }
 
-fn as_transform(pos: &Point2<f32>) -> Transform
+fn as_transform(pos: &Point2<Meter>) -> Transform
 {
     let mut transform = Transform::default();
-    transform.set_translation_xyz(pos.x, pos.y, 0.0);
+    transform.set_translation_xyz(pos.x.into_pixel(), pos.y.into_pixel(), 0.0);
     transform
 }
 

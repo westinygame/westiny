@@ -1,6 +1,7 @@
 
 use amethyst::ecs::prelude::{Component, DenseVecStorage};
 use std::time::Duration;
+use crate::metric_dimension::Second;
 
 #[derive(Debug)]
 pub struct Lifespan
@@ -14,9 +15,9 @@ impl Component for Lifespan {
 
 impl Lifespan
 {
-    pub fn new(secs_to_live: f32, timing_start: Duration) -> Self {
+    pub fn new(secs_to_live: Second, timing_start: Duration) -> Self {
         Lifespan {
-            living_until: timing_start + Duration::from_secs_f32(secs_to_live),
+            living_until: timing_start + secs_to_live.into_duration(),
         }
     }
 }

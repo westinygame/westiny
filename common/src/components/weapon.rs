@@ -2,6 +2,7 @@ use amethyst::ecs::{Component, DenseVecStorage};
 use std::time::Duration;
 pub use weapon_details::*;
 use crate::resources::weapon::{GunResource, GunId};
+use crate::metric_dimension::Second;
 
 const NUMBER_OF_SLOTS: usize = 3;
 
@@ -90,7 +91,7 @@ impl Weapon {
             && current_absolute_time > self.last_shot_time + shoot_interval
     }
 
-    pub fn bullet_lifespan_sec(&self) -> f32 {
+    pub fn bullet_lifespan_sec(&self) -> Second {
         self.details.bullet_distance_limit / self.details.bullet_speed
     }
 
@@ -101,6 +102,8 @@ impl Weapon {
 
 mod weapon_details {
     use serde::Deserialize;
+    use crate::metric_dimension::length::Meter;
+    use crate::metric_dimension::{MeterPerSec, Second};
 
     #[derive(Debug, PartialEq, Deserialize, Clone)]
     pub enum Shot {
@@ -121,16 +124,16 @@ mod weapon_details {
         /// Number of bullets in a single magazine. 0 mean infinite (e.g. laser pistol)
         pub magazine_size: u32,
         /// When magazine_size > 0, amount of time required to reload [seconds]
-        pub reload_time: f32,
+        pub reload_time: Second,
         /// Damage caused by single bullet
         pub damage: u16,
         /// Bullet spread [degree]
         /// 0 is the perfect gun, always shooting where pointed
         /// 10 is a dumb shotgun
         pub spread: f32,
-        /// Shooting time, bullets disappear after
-        pub bullet_distance_limit: f32,
-        pub bullet_speed: f32,
+        /// Shooting distance, bullets disappear after
+        pub bullet_distance_limit: Meter,
+        pub bullet_speed: MeterPerSec,
         pub shot: Shot,
         /// Number of pellets when shot
         pub pellet_number: u32,

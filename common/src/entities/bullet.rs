@@ -6,12 +6,13 @@ use amethyst::{
 
 use crate::components::{Velocity, Projectile, Lifespan};
 use std::time::Duration;
+use crate::metric_dimension::{Second, MeterPerSec};
 
 pub fn spawn_bullet<B: Builder>(
     transform: Transform,
-    velocity: Vector2<f32>,
+    velocity: Vector2<MeterPerSec>,
     current_time: Duration,
-    lives_for_seconds: f32,
+    lives_for_seconds: Second,
     entity_builder: B)
 {
     let lifespan = Lifespan::new(lives_for_seconds, current_time);

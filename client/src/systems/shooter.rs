@@ -10,6 +10,8 @@ use westiny_common::resources::{SpriteId, AudioQueue, SoundId};
 use westiny_common::entities::spawn_bullet;
 use amethyst::core::ecs::{System, ReaderId, Read, LazyUpdate, Entities, SystemData, WriteExpect};
 use amethyst::core::ecs::shrev::EventChannel;
+use westiny_common::metric_dimension::{MeterPerSec, Second};
+use westiny_common::metric_dimension::length::Meter;
 
 #[derive(Default)]
 pub struct ShooterSystemDesc;
@@ -63,14 +65,14 @@ impl<'s> System<'s> for ShooterSystem {
 
 impl ShooterSystem {
     fn spawn_bullet<B: Builder>(&self,
-                                pos: &Point2<f32>,
-                                velocity: &Vector2<f32>,
-                                time_limit_sec: f32,
+                                pos: &Point2<Meter>,
+                                velocity: &Vector2<MeterPerSec>,
+                                time_limit_sec: Second,
                                 current_time: Duration,
                                 entity_builder: B) {
         let transform = {
             let mut transform = Transform::default();
-            transform.set_translation_xyz(pos.x, pos.y, 0.0);
+            transform.set_translation_xyz(pos.x.into_pixel(), pos.y.into_pixel(), 0.0);
             westiny_common::utilities::set_rotation_toward_vector(&mut transform, velocity);
             transform
         };

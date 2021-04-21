@@ -1,11 +1,11 @@
 (
     fire_rate: 1.2,
     magazine_size: 2,
-    reload_time: 3.0,
+    reload_time: Second(3.0),
     damage: 3,
     spread: 2.0,
-    bullet_distance_limit: 80.0,
-    bullet_speed: 300.0,
+    bullet_distance_limit: Meter(5.0),
+    bullet_speed: MeterPerSec(18.0),
     shot: Single,
     pellet_number: 9,
 )

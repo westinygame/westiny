@@ -71,8 +71,8 @@ impl<'s> System<'s> for CollisionHandlerForObstacles {
         for collision in &collisions.0 {
             if let Some(transform) = transforms.get_mut(collision.collider)
             {
-                transform.prepend_translation_x(-collision.vector.x);
-                transform.prepend_translation_y(-collision.vector.y);
+                transform.prepend_translation_x(-collision.vector.x.into_pixel());
+                transform.prepend_translation_y(-collision.vector.y.into_pixel());
             }
         }
 

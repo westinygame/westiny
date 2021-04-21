@@ -6,6 +6,8 @@ use amethyst::core::math::{Vector2, Rotation2, Point2};
 use westiny_common::MoveDirection;
 use westiny_common::components::{Player, Velocity};
 use westiny_common::components::{InputFlags, Input};
+use westiny_common::metric_dimension::{MeterPerSec, rotate};
+use amethyst::core::num::Zero;
 
 #[derive(SystemDesc)]
 pub struct PlayerMovementSystem;
@@ -20,7 +22,7 @@ impl<'s> System<'s> for PlayerMovementSystem {
 
     fn run(&mut self, (mut transforms, mut velocities, players, inputs): Self::SystemData) {
         for (_player, input, mut velocity, transform) in (&players, &inputs, &mut velocities, &mut transforms).join() {
-            rotate_toward_point(transform, &input.cursor);
+            rotate_toward_point(transform, &Point2::new(input.cursor.x.into_pixel(), input.cursor.y.into_pixel()));
 
             let move_inputs = move_directions_from_input(&input);
             log::debug!("{:?} {}", input, move_inputs.len());
@@ -58,12 +60,13 @@ pub fn rotate_toward_point(
     point: &Point2<f32>
 ) {
     use westiny_common::utilities::set_rotation_toward_vector;
+
     // Calculate the vector from player position to mouse cursor
     let direction: Vector2<f32> = (point.to_homogeneous() - transform.translation()).xy();
     set_rotation_toward_vector(transform, &direction);
 }
 
-const PLAYER_MAX_WALK_SPEED: f32 = 64.0;
+const PLAYER_MAX_WALK_SPEED: MeterPerSec = MeterPerSec(4.0);
 
 // TODO It would be better to use a more generic IntoIterator instead of the specific vector type.
 // I did not manage to call into_iter on <T: IntoIterator<Item=MoveDirection>> type
@@ -75,20 +78,21 @@ fn update_velocity(
     *velocity = if move_inputs.is_empty() {
         Velocity::default()
     } else {
-        let velocities: Vec<Vector2<f32>> = move_inputs.into_iter()
+        let velocities: Vec<Vector2<MeterPerSec>> = move_inputs.into_iter()
             .map(|dir| as_vector2(*dir))
             .collect();
 
         let angle = transform.rotation().axis().map(|vec| vec.z).unwrap_or(1.0) * transform.rotation().angle();
         let rot = Rotation2::new(angle);
-        Velocity(rot * vector_avg(&velocities))
+        Velocity(rotate(vector_avg(&velocities), rot))
     };
 }
 
-fn vector_avg<'a, I>(velocities: I) -> Vector2<f32>
-    where I: IntoIterator<Item=&'a Vector2<f32>> {
-    let mut x = 0_f32;
-    let mut y = 0_f32;
+fn vector_avg<'a, I>(velocities: I) -> Vector2<MeterPerSec>
+    where I: IntoIterator<Item=&'a Vector2<MeterPerSec>> {
+
+    let mut x = MeterPerSec::zero();
+    let mut y = MeterPerSec::zero();
     let mut len = 0;
 
     for &vel in velocities {
@@ -98,19 +102,18 @@ fn vector_avg<'a, I>(velocities: I) -> Vector2<f32>
     }
 
     Vector2::new(x/len as f32, y/len as f32)
-
 }
 
 // TODO I couldn't manage to create valid rustdoc links :(
 /// Gives the corresponding `Vector2` to the given `MoveDirection` element.
 /// In te case of `Forward` the length of the returned vector will be the max walk speed
-/// and the halt of that in any other cases
-fn as_vector2(move_dir: MoveDirection) -> Vector2<f32> {
+/// and the half of that in any other cases
+fn as_vector2(move_dir: MoveDirection) -> Vector2<MeterPerSec> {
     match move_dir {
-        MoveDirection::Forward => Vector2::new(0.0, -PLAYER_MAX_WALK_SPEED),
-        MoveDirection::Backward => Vector2::new(0.0, PLAYER_MAX_WALK_SPEED / 2.0),
-        MoveDirection::StrafeLeft => Vector2::new(PLAYER_MAX_WALK_SPEED / 2.0, 0.0),
-        MoveDirection::StrafeRight => Vector2::new(-PLAYER_MAX_WALK_SPEED / 2.0, 0.0)
+        MoveDirection::Forward => Vector2::new(MeterPerSec::zero(), -PLAYER_MAX_WALK_SPEED),
+        MoveDirection::Backward => Vector2::new(MeterPerSec::zero(), PLAYER_MAX_WALK_SPEED / 2.0),
+        MoveDirection::StrafeLeft => Vector2::new(PLAYER_MAX_WALK_SPEED / 2.0, MeterPerSec::zero()),
+        MoveDirection::StrafeRight => Vector2::new(-PLAYER_MAX_WALK_SPEED / 2.0, MeterPerSec::zero())
     }
 }
 
@@ -163,6 +166,7 @@ mod test {
 
     mod test_update_velocity {
         use super::*;
+        use westiny_test::f32_eq;
 
         macro_rules! test_update_velocity {
             ($($name:ident: $player_rotation:expr, $move_dirs:expr, $expected:expr,)*) => {$(
@@ -177,8 +181,8 @@ mod test {
                     let mut velocity = Velocity::default();
                     update_velocity(&transform, &inputs, &mut velocity);
 
-                    assert!(f32_eq(exp_x, velocity.0.x), "velocity x -> Expected: {}, Actual: {}", exp_x, velocity.0.x);
-                    assert!(f32_eq(exp_y, velocity.0.y), "velocity y -> Expected: {}, Actual: {}", exp_y, velocity.0.y);
+                    assert!(f32_eq(exp_x.0, velocity.0.x.0), "velocity x -> Expected: {}, Actual: {}", exp_x, velocity.0.x);
+                    assert!(f32_eq(exp_y.0, velocity.0.y.0), "velocity y -> Expected: {}, Actual: {}", exp_y, velocity.0.y);
                 }
             )*}
         }
@@ -187,10 +191,10 @@ mod test {
 
         test_update_velocity! {
             // forward
-            fwd_up: FACING_UP, vec!{Forward}, (0.0, PLAYER_MAX_WALK_SPEED),
-            fwd_down: FACING_DOWN, vec!{Forward}, (0.0, -PLAYER_MAX_WALK_SPEED),
-            fwd_left: FACING_LEFT, vec!{Forward}, (-PLAYER_MAX_WALK_SPEED, 0.0),
-            fwd_right: FACING_RIGHT, vec!{Forward}, (PLAYER_MAX_WALK_SPEED, 0.0),
+            fwd_up: FACING_UP, vec!{Forward}, (MeterPerSec(0.0), PLAYER_MAX_WALK_SPEED),
+            fwd_down: FACING_DOWN, vec!{Forward}, (MeterPerSec(0.0), -PLAYER_MAX_WALK_SPEED),
+            fwd_left: FACING_LEFT, vec!{Forward}, (-PLAYER_MAX_WALK_SPEED, MeterPerSec(0.0)),
+            fwd_right: FACING_RIGHT, vec!{Forward}, (PLAYER_MAX_WALK_SPEED, MeterPerSec(0.0)),
         }
     }
 
