@@ -9,6 +9,7 @@ use amethyst::network::simulation::{TransportResource, DeliveryRequirement, Urge
 use westiny_common::serialize;
 use westiny_common::network::{PacketType, PlayerDeath};
 use amethyst::core::math::Point2;
+use westiny_common::metric_dimension::to_meter_vec;
 
 
 /// Game logic related to player death
@@ -47,7 +48,7 @@ impl<'s> System<'s> for DeathSystem {
                     PlayerDeath {
                         player_name,
                         position: Point2 {
-                            coords: transform.translation().xy()
+                            coords: to_meter_vec(transform.translation().xy())
                         }
                     }
             )).expect("Could not serialize PlayerDeath");

@@ -10,6 +10,7 @@ use amethyst::renderer::camera::Camera;
 
 use westiny_common::resources::CursorPosition;
 use crate::bindings::MovementBindingTypes;
+use westiny_common::metric_dimension::to_meter_vec;
 
 #[derive(SystemDesc, Default)]
 pub struct CursorPosUpdateSystem;
@@ -34,7 +35,7 @@ impl<'s> System<'s> for CursorPosUpdateSystem {
                 let distance = ray.intersect_plane(&Plane::with_z(0.0)).unwrap();
                 let mouse_world_position = ray.at_distance(distance);
 
-                *cursor_pos = CursorPosition{ pos: mouse_world_position.xy()};
+                *cursor_pos = CursorPosition{ pos: Point2 { coords: to_meter_vec(mouse_world_position.xy().coords) }};
             }
         }
     }
@@ -50,6 +51,7 @@ mod test_integration {
     use amethyst_test::prelude::*;
     use crate::test_helpers as helper;
     use crate::states::game_states::init_camera;
+    use westiny_common::metric_dimension::length::Meter;
 
     #[test]
     fn simple_cursor_position_update() -> Result<(), Error> {
@@ -73,8 +75,8 @@ mod test_integration {
             .with_assertion(|world| {
                 let cursor = world.read_resource::<CursorPosition>();
 
-                assert_eq!(cursor.pos.x, 400.0);
-                assert_eq!(cursor.pos.y, 300.0);
+                assert_eq!(cursor.pos.x, Meter::from_pixel(400.0));
+                assert_eq!(cursor.pos.y, Meter::from_pixel(300.0));
             })
             .run()
     }

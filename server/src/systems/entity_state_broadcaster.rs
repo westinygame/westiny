@@ -6,6 +6,7 @@ use amethyst::network::simulation::{TransportResource, DeliveryRequirement, Urge
 use crate::resources::{ClientRegistry, StreamId};
 use crate::components;
 use westiny_common::{network, serialize};
+use westiny_common::metric_dimension::length::Meter;
 
 /// This system is responsible for sending the transform of all the entities that has NetworkID
 /// to every connected clients
@@ -24,7 +25,7 @@ impl<'s> System<'s> for EntityStateBroadcasterSystem {
         for (network_id, transform) in (&network_ids, &transforms).join() {
             let entity_state = network::EntityState {
                 network_id: *network_id,
-                position: Point2::new(transform.translation().x, transform.translation().y),
+                position: Point2::new(Meter::from_pixel(transform.translation().x), Meter::from_pixel(transform.translation().y)),
                 rotation: get_angle(transform.rotation()),
             };
 

@@ -25,9 +25,9 @@ mod tests {
     use super::*;
     use crate::components::{Input, InputFlags, NetworkId, EntityType};
     use crate::network::EntityState;
+    use crate::metric_dimension::length::Meter;
     use amethyst::core::math::Point2;
     use proptest::prelude::*;
-
 
     fn packet_enum_strategy() -> impl Strategy<Value = PacketType> {
         prop_oneof![
@@ -76,8 +76,8 @@ mod tests {
     }
 
     prop_compose! {
-        fn arb_point2()(x in any::<f32>(), y in any::<f32>()) -> Point2<f32> {
-            Point2::new(x, y)
+        fn arb_point2()(x in any::<f32>(), y in any::<f32>()) -> Point2<Meter> {
+            Point2::new(Meter(x), Meter(y))
         }
     }
 

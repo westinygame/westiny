@@ -11,6 +11,8 @@ use westiny_common::serialize;
 use westiny_common::network::{PacketType, ShotEvent, PlayerUpdate};
 use amethyst::core::math::Point2;
 use std::time::Duration;
+use westiny_common::metric_dimension::MeterPerSec;
+use westiny_common::metric_dimension::length::Meter;
 
 pub struct ShooterSystem;
 
@@ -110,10 +112,10 @@ impl ShooterSystem {
         let direction2d = Vector2::new(-direction3d.x, -direction3d.y);
 
         if let Some(bound) = bound {
-            *bullet_transform.translation_mut() -= direction3d * bound.radius;
+            *bullet_transform.translation_mut() -= bound.radius.into_pixel() * direction3d;
         }
 
-        let velocity = direction2d * weapon.details.bullet_speed;
+        let velocity = weapon.details.bullet_speed * direction2d;
         let bullet_builder = lazy_update.create_entity(&entities)
             .with(Damage(weapon.details.damage));
 
@@ -148,9 +150,9 @@ impl ShooterSystem {
                             net: &mut TransportResource,
                             weapon: &mut Weapon,
                             bullet_transform: &mut Transform,
-                            velocity: &Vector2<f32>) {
+                            velocity: &Vector2<MeterPerSec>) {
         let payload = serialize(&PacketType::ShotEvent(ShotEvent {
-            position: Point2::new(bullet_transform.translation().x, bullet_transform.translation().y),
+            position: Point2::new(Meter::from_pixel(bullet_transform.translation().x), Meter::from_pixel(bullet_transform.translation().y)),
             velocity: *velocity,
             bullet_time_limit_secs: weapon.bullet_lifespan_sec(),
         })).expect("ShotEvent's serialization failed");
@@ -169,7 +171,7 @@ impl ShooterSystem {
                            weapon: &mut Weapon,
                            client: Option<&Client>,
                            reload_start: &Duration) {
-        if time.absolute_time_seconds() >= reload_start.as_secs_f64() + weapon.details.reload_time as f64 {
+        if time.absolute_time_seconds() >= reload_start.as_secs_f64() + weapon.details.reload_time.0 as f64 {
             weapon.bullets_left_in_magazine = weapon.details.magazine_size;
             weapon.reload_started_at = None;
 
@@ -207,6 +209,8 @@ mod test {
     use amethyst::core::num::Bounded;
     use westiny_common::deserialize;
     use crate::components::weapon::WeaponDetails;
+    use westiny_common::metric_dimension::length::Meter;
+    use westiny_common::metric_dimension::Second;
 
     #[test]
     fn broadcast_shot_event() -> anyhow::Result<(), Error>{
@@ -231,18 +235,18 @@ mod test {
             .with_setup(|world: &mut World| {
                 let input = Input {
                     flags: InputFlags::SHOOT,
-                    cursor: Point2::new(0.0, 0.0),
+                    cursor: Point2::new(Meter(0.0), Meter(0.0)),
                 };
 
                 let gun = WeaponDetails {
                     damage: 5,
-                    bullet_distance_limit: 120.0,
+                    bullet_distance_limit: Meter(7.5),
                     fire_rate: f32::max_value(),
                     magazine_size: 6,
-                    reload_time: 1.0,
+                    reload_time: Second(1.0),
                     spread: 2.0,
                     shot: weapon::Shot::Single,
-                    bullet_speed: 200.0,
+                    bullet_speed: MeterPerSec(12.5),
                     pellet_number: 1,
                 };
 
@@ -255,7 +259,7 @@ mod test {
                 world.create_entity()
                     .with(input)
                     .with(Transform::default())
-                    .with(BoundingCircle { radius: 1.0 })
+                    .with(BoundingCircle { radius: Meter(1.0) })
                     .with(Holster::new_with_guns(guns))
                     .build();
             })
@@ -267,10 +271,10 @@ mod test {
                 let messages = net.get_messages();
 
                 assert_eq!(3, messages.len());
-                let expected_msg = ShotEvent{
-                    position: Point2::new(0.0, -1.0),
-                    velocity: Vector2::new(0.0, -200.0),
-                    bullet_time_limit_secs: 0.6
+                let expected_msg = ShotEvent {
+                    position: Point2::new(Meter(0.0), Meter(-1.0)),
+                    velocity: Vector2::new(MeterPerSec(0.0), MeterPerSec(-12.5)),
+                    bullet_time_limit_secs: Second(0.6)
                 };
 
                 messages.iter().for_each(|msg| {

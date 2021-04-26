@@ -27,13 +27,11 @@ impl Default for ServerAddress {
 #[derive(Copy, Clone)]
 #[repr(usize)]
 pub enum SpriteId {
-    Player = 3,
-    #[allow(dead_code)] // Please remove this allow when using ShootingPlayer
-    ShootingPlayer = 4,
+    Player = 2,
+    Barrel = 3,
+    Corpse = 4,
     Bullet = 5,
-    Barrel = 6,
-    Corpse = 7,
-    HandWithPistol = 8,
+    HandWithPistol = 6,
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Debug)]

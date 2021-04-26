@@ -2,6 +2,8 @@ use serde::Deserialize;
 use std::io::Read;
 use amethyst::core::Transform;
 use amethyst::core::math::Vector2;
+use num_traits::ToPrimitive;
+use std::fmt::Debug;
 
 pub fn read_ron<T>(ron_path: & std::path::Path) -> anyhow::Result<T>
     where T: for<'a> Deserialize<'a> {
@@ -20,9 +22,10 @@ pub fn read_ron<T>(ron_path: & std::path::Path) -> anyhow::Result<T>
     Ok(deserialized)
 }
 
-pub fn set_rotation_toward_vector(transform: &mut Transform, vector: &Vector2<f32>) {
-    let mut angle = Vector2::new(0.0, -1.0).angle(vector);
-    if vector.x < 0.0 {
+pub fn set_rotation_toward_vector<T>(transform: &mut Transform, vector: &Vector2<T>) where T: 'static + ToPrimitive + Copy + PartialEq + Debug {
+    let primitive_vec = Vector2::new(vector.x.to_f32().unwrap(), vector.y.to_f32().unwrap());
+    let mut angle = Vector2::new(0.0, -1.0).angle(&primitive_vec);
+    if primitive_vec.x < 0.0 {
         angle = 2.0 * std::f32::consts::PI - angle;
     }
     transform.set_rotation_2d(angle);

@@ -1,11 +1,12 @@
 use amethyst::ecs::Entity;
 use amethyst::core::math::Vector2;
+use crate::metric_dimension::length::Meter;
 
 pub struct Collision
 {
     pub collider: Entity, // moving
     pub collidee: Entity,
-    pub vector: Vector2<f32>,
+    pub vector: Vector2<Meter>,
 }
 
 pub struct Collisions(pub Vec<Collision>);
@@ -20,7 +21,7 @@ pub struct ProjectileCollision
 {
     pub projectile: Entity,
     pub target: Entity,
-    pub vector: Vector2<f32>,
+    pub vector: Vector2<Meter>,
 }
 
 pub struct ProjectileCollisions(pub Vec<ProjectileCollision>);

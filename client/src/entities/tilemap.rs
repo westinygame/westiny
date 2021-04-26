@@ -4,8 +4,9 @@ use amethyst::core::Transform;
 use amethyst::tiles::{TileMap, MortonEncoder};
 
 use crate::resources::{GroundTile, SpriteResource};
+use westiny_common::metric_dimension::length::Meter;
 
-const TILE_SIZE: u32 = 16;
+const TILE_SIZE: Meter = Meter(1.0);
 const CHUNK_SIZE: u32 = 64;
 
 pub fn initialize_tilemap(
@@ -15,7 +16,7 @@ pub fn initialize_tilemap(
 {
     let map = TileMap::<GroundTile, MortonEncoder>::new(
         /*dimensions:*/ Vector3::new(CHUNK_SIZE, CHUNK_SIZE, 1),
-        /*tile_dimensions:*/ Vector3::new(TILE_SIZE, TILE_SIZE, 1),
+        /*tile_dimensions:*/ Vector3::new(TILE_SIZE.into_pixel() as u32, TILE_SIZE.into_pixel() as u32, 1),
         /*sprite_sheet:*/ Some(sprite_resource.sheet.clone()),
         );
 

@@ -5,6 +5,8 @@ use crate::components::{Input, NetworkId, Health};
 use amethyst::core::math::{Point2, Vector2};
 use crate::resources::Seed;
 use crate::PlayerName;
+use crate::metric_dimension::{Second, MeterPerSec};
+use crate::metric_dimension::length::Meter;
 
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(test, derive(Clone, PartialEq))]
@@ -34,7 +36,7 @@ pub struct ClientInitialData {
 #[cfg_attr(test, derive(PartialEq))]
 pub struct EntityState {
     pub network_id: NetworkId,
-    pub position: Point2<f32>,
+    pub position: Point2<Meter>,
     pub rotation: f32,
 }
 
@@ -53,16 +55,16 @@ pub struct PlayerNotification {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct ShotEvent {
-    pub position: Point2<f32>,
-    pub velocity: Vector2<f32>,
-    pub bullet_time_limit_secs: f32,
+    pub position: Point2<Meter>,
+    pub velocity: Vector2<MeterPerSec>,
+    pub bullet_time_limit_secs: Second,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[cfg_attr(test, derive(PartialEq))]
 pub struct PlayerDeath {
     pub player_name: PlayerName,
-    pub position: Point2<f32>,
+    pub position: Point2<Meter>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

@@ -10,6 +10,7 @@ use westiny_common::events::EntityDelete;
 use derive_new::new;
 use crate::resources::ClientRegistry;
 use westiny_common::resources::weapon::GunResource;
+use westiny_common::metric_dimension::length::Meter;
 
 pub struct RespawnSystem;
 
@@ -136,7 +137,7 @@ impl SpawnSystem {
             .with(components::Health(100))
             .with(components::Input::default())
             .with(components::Velocity::default())
-            .with(components::BoundingCircle { radius: 8.0 })
+            .with(components::BoundingCircle { radius: Meter(0.5) })
             .with(components::Respawn {respawn_duration: Duration::from_secs(5)})
             .with(components::weapon::Holster::new(&gun_resource))
             .build();
@@ -170,7 +171,7 @@ impl SpawnSystem {
         const TILE_SIZE: u32 = 16;
         const BOUND: f32 = (MAP_SIZE/2 * TILE_SIZE) as f32;
 
-        let candidate_bounding = components::BoundingCircle { radius: 8.0 };
+        let candidate_bounding = components::BoundingCircle { radius: Meter(0.5) };
 
         for _ in 0..MAX_TRIAL_ITERATION {
             // TODO hardcoded range: should be calculated from map data

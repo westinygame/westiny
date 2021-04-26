@@ -1,7 +1,9 @@
 use amethyst::ecs::prelude::{Component, DenseVecStorage};
+use crate::metric_dimension::length::Meter;
 
+#[derive(Debug)]
 pub struct BoundingCircle {
-    pub radius: f32,
+    pub radius: Meter,
 }
 
 impl Component for BoundingCircle {

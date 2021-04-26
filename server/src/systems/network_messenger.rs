@@ -121,6 +121,7 @@ mod test {
     use amethyst::prelude::*;
     use amethyst_test::prelude::*;
     use westiny_common::{network, components::{InputFlags, Input}, serialize};
+    use westiny_common::metric_dimension::length::Meter;
 
     fn create_testapp() -> AmethystApplication<GameData<'static, 'static>, StateEvent, StateEventReader>
     {
@@ -179,7 +180,7 @@ mod test {
     fn make_input() -> Input {
         let mut inp = Input::default();
         inp.flags |= InputFlags::FORWARD;
-        inp.cursor = Point2::new(42.0, 99.99);
+        inp.cursor = Point2::new(Meter::from_pixel(42.0), Meter::from_pixel(99.99));
         inp
     }
 

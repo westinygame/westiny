@@ -8,6 +8,7 @@ use westiny_common::components::{Input, Health, Player, NetworkId, BoundingCircl
 use crate::resources::SpriteResource;
 use westiny_common::resources::SpriteId;
 use crate::components::WeaponInfo;
+use westiny_common::metric_dimension::length::Meter;
 
 pub const CHARACTER_HEIGHT : f32 = 1.8;
 
@@ -18,7 +19,7 @@ pub fn create_hand_for_character<B: Builder>(
     ) -> Entity
 {
     let mut hand_transform = Transform::default();
-    hand_transform.set_translation_xyz(-3., -6., -0.3); // relative to parent
+    hand_transform.set_translation_xyz(Meter(-0.25).into_pixel(), Meter(-0.2).into_pixel(), -0.3); // relative to parent
 
     builder
         .with(Parent{entity: parent})
@@ -40,7 +41,7 @@ pub fn create_character<B: Builder, F: Fn() -> B>(
         .with(network_id)
         .with(sprite_resource.sprite_render_for(SpriteId::Player))
         .with(transform)
-        .with(BoundingCircle{radius: 8.0})
+        .with(BoundingCircle{radius: Meter(0.5)})
         .build();
 
     create_hand_for_character(factory(), &sprite_resource, entity);
