@@ -94,15 +94,19 @@ impl ShooterSystem {
             *bullet_transform.translation_mut() -= bound.radius.into_pixel() * direction3d;
         }
 
-        let velocity = weapon.details.bullet_speed * Self::apply_spread(&direction2d, weapon.details.spread);
-        let bullet_builder = lazy_update.create_entity(&entities)
-            .with(Damage(weapon.details.damage));
+        for pellet_idx in 0..weapon.details.pellet_number {
+            let velocity = weapon.details.bullet_speed * Self::apply_spread(&direction2d, weapon.details.spread);
+            let bullet_builder = lazy_update.create_entity(&entities)
+                .with(Damage(weapon.details.damage));
 
-        spawn_bullet(bullet_transform.clone(),
-                     velocity.clone(),
-                     time.absolute_time(),
-                     weapon.bullet_lifespan_sec(),
-                     bullet_builder);
+            spawn_bullet(bullet_transform.clone(),
+                         velocity.clone(),
+                         time.absolute_time(),
+                         weapon.bullet_lifespan_sec(),
+                         bullet_builder);
+
+            Self::broadcast_shot_event(client_registry, net, &mut weapon, &mut bullet_transform, &velocity);
+        }
 
         weapon.last_shot_time = time.absolute_time_seconds();
         weapon.input_lifted = false;
@@ -122,7 +126,6 @@ impl ShooterSystem {
             weapon.reload_started_at = Some(time.absolute_time());
         }
 
-        Self::broadcast_shot_event(client_registry, net, &mut weapon, &mut bullet_transform, &velocity)
     }
 
     fn apply_spread(reference_direction: &Vector2<f32>, spread: f32) -> Vector2<f32>
@@ -130,7 +133,6 @@ impl ShooterSystem {
         use rand::Rng;
 
         let spread_rad = rand::thread_rng().gen_range(-spread..spread) * (PI/180.0);
-        log::info!("spread applied: {}", spread_rad);
         UnitComplex::new(spread_rad) * reference_direction
     }
 
