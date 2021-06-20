@@ -94,7 +94,7 @@ impl ShooterSystem {
             *bullet_transform.translation_mut() -= bound.radius.into_pixel() * direction3d;
         }
 
-        for pellet_idx in 0..weapon.details.pellet_number {
+        for _pellet_idx in 0..weapon.details.pellet_number {
             let velocity = weapon.details.bullet_speed * Self::apply_spread(&direction2d, weapon.details.spread);
             let bullet_builder = lazy_update.create_entity(&entities)
                 .with(Damage(weapon.details.damage));
@@ -130,10 +130,14 @@ impl ShooterSystem {
 
     fn apply_spread(reference_direction: &Vector2<f32>, spread: f32) -> Vector2<f32>
     {
-        use rand::Rng;
-
-        let spread_rad = rand::thread_rng().gen_range(-spread..spread) * (PI/180.0);
-        UnitComplex::new(spread_rad) * reference_direction
+        if spread > 0.0
+        {
+            use rand::Rng;
+            let spread_rad = rand::thread_rng().gen_range(-spread..spread) * (PI / 180.0);
+            UnitComplex::new(spread_rad) * reference_direction
+        } else {
+            reference_direction.clone_owned()
+        }
     }
 
     fn broadcast_shot_event(client_registry: &ClientRegistry,
@@ -265,7 +269,7 @@ mod test {
                     fire_rate: f32::max_value(),
                     magazine_size: 6,
                     reload_time: Second(1.0),
-                    spread: 2.0,
+                    spread: 0.0,
                     shot: weapon::Shot::Single,
                     bullet_speed: MeterPerSec(12.5),
                     pellet_number: 1,
