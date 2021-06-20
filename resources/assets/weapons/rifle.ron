@@ -3,7 +3,7 @@
     magazine_size: 1,
     reload_time: Second(3.0),
     damage: 50,
-    spread: 0.7,
+    spread: 4.0,
     bullet_distance_limit: Meter(12.5),
     bullet_speed: MeterPerSec(15.5),
     shot: Single,
