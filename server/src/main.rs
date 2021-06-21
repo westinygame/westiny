@@ -17,6 +17,7 @@ pub mod resources;
 pub mod systems;
 pub mod components;
 pub mod server_state;
+pub mod ai;
 
 pub const RESOURCES_RELATIVE_PATH: &'static str = "../resources";
 
