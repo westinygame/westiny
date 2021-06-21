@@ -1,6 +1,6 @@
 ![Westiny logo](media/westiny_logo.png)
 # westiny
-This is a topview sandbox game.  
+This is a western topview sandbox game.  
 The game is written fully in rust.
 
 ## usage
