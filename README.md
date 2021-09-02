@@ -27,5 +27,17 @@ Start the server with default address:
 `cargo run --release --bin westiny_server`
 
 Start the client with default address too:
-`cargo run --release --bin westiny_client`
+`cargo run --release --bin westiny_client`  
 Note, that `WESTINY_SERVER_ADDRESS` has not been set.
+
+## configuration
+### player name
+The player's name is got from `USER` env var,
+so to change the player's name start client with setting the `USER`:  
+`USER="Clint Westwood" cargo run --release --bin westiny_client`
+
+### Running multiple clients on the same computer
+To try the game alone you might want to run two or more clients on the same computer.  
+The server identifies a player by its name and its address.  
+To be able to connect multiple clients those has to be started
+with a different player name.
