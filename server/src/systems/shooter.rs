@@ -47,7 +47,9 @@ impl<'s> System<'s> for ShooterSystem {
                 weapon.input_lifted = true;
             }
 
-            if let Some(reload_start) = weapon.reload_started_at {
+            if input.flags.intersects(InputFlags::RELOAD) && weapon.is_allowed_to_reload() {
+                weapon.reload_started_at = Some(time.absolute_time())
+            } else if let Some(reload_start) = weapon.reload_started_at {
                 Self::check_reload_finish(&time, &client_registry, &mut net, weapon, client, &reload_start)
             }
         }
@@ -120,12 +122,6 @@ impl ShooterSystem {
                 log::error!("Failed to send ammo update to client {:?}. Error: {}", client.id, err);
             }
         }
-
-        // Temporary auto-reload
-        if weapon.bullets_left_in_magazine <= 0 && weapon.is_allowed_to_reload() {
-            weapon.reload_started_at = Some(time.absolute_time());
-        }
-
     }
 
     fn apply_spread(reference_direction: &Vector2<f32>, spread: f32) -> Vector2<f32>
