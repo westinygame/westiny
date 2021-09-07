@@ -51,9 +51,9 @@ A - move left
 D - move right  
 Left click - shoot  
 1 - switch weapon to Revolver  
-2 - switch weapon to Shotgun
-3 - switch weapon to Rifle
-R - reload
+2 - switch weapon to Shotgun  
+3 - switch weapon to Rifle  
+R - reload  
 
 ### misc
 The weapons have different parameters. They differ in damage, pellet number, spread, shoot distance, bullet speed.  
