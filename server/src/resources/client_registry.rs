@@ -8,6 +8,7 @@ use westiny_common::PlayerName;
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
 pub struct ClientID(pub u32);
 
+#[derive(Debug)]
 pub struct ClientHandle {
     pub id: ClientID,
     pub addr: SocketAddr,
@@ -15,6 +16,7 @@ pub struct ClientHandle {
     pub player_name: PlayerName,
 }
 
+#[derive(Debug)]
 pub struct ClientRegistry {
     max_slots: usize,
     next_id: u32,

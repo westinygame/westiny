@@ -1,34 +1,15 @@
-use amethyst::derive::SystemDesc;
-use amethyst::ecs::{System, SystemData, ReadStorage, WriteStorage, Join};
-use amethyst::core::Transform;
-use amethyst::core::math::{Vector2, Rotation2, Point2};
-
 use westiny_common::MoveDirection;
-use westiny_common::components::{Player, Velocity};
-use westiny_common::components::{InputFlags, Input};
-use westiny_common::metric_dimension::{MeterPerSec, rotate};
-use amethyst::core::num::Zero;
+use westiny_common::components::{Player, Velocity, Input, InputFlags};
+use westiny_common::utilities::set_rotation_toward_vector;
+use westiny_common::metric_dimension::{MeterPerSecVec2, MeterPerSec};
+use bevy::prelude::*;
 
-#[derive(SystemDesc)]
-pub struct PlayerMovementSystem;
+pub fn apply_input(mut query: Query<(&mut Transform, &mut Velocity, &Input)>) {
+    for (mut transform, mut velocity, input) in query.iter_mut() {
+        set_rotation_toward_vector(&mut transform, &input.cursor.into_pixel_vec());
 
-impl<'s> System<'s> for PlayerMovementSystem {
-    type SystemData = (
-        WriteStorage<'s, Transform>,
-        WriteStorage<'s, Velocity>,
-        ReadStorage<'s, Player>,
-        ReadStorage<'s, Input>,
-    );
-
-    fn run(&mut self, (mut transforms, mut velocities, players, inputs): Self::SystemData) {
-        for (_player, input, mut velocity, transform) in (&players, &inputs, &mut velocities, &mut transforms).join() {
-            rotate_toward_point(transform, &Point2::new(input.cursor.x.into_pixel(), input.cursor.y.into_pixel()));
-
-            let move_inputs = move_directions_from_input(&input);
-            log::debug!("{:?} {}", input, move_inputs.len());
-
-            update_velocity(&transform, &move_inputs, &mut velocity);
-        }
+        let move_inputs = move_directions_from_input(&input);
+        *velocity = get_velocity(&transform, &move_inputs);
     }
 }
 
@@ -55,65 +36,56 @@ pub fn move_directions_from_input(input: &Input) -> Vec<MoveDirection>
 }
 
 
-pub fn rotate_toward_point(
-    transform: &mut Transform,
-    point: &Point2<f32>
-) {
-    use westiny_common::utilities::set_rotation_toward_vector;
-
-    // Calculate the vector from player position to mouse cursor
-    let direction: Vector2<f32> = (point.to_homogeneous() - transform.translation()).xy();
-    set_rotation_toward_vector(transform, &direction);
-}
-
 const PLAYER_MAX_WALK_SPEED: MeterPerSec = MeterPerSec(4.0);
 
 // TODO It would be better to use a more generic IntoIterator instead of the specific vector type.
-// I did not manage to call into_iter on <T: IntoIterator<Item=MoveDirection>> type
-fn update_velocity(
-    transform: &Transform,
-    move_inputs: &Vec<MoveDirection>,
-    velocity: &mut Velocity
-) {
-    *velocity = if move_inputs.is_empty() {
+fn get_velocity (transform: &Transform,
+                 move_inputs: &Vec<MoveDirection>) -> Velocity {
+    if move_inputs.is_empty() {
         Velocity::default()
     } else {
-        let velocities: Vec<Vector2<MeterPerSec>> = move_inputs.into_iter()
+        let velocities: Vec<MeterPerSecVec2> = move_inputs.into_iter()
             .map(|dir| as_vector2(*dir))
             .collect();
 
-        let angle = transform.rotation().axis().map(|vec| vec.z).unwrap_or(1.0) * transform.rotation().angle();
-        let rot = Rotation2::new(angle);
-        Velocity(rotate(vector_avg(&velocities), rot))
-    };
+        let rotation = transform.rotation.clone();
+        let mut velocity_vec = vector_avg(&velocities);
+        Velocity(velocity_vec.rotate(&transform.rotation))
+    }
 }
 
-fn vector_avg<'a, I>(velocities: I) -> Vector2<MeterPerSec>
-    where I: IntoIterator<Item=&'a Vector2<MeterPerSec>> {
+fn vector_avg<'a, I>(velocities: I) -> MeterPerSecVec2
+    where I: IntoIterator<Item=&'a MeterPerSecVec2> {
 
-    let mut x = MeterPerSec::zero();
-    let mut y = MeterPerSec::zero();
+    let mut sum_vec = MeterPerSecVec2::from_raw(0.0, 0.0);
     let mut len = 0;
 
     for &vel in velocities {
-        x += vel.x;
-        y += vel.y;
+        sum_vec += vel;
         len += 1;
     }
 
-    Vector2::new(x/len as f32, y/len as f32)
+    sum_vec / (len as f32)
 }
 
-// TODO I couldn't manage to create valid rustdoc links :(
-/// Gives the corresponding `Vector2` to the given `MoveDirection` element.
-/// In te case of `Forward` the length of the returned vector will be the max walk speed
-/// and the half of that in any other cases
-fn as_vector2(move_dir: MoveDirection) -> Vector2<MeterPerSec> {
+fn as_vector2(move_dir: MoveDirection) -> MeterPerSecVec2 {
     match move_dir {
-        MoveDirection::Forward => Vector2::new(MeterPerSec::zero(), -PLAYER_MAX_WALK_SPEED),
-        MoveDirection::Backward => Vector2::new(MeterPerSec::zero(), PLAYER_MAX_WALK_SPEED / 2.0),
-        MoveDirection::StrafeLeft => Vector2::new(PLAYER_MAX_WALK_SPEED / 2.0, MeterPerSec::zero()),
-        MoveDirection::StrafeRight => Vector2::new(-PLAYER_MAX_WALK_SPEED / 2.0, MeterPerSec::zero())
+        MoveDirection::Forward     => MeterPerSecVec2 {
+                                          x: MeterPerSec(0.0),
+                                          y: -PLAYER_MAX_WALK_SPEED
+                                      },
+        MoveDirection::Backward    => MeterPerSecVec2 {
+                                          x: MeterPerSec(0.0),
+                                          y: PLAYER_MAX_WALK_SPEED / 2.0
+                                      },
+        MoveDirection::StrafeLeft  => MeterPerSecVec2 {
+                                          x: PLAYER_MAX_WALK_SPEED / 2.0,
+                                          y: MeterPerSec(0.0)
+                                      },
+        MoveDirection::StrafeRight => MeterPerSecVec2 {
+                                          x: -PLAYER_MAX_WALK_SPEED / 2.0,
+                                          y: MeterPerSec(0.0)
+                                      }
     }
 }
 

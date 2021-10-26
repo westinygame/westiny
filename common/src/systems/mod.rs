@@ -1,13 +1,3 @@
-pub use physics::PhysicsSystem;
-pub use lifespan::LifespanSystem;
-pub use collision::{
-    CollisionBundle,
-    CollisionHandlerForObstacles,
-    CollisionSystem,
-    ProjectileCollisionHandler,
-    ProjectileCollisionSystem
-};
+pub use physics::physics;
 
-mod physics;
-mod lifespan;
-mod collision;
+pub mod physics;

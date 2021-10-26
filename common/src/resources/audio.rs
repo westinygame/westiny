@@ -1,4 +1,3 @@
-
 #[derive(Copy, Clone)]
 #[repr(usize)]
 pub enum SoundId {

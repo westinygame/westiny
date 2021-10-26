@@ -1,25 +1,23 @@
-use amethyst::ecs::{Component, DenseVecStorage};
 use std::time::Duration;
 pub use weapon_details::*;
 use crate::resources::weapon::{GunResource, GunId};
 use crate::metric_dimension::Second;
+use bevy::asset::Assets;
 
 const NUMBER_OF_SLOTS: usize = 3;
 
 /// This is the first approach of the inventory. For now it stores fix number of guns
-#[derive(Component)]
-#[storage(DenseVecStorage)]
 pub struct Holster {
     guns: [(Weapon, &'static str); NUMBER_OF_SLOTS],
     selected: usize
 }
 
 impl Holster {
-    pub fn new(gun_resource: &GunResource) -> Self {
+    pub fn new(gun_resource: &GunResource, assets: &Assets<WeaponDetails>) -> Self {
         let guns = [
-            (Weapon::new(gun_resource.get_gun(GunId::Revolver)), "Revolver"),
-            (Weapon::new(gun_resource.get_gun(GunId::Shotgun)), "Shotgun"),
-            (Weapon::new(gun_resource.get_gun(GunId::Rifle)), "Rifle")
+            (Weapon::new(assets.get(gun_resource.get_gun(GunId::Revolver)).unwrap().clone()), "Revolver"),
+            (Weapon::new(assets.get(gun_resource.get_gun(GunId::Shotgun)).unwrap().clone()), "Shotgun"),
+            (Weapon::new(assets.get(gun_resource.get_gun(GunId::Rifle)).unwrap().clone()), "Rifle")
         ];
 
         Holster { guns, selected: 0 }
@@ -104,6 +102,7 @@ mod weapon_details {
     use serde::Deserialize;
     use crate::metric_dimension::length::Meter;
     use crate::metric_dimension::{MeterPerSec, Second};
+    use bevy::reflect::TypeUuid;
 
     #[derive(Debug, PartialEq, Deserialize, Clone)]
     pub enum Shot {
@@ -117,7 +116,8 @@ mod weapon_details {
         Auto
     }
 
-    #[derive(Deserialize, Clone, PartialEq)]
+    #[derive(Deserialize, Clone, PartialEq, TypeUuid)]
+    #[uuid = "d8653dbe-c8a2-46a0-9e64-a7eeeb61bc7f"]
     pub struct WeaponDetails {
         /// Fire rate per seconds [1/s]
         pub fire_rate: f32,

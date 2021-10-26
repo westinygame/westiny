@@ -1,10 +1,6 @@
-use amethyst::core::math::Point2;
-use amethyst::ecs::prelude::{Component, DenseVecStorage};
 use serde::{Serialize, Deserialize};
-
 use bitflags;
-use crate::metric_dimension::length::Meter;
-use amethyst::core::num::Zero;
+use crate::metric_dimension::length::{Meter, MeterVec2};
 
 const SELECTIONS: [InputFlags; 5] = [
     InputFlags::SELECT1,
@@ -39,7 +35,7 @@ bitflags::bitflags! {
 pub struct Input
 {
     pub flags : InputFlags,
-    pub cursor : Point2<Meter>
+    pub cursor : MeterVec2
 }
 
 impl Input {
@@ -54,11 +50,7 @@ impl Default for Input
     fn default() -> Self {
         Input{
             flags: InputFlags::NOP,
-            cursor: Point2::new(Meter::zero(), Meter::zero()),
+            cursor: MeterVec2 { x: Meter(0.0), y: Meter(0.0) },
         }
     }
-}
-
-impl Component for Input {
-    type Storage = DenseVecStorage<Self>;
 }

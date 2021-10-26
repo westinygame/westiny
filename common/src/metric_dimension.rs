@@ -1,10 +1,13 @@
 use std::ops::{Mul, Div, AddAssign, Neg};
-use std::time::Duration;
 use crate::metric_dimension::length::Meter;
 use serde::{Serialize, Deserialize};
-use amethyst::core::math::{Vector2, Rotation2};
-use std::fmt::{Debug, Display, Formatter};
-use num_derive::{Float, Num, NumCast, NumOps, ToPrimitive, One, Zero};
+use std::fmt::{Debug,
+               Display,
+               Formatter
+};
+use std::time::Duration;
+use bevy::prelude::{Vec2, Quat};
+
 
 macro_rules! impl_trait {
     (impl $trait:ident :: $method:ident ::< $other:ty > for $base:ident -> $output:ident) => {
@@ -16,11 +19,14 @@ macro_rules! impl_trait {
             }
         }
 
-        impl $trait<Vector2<$other>> for $base {
-            type Output = Vector2<$output>;
+        impl $trait<ThinVec<$other>> for $base {
+            type Output = ThinVec<$output>;
 
-            fn $method(self, rhs: Vector2<$other>) -> Self::Output {
-                Vector2::new(self.$method(rhs.x), self.$method(rhs.y))
+            fn $method(self, rhs: ThinVec<$other>) -> Self::Output {
+                ThinVec::<$output> {
+                    x: self.$method(rhs.x),
+                    y: self.$method(rhs.y)
+                }
             }
         }
     }
@@ -32,23 +38,24 @@ impl_trait!{ impl Div::div::<MeterPerSec> for Meter -> Second }
 
 const PIXEL_PER_METER: u16 = 32;
 
-pub mod length {
-    use std::ops::{Mul, Neg};
-    use amethyst::core::math::{Vector3, Vector2};
-    use super::*;
-    use serde::Deserialize;
-    use num_derive::{Float, Num, NumCast, NumOps, ToPrimitive, One, Zero};
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ThinVec<T> {
+    pub x: T,
+    pub y: T,
+}
 
-    #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, PartialOrd,
-    Float, Num, NumCast, NumOps, ToPrimitive, One, Zero)]
+pub mod length {
+    use super::*;
+    use bevy::math::{Vec2, Vec3};
+
+    #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq)]
     pub struct Meter(pub f32);
 
-    impl Neg for Meter {
-        type Output = Self;
+    pub type MeterVec2 = ThinVec<Meter>;
 
-        fn neg(self) -> Self::Output {
-            Meter(self.0.neg())
-        }
+    pub struct MeterVec3 {
+        pub xy: MeterVec2,
+        pub z: Meter
     }
 
     impl Meter {
@@ -61,12 +68,43 @@ pub mod length {
         }
     }
 
-    impl Mul<Vector3<f32>> for Meter {
-        type Output = Vector3<Meter>;
+    impl MeterVec2 {
+        pub fn from_raw(x: f32, y: f32) -> MeterVec2 {
+            MeterVec2 {
+                x: Meter(x),
+                y: Meter(y)
+            }
+        }
+
+        pub fn from_pixel_vec(vec: Vec2) -> Self {
+            Self {
+                x: Meter::from_pixel(vec.x),
+                y: Meter::from_pixel(vec.y)
+            }
+        }
+
+        pub fn into_pixel_vec(self) -> Vec2 {
+            Vec2::new(self.x.into_pixel(), self.y.into_pixel())
+        }
+    }
+
+    impl Neg for Meter {
+        type Output = Self;
+
+        fn neg(self) -> Self::Output {
+            Meter(self.0.neg())
+        }
+    }
+
+    impl Mul<Vec3> for Meter {
+        type Output = MeterVec3;
 
         /// The z coordinate will not be multiplied
-        fn mul(self, rhs: Vector3<f32>) -> Self::Output {
-            Vector3::new(Meter(self.0 * rhs.x), Meter(self.0 * rhs.y), Meter::from_pixel(rhs.z))
+        fn mul(self, rhs: Vec3) -> Self::Output {
+            MeterVec3 {
+                xy: self * rhs.truncate(),
+                z: Meter::from_pixel(rhs.z.clone())
+            }
         }
     }
 
@@ -78,23 +116,31 @@ pub mod length {
         }
     }
 
-    impl Mul<Vector2<f32>> for Meter {
-        type Output = Vector2<Meter>;
+    impl Div<f32> for Meter {
+        type Output = Meter;
 
-        fn mul(self, rhs: Vector2<f32>) -> Self::Output {
-            Vector2::new(self * rhs.x, self * rhs.y)
+        fn div(self, rhs: f32) -> Self::Output {
+            Meter(self.0 / rhs)
         }
     }
 
-    pub fn magnitude(vector: Vector2<Meter>) -> Meter {
-        let pixel_vec = Vector2::new(vector.x.into_pixel(), vector.y.into_pixel());
-        Meter::from_pixel(pixel_vec.magnitude())
+    impl Mul<Vec2> for Meter {
+        type Output = MeterVec2;
+
+        fn mul(self, rhs: Vec2) -> Self::Output {
+            MeterVec2 {
+                x: Meter(self.0 * &rhs.x),
+                y: Meter(self.0 * &rhs.y)
+            }
+        }
     }
 
-    pub fn normalize(vector: Vector2<Meter>) -> Vector2<f32> {
-        let pixel_vec = Vector2::new(vector.x.into_pixel(), vector.y.into_pixel());
-        let magnitude = pixel_vec.magnitude();
-        pixel_vec / magnitude
+    pub fn magnitude(vector: &MeterVec2) -> Meter {
+        Meter::from_pixel(vector.into_pixel_vec().length())
+    }
+
+    pub fn normalize(vector: MeterVec2) -> Vec2 {
+        vector.into_pixel_vec().normalize()
     }
 }
 
@@ -113,13 +159,18 @@ impl From<Duration> for Second {
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, PartialOrd,
-Float, Num, NumCast, NumOps, ToPrimitive, One, Zero)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
 pub struct MeterPerSec(pub f32);
+
+pub type MeterPerSecVec2 = ThinVec<MeterPerSec>;
 
 impl MeterPerSec {
     pub fn from_pixel_per_sec(pixel_per_sec: f32) -> Self {
         MeterPerSec(pixel_per_sec / (PIXEL_PER_METER as f32))
+    }
+
+    pub fn into_pixel_per_sec(self) -> f32 {
+        self.0 * (PIXEL_PER_METER as f32)
     }
 }
 
@@ -130,11 +181,15 @@ impl Neg for MeterPerSec {
     }
 }
 
-impl Mul<Vector2<f32>> for MeterPerSec {
-    type Output = Vector2<MeterPerSec>;
+impl Mul<Vec2> for MeterPerSec {
+    type Output = MeterPerSecVec2;
 
-    fn mul(self, rhs: Vector2<f32>) -> Self::Output {
-        Vector2::new(MeterPerSec(self.0 * rhs.x), MeterPerSec(self.0 * rhs.y))
+    fn mul(self, rhs: Vec2) -> Self::Output {
+        let raw_vec = self.0 * rhs;
+        MeterPerSecVec2 {
+            x: MeterPerSec(self.0 * &raw_vec.x),
+            y: MeterPerSec(self.0 * &raw_vec.y)
+        }
     }
 }
 
@@ -142,7 +197,7 @@ impl Div<f32> for MeterPerSec {
     type Output = MeterPerSec;
 
     fn div(self, rhs: f32) -> Self::Output {
-        MeterPerSec(self.0 / (rhs as f32))
+        MeterPerSec(self.0 / rhs)
     }
 }
 
@@ -158,11 +213,56 @@ impl Display for MeterPerSec {
     }
 }
 
-pub fn rotate(velocity: Vector2<MeterPerSec>, rotation: Rotation2<f32>) -> Vector2<MeterPerSec> {
-    let rotated = rotation * Vector2::new(velocity.x.0, velocity.y.0);
-    Vector2::new(MeterPerSec(rotated.x), MeterPerSec(rotated.y))
+impl MeterPerSecVec2 {
+    pub fn from_raw(x: f32, y: f32) -> Self {
+        MeterPerSecVec2 {
+            x: MeterPerSec(x),
+            y: MeterPerSec(y)
+        }
+    }
+    pub fn from_raw_vec(vec: Vec2) -> Self {
+        MeterPerSecVec2::from_raw(vec.x, vec.y)
+    }
+
+    pub fn from_pixel_per_sec(vec: Vec2) -> Self {
+        MeterPerSecVec2 {
+            x: MeterPerSec::from_pixel_per_sec(vec.x),
+            y: MeterPerSec::from_pixel_per_sec(vec.y)
+        }
+    }
+
+    pub fn xy(&self) -> Vec2 {
+        Vec2::new(self.x.0, self.y.0)
+    }
+
+    pub fn rotate(&self, rotation: &Quat) -> Self {
+        let mut corrected_rotation = if rotation.z < 0.0 {
+            rotation.inverse()
+        } else {
+            rotation.clone()
+        };
+        Self::from_raw_vec(corrected_rotation.mul_vec3(self.xy().extend(0.0)).truncate())
+    }
+
+    pub fn into_pixel_per_sec_vec(self) -> Vec2 {
+        Vec2::new(self.x.into_pixel_per_sec(), self.y.into_pixel_per_sec())
+    }
 }
 
-pub fn to_meter_vec(pixel_vec: Vector2<f32>) -> Vector2<Meter> {
-    Vector2::new(Meter::from_pixel(pixel_vec.x), Meter::from_pixel(pixel_vec.y))
+impl Div<f32> for MeterPerSecVec2 {
+    type Output = MeterPerSecVec2;
+
+    fn div(self, rhs: f32) -> Self::Output {
+        MeterPerSecVec2 {
+            x: self.x / rhs,
+            y: self.y / rhs
+        }
+    }
+}
+
+impl AddAssign<MeterPerSecVec2> for MeterPerSecVec2 {
+    fn add_assign(&mut self, rhs: MeterPerSecVec2) {
+        self.x += rhs.x;
+        self.y += rhs.y;
+    }
 }

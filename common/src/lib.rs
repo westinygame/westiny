@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
-use amethyst::network::simulation::laminar::LaminarConfig;
+use blaminar::simulation::laminar::LaminarConfig;
 use std::time::Duration;
+use std::fmt;
 
 pub mod components;
 pub mod resources;
@@ -8,7 +9,6 @@ pub mod systems;
 pub mod network;
 pub mod serialization;
 pub mod entities;
-pub mod collision;
 pub mod events;
 pub mod utilities;
 pub mod metric_dimension;
@@ -21,10 +21,6 @@ pub enum MoveDirection {
     StrafeLeft,
     StrafeRight,
 }
-
-pub use serialization::{serialize, deserialize};
-use std::fmt;
-
 
 #[derive(Deserialize)]
 pub struct NetworkConfig {

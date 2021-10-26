@@ -1,5 +1,3 @@
-
-use amethyst::ecs::prelude::{Component, DenseVecStorage};
 use std::time::Duration;
 use crate::metric_dimension::Second;
 
@@ -7,10 +5,6 @@ use crate::metric_dimension::Second;
 pub struct Lifespan
 {
     pub living_until: Duration,
-}
-
-impl Component for Lifespan {
-    type Storage = DenseVecStorage<Self>;
 }
 
 impl Lifespan

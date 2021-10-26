@@ -1,13 +1,12 @@
-use amethyst::core::math::Point2;
-use crate::metric_dimension::length::Meter;
+use crate::metric_dimension::length::MeterVec2;
 
 #[derive(Copy, Clone)]
 pub struct CursorPosition {
-    pub pos: Point2<Meter>
+    pub pos: MeterVec2
 }
 
 impl Default for CursorPosition {
     fn default() -> Self {
-        CursorPosition {pos: Point2::new(Meter(0.0), Meter(0.0))}
+        CursorPosition { pos: MeterVec2::from_raw(0.0, 0.0) }
     }
 }

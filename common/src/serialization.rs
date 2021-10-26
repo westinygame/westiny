@@ -1,7 +1,6 @@
-use crate::network::PacketType;
 use anyhow::Result;
 use thiserror::Error;
-
+use crate::network::PacketType;
 
 #[derive(Error, Debug)]
 #[error("Could not encode packet: {0:?}")]
@@ -25,8 +24,7 @@ mod tests {
     use super::*;
     use crate::components::{Input, InputFlags, NetworkId, EntityType};
     use crate::network::EntityState;
-    use crate::metric_dimension::length::Meter;
-    use amethyst::core::math::Point2;
+    use crate::metric_dimension::length::{Meter, MeterVec2};
     use proptest::prelude::*;
 
     fn packet_enum_strategy() -> impl Strategy<Value = PacketType> {
@@ -76,8 +74,8 @@ mod tests {
     }
 
     prop_compose! {
-        fn arb_point2()(x in any::<f32>(), y in any::<f32>()) -> Point2<Meter> {
-            Point2::new(Meter(x), Meter(y))
+        fn arb_point2()(x in any::<f32>(), y in any::<f32>()) -> MeterVec2 {
+            MeterVec2::
         }
     }
 

@@ -1,14 +1,9 @@
 use crate::resources::ClientID;
 use derive_new::new;
-use amethyst::core::ecs::{Component, VecStorage};
 
-#[derive(new, Copy, Clone, Debug)]
+#[derive(Copy, Clone, new)]
 pub struct Client {
     pub id: ClientID
-}
-
-impl Component for Client {
-    type Storage = VecStorage<Self>;
 }
 
 impl Client {
@@ -16,3 +11,4 @@ impl Client {
         &self.id
     }
 }
+

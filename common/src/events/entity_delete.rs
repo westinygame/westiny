@@ -1,4 +1,4 @@
-use amethyst::ecs::Entity;
+use bevy::ecs::prelude::Entity;
 
 pub struct EntityDelete
 {

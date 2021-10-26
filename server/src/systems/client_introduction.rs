@@ -1,148 +1,112 @@
-use amethyst::{
-    derive::SystemDesc,
-    ecs::{
-        Entities, Join, Read, ReadExpect, ReadStorage, System, SystemData, WriteExpect,
-    },
-    network::simulation::{DeliveryRequirement, TransportResource, UrgencyRequirement},
-    shrev::{EventChannel, ReaderId},
-};
-
-use derive_new::new;
-
 use westiny_common::{
-    network::{ClientInitialData, PacketType, PlayerNotification},
-    serialize,
-    events::EntityDelete,
+    network::{ClientInitialData, PacketType},
+    serialization::serialize,
+    //events::EntityDelete,
+    resources::Seed
 };
 
 use crate::{
-    components,
-    components::EntityType,
+    components::{NetworkId, Client, EntityType},
     resources::{ClientID, ClientNetworkEvent, ClientRegistry, NetworkIdSupplier},
+    systems::spawn::SpawnPlayerEvent
 };
-use westiny_common::resources::Seed;
-use crate::systems::SpawnPlayerEvent;
+use bevy::prelude::{EventReader, ResMut, Res, Query, EventWriter};
+use bevy::log::info;
+use blaminar::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
 
-#[derive(SystemDesc, new)]
-#[system_desc(name(ClientIntroductionSystemDesc))]
-pub struct ClientIntroductionSystem {
-    #[system_desc(event_channel_reader)]
-    reader: ReaderId<ClientNetworkEvent>,
-}
+pub fn introduce_new_clients(mut client_network_ec: EventReader<ClientNetworkEvent>,
+                             //mut entity_delete_ec: EventWriter<EntityDelete>,
+                             mut spawn_player_ec: EventWriter<SpawnPlayerEvent>,
+                             mut transport: ResMut<TransportResource>,
+                                 client_registry: Res<ClientRegistry>,
+                                 seed: Res<Seed>,
+                             mut network_id_supplier: ResMut<NetworkIdSupplier>,
+                             mut query: Query<(&NetworkId, &Client)>) {
+    // This vector is used for deduplicating ClientConnected events within one frame to avoid
+    // multiple spawn for a single client.
+    let mut added_clients = Vec::<(ClientID, NetworkId)>::new();
 
-impl<'s> System<'s> for ClientIntroductionSystem {
-    type SystemData = (
-        Read<'s, EventChannel<ClientNetworkEvent>>,
-        Entities<'s>,
-        WriteExpect<'s, EventChannel<EntityDelete>>,
-        WriteExpect<'s, TransportResource>,
-        ReadExpect<'s, ClientRegistry>,
-        ReadExpect<'s, Seed>,
-        WriteExpect<'s, NetworkIdSupplier>,
-        ReadStorage<'s, components::NetworkId>,
-        ReadStorage<'s, components::Client>,
-        WriteExpect<'s, EventChannel<SpawnPlayerEvent>>,
-    );
+    for client_network_event in client_network_ec.iter() {
+        match client_network_event {
+            ClientNetworkEvent::ClientConnected(client_id) => {
+                let client_handle = client_registry.find_client(*client_id).expect(&format!(
+                    "Client [client_id: {:?}] not found in registry",
+                    client_id
+                ));
 
-    fn run(
-        &mut self,
-        (
-            client_net_ec,
-            entities,
-            mut entity_delete_channel,
-            mut net,
-            client_registry,
-            seed,
-            mut net_id_supplier,
-            network_ids,
-            client,
-            mut spawn_player_event_channel
-        ): Self::SystemData,
-    ) {
-        // This vector is used for deduplicating ClientConnected events within one frame to avoid
-        // multiple spawn for a single client.
-        let mut added_clients = Vec::<(ClientID, components::NetworkId)>::new();
+                let entity_network_id = if let Some((_, net_id)) =
+                added_clients.iter().find(|(cli_id, _)| cli_id == client_id)
+                {
+                    info!(
+                        "Player for {:?} already spawned: {:?}, not respawning.",
+                        client_id,
+                        net_id
+                    );
+                    *net_id
+                } else {
+                    let net_id = network_id_supplier.next(EntityType::Player);
 
-        for client_network_event in client_net_ec.read(&mut self.reader) {
-            match client_network_event {
-                ClientNetworkEvent::ClientConnected(client_id) => {
-                    let client_handle = client_registry.find_client(*client_id).expect(&format!(
-                        "Client [client_id: {:?}] not found in registry",
-                        client_id
-                    ));
-
-                    let entity_network_id = if let Some((_, net_id)) =
-                        added_clients.iter().find(|(cli_id, _)| cli_id == client_id)
-                    {
-                        log::info!(
-                            "Player for {:?} already spawned: {:?}, not respawning.",
-                            client_id,
-                            net_id
-                        );
-                        *net_id
-                    } else {
-                        let net_id = net_id_supplier.next(EntityType::Player);
-
-                        if let Some((cli, net_id)) = (&client, &network_ids)
-                            .join()
-                            .find(|(&cli, _)| cli.id == *client_id)
-                        {
-                            log::info!(
+                    for (net_id, client) in query.iter() {
+                        if client.id == *client_id {
+                            info!(
                                 "{:?} already connected, its entity already spawned: {:?}",
-                                cli.id,
+                                client.id,
                                 net_id
                             );
                         }
+                    }
 
-                        spawn_player_event_channel.single_write(SpawnPlayerEvent {
-                            client: components::Client { id: *client_id },
-                            network_id: net_id,
-                        });
+                    spawn_player_ec.send(SpawnPlayerEvent {
+                        client: Client { id: *client_id },
+                        network_id: net_id,
+                    });
 
-                        log::debug!(
-                            "Player entity spawn requested for {}, {:?}, {:?}",
-                            client_handle.player_name,
-                            client_id,
-                            net_id
-                        );
-                        added_clients.push((*client_id, net_id));
+                    log::debug!(
+                        "Player entity spawn requested for {}, {:?}, {:?}",
+                        client_handle.player_name,
+                        client_id,
                         net_id
-                    };
-
-                    // Send response to client
-                    let connection_response =
-                        PacketType::ConnectionResponse(Ok(ClientInitialData {
-                            player_network_id: entity_network_id,
-                            // TODO initial_pos should not be sent here. On the client side it will be processed from EntityStateUpdate messages anyway.
-                            seed: *seed
-                        })
                     );
-                    net.send_with_requirements(
-                        client_handle.addr,
-                        &serialize(&connection_response).unwrap(),
-                        DeliveryRequirement::Reliable,
-                        UrgencyRequirement::OnTick,
-                    );
+                    added_clients.push((*client_id, net_id));
+                    net_id
+                };
 
-                    broadcast_notification(
-                        &mut net,
-                        &client_registry,
-                        PlayerNotification{message: format!("{} joined.", &client_handle.player_name)});
-                }
-                ClientNetworkEvent::ClientDisconnected(client_id, player_name) => {
-                    log::debug!("Removing disconnecting client's player entity [client_id: {:?}]", client_id);
-                    Self::despawn_player(&entities, &mut entity_delete_channel, &client, client_id);
+                // Send response to client
+                let connection_response =
+                    PacketType::ConnectionResponse(Ok(ClientInitialData {
+                        player_network_id: entity_network_id,
+                        seed: *seed
+                    }));
+                transport.send_with_requirements(
+                    client_handle.addr,
+                    &serialize(&connection_response).unwrap(),
+                    DeliveryRequirement::Reliable,
+                    UrgencyRequirement::OnTick,
+                );
 
-                    broadcast_notification(
-                        &mut net,
-                        &client_registry,
-                        PlayerNotification{message: format!("{} left the game.", &player_name)});
-                }
+                /*
+                broadcast_notification(
+                    &mut net,
+                    &client_registry,
+                    PlayerNotification{message: format!("{} joined.", &client_handle.player_name)});
+                */
+            }
+            ClientNetworkEvent::ClientDisconnected(client_id, player_name) => {
+                log::debug!("Removing disconnecting client's player entity [client_id: {:?}]", client_id);
+                /*
+                Self::despawn_player(&entities, &mut entity_delete_channel, &client, client_id);
+
+                broadcast_notification(
+                    &mut net,
+                    &client_registry,
+                    PlayerNotification{message: format!("{} left the game.", &player_name)});
+                */
             }
         }
     }
 }
 
+/*
 fn broadcast_notification(
     net: &mut TransportResource,
     client_registry: &ClientRegistry,
@@ -157,19 +121,17 @@ fn broadcast_notification(
     }
 }
 
-impl ClientIntroductionSystem {
-    fn despawn_player(
-        entities: &Entities<'_>,
-        entity_delete_channel: &mut EventChannel<EntityDelete>,
-        client_storage: &ReadStorage<'_, components::Client>,
-        client_id: &ClientID,
-    ) {
-        for (entity, client) in (&*entities, client_storage).join() {
-            if client.id() == client_id {
-                entity_delete_channel.single_write(EntityDelete{entity_id: entity});
-                return;
-            }
+fn despawn_player(
+    mut query: Query<Entity, Client>,
+    mut entity_delete_channel: EventWriter<EntityDelete>,
+    client_id: &ClientID,
+) {
+    for (entity, client) in query.iter() {
+        if client.id() == client_id {
+            entity_delete_channel.single_write(EntityDelete{entity_id: entity});
+            return;
         }
     }
 }
+*/
 

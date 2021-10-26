@@ -1,40 +1,20 @@
-use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Read, System, SystemData, ReadStorage, WriteStorage};
-use amethyst::ecs::prelude::Join;
-use amethyst::core::{Transform, Time};
-use amethyst::core::math::Vector2;
-
 use crate::components::{Velocity};
 use crate::metric_dimension::Second;
-use crate::metric_dimension::length::Meter;
+use crate::metric_dimension::length::{Meter, MeterVec2};
+use bevy::prelude::*;
 
-#[derive(SystemDesc)]
-pub struct PhysicsSystem;
-
-impl<'s> System<'s> for PhysicsSystem {
-    type SystemData = (
-        WriteStorage<'s, Transform>,
-        ReadStorage<'s, Velocity>,
-        Read<'s, Time>,
-    );
-
-    fn run(&mut self, (mut transforms, velocities, time): Self::SystemData) {
-        for (transform, velocity) in
-            (&mut transforms, &velocities).join()
-        {
-            update_position(transform, velocity, &time);
-        }
+pub fn physics(time: Res<Time>,
+               mut query: Query<(&mut Transform, &Velocity)>) {
+    for (mut transform, velocity) in query.iter_mut() {
+        update_position(&mut transform, &velocity, &time)
     }
 }
 
 /// Updates transform with velocity based on time
 /// Returns delta (x,y) vector
-pub fn update_position(transform: &mut Transform, velocity: &Velocity, time: &Time) -> Vector2<Meter> {
+fn update_position(transform: &mut Transform, velocity: &Velocity, time: &Time) {
     let delta = Second(time.delta_seconds()) * velocity.0;
-    let delta_clone = delta.clone();
-    transform.prepend_translation_x(delta_clone.x.into_pixel());
-    transform.prepend_translation_y(delta_clone.y.into_pixel());
-    delta
+    transform.translation += delta.into_pixel_vec().extend(0.0);
 }
 
 #[cfg(test)]
