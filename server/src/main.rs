@@ -20,7 +20,6 @@ pub mod components;
 pub mod server_state;
 pub mod diagnostics;
 
-
 fn main() {
     let resources_dir = PathBuf::from("resources");
     let server_port: u16 = {
@@ -48,16 +47,20 @@ fn main() {
         .expect(&format!("Failed to load Laminar protocol configuration file: {}", ron_path.as_os_str().to_str().unwrap()))
     };
 
+
     App::build()
         .insert_resource(ClientRegistry::new(64))
         .insert_resource(resources::Seed(0)) // Hard-coded seed for now
         .insert_resource(resources::NetworkIdSupplier::new())
+        .insert_resource(resources::ResourcesDir(resources_dir))
 
         .add_plugins(MinimalPlugins)
         .add_plugin(LogPlugin)
         .add_plugins(DiagnosticPlugins)
         .add_plugin(LaminarPlugin::new(socket_address, laminar_config))
         // .add_plugin(RonAssetPlugin::<WeaponDetails>::new(&["gun"]))
+
+        .add_startup_system(systems::build_map.system())
 
         .add_event::<ClientNetworkEvent>()
         .add_event::<NetworkCommand>()
@@ -87,6 +90,8 @@ fn main() {
                     .label("broadcast_entity_state")
                     .after("introduce_client")
                     .after("physics"))
+
+        .add_plugin(systems::CollisionPlugin)
         .run();
 }
 

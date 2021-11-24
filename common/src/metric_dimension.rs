@@ -1,4 +1,4 @@
-use std::ops::{Mul, Div, AddAssign, Neg};
+use std::ops::{Mul, Div, AddAssign, Neg, Add, Sub};
 use crate::metric_dimension::length::Meter;
 use serde::{Serialize, Deserialize};
 use std::fmt::{Debug,
@@ -35,6 +35,8 @@ macro_rules! impl_trait {
 impl_trait!{ impl Div::div::<Second> for Meter -> MeterPerSec }
 impl_trait!{ impl Mul::mul::<MeterPerSec> for Second -> Meter }
 impl_trait!{ impl Div::div::<MeterPerSec> for Meter -> Second }
+impl_trait!{ impl Sub::sub::<Meter> for Meter -> Meter }
+impl_trait!{ impl Add::add::<Meter> for Meter -> Meter }
 
 const PIXEL_PER_METER: u16 = 32;
 
@@ -48,7 +50,7 @@ pub mod length {
     use super::*;
     use bevy::math::{Vec2, Vec3};
 
-    #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq)]
+    #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
     pub struct Meter(pub f32);
 
     pub type MeterVec2 = ThinVec<Meter>;
@@ -236,7 +238,7 @@ impl MeterPerSecVec2 {
     }
 
     pub fn rotate(&self, rotation: &Quat) -> Self {
-        let mut corrected_rotation = if rotation.z < 0.0 {
+        let corrected_rotation = if rotation.z < 0.0 {
             rotation.inverse()
         } else {
             rotation.clone()

@@ -1,6 +1,5 @@
 use crate::components::{Velocity};
 use crate::metric_dimension::Second;
-use crate::metric_dimension::length::{Meter, MeterVec2};
 use bevy::prelude::*;
 
 pub fn physics(time: Res<Time>,

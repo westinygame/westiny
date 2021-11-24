@@ -21,3 +21,17 @@ mod player_movement;
 // mod health;
 mod spawn;
 // mod death;
+
+use bevy::prelude::{Commands, Res};
+use crate::resources;
+
+pub fn build_map(commands: Commands,
+                 seed: Res<resources::Seed>,
+                 res_dir: Res<resources::ResourcesDir>) {
+    let res = resources::map::build_map(commands, *seed, &res_dir.0.join("map"));
+    match res {
+        Ok(()) => bevy::log::info!("Map built"),
+        Err(err) => bevy::log::error!("{}", err)
+    };
+}
+

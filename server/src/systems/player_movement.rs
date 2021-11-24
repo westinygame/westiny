@@ -48,7 +48,6 @@ fn get_velocity (transform: &Transform,
             .map(|dir| as_vector2(*dir))
             .collect();
 
-        let rotation = transform.rotation.clone();
         let mut velocity_vec = vector_avg(&velocities);
         Velocity(velocity_vec.rotate(&transform.rotation))
     }

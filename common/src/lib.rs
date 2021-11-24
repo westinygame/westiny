@@ -12,6 +12,7 @@ pub mod entities;
 pub mod events;
 pub mod utilities;
 pub mod metric_dimension;
+pub mod collision;
 
 /// The move direction relative to facing
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]

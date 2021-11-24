@@ -1,9 +1,9 @@
 use crate::components;
 use crate::resources::ClientRegistry;
-use westiny_common::metric_dimension::length::MeterVec2;
+use westiny_common::metric_dimension::length::{Meter, MeterVec2};
 use bevy::prelude::*;
 use bevy::log::info;
-//use westiny_common::collision;
+use westiny_common::collision;
 //use westiny_common::events::EntityDelete;
 
 // pub struct RespawnSystem;
@@ -66,13 +66,15 @@ use bevy::log::info;
 // }
 //
 
+
 pub fn spawn_player(mut commands: Commands,
-                mut spawn_player_ec: EventReader<SpawnPlayerEvent>,
-                    client_registry: Res<ClientRegistry>
+                    mut spawn_player_ec: EventReader<SpawnPlayerEvent>,
+                    client_registry: Res<ClientRegistry>,
+                    mut transforms_boundings_query: Query<(&Transform, &components::BoundingCircle)>
                 ) {
 
     for spawn_event in spawn_player_ec.iter() {
-        let spawn_pos = MeterVec2::from_raw(0.0, 0.0);
+        let spawn_pos = find_spawn_pos(&mut transforms_boundings_query);
         info!("Spawn position found for player at ({},{})", spawn_pos.x.0, spawn_pos.y.0);
         create_player_entity(&spawn_pos,
                              &mut commands,
@@ -84,14 +86,11 @@ pub fn spawn_player(mut commands: Commands,
     }
 }
 
-//
-// impl SpawnSystem {
-     fn create_player_entity(
-         initial_pos: &MeterVec2,
-         commands: &mut Commands,
-         client: components::Client,
-         network_id: components::NetworkId,
-     //    gun_resource: &GunResource,
+fn create_player_entity(initial_pos: &MeterVec2,
+                        commands: &mut Commands,
+                        client: components::Client,
+                        network_id: components::NetworkId,
+                        // gun_resource: &GunResource,
      ) {
          commands.spawn()
              .insert(client)
@@ -102,28 +101,14 @@ pub fn spawn_player(mut commands: Commands,
              .insert(components::Health(100))
              .insert(components::Input::default())
              .insert(components::Velocity::default())
-             .id();
-
-         /*
-         lazy_update
-             .create_entity(entities)
-             .with(client)
-             .with(network_id)
-             .with(components::Player)
-             .with(transform)
-             .with(components::Health(100))
-             .with(components::Input::default())
-             .with(components::Velocity::default())
-             .with(components::BoundingCircle { radius: Meter(0.5) })
-             .with(components::Respawn {respawn_duration: Duration::from_secs(5)})
-             .with(components::weapon::Holster::new(&gun_resource))
-             .build();
-             */
+             .insert(components::BoundingCircle{ radius: Meter(0.5)});
+         // respawn
+         // weapon::Holster
      }
 
-/*
+
 fn has_collision(
-    mut transforms_boundings_query: Query<(&Transform, &components::BoundingCircle)>,
+    transforms_boundings_query: &mut Query<(&Transform, &components::BoundingCircle)>,
     collider: &collision::Collider
 ) -> bool {
     for (transform, bound) in transforms_boundings_query.iter() {
@@ -137,7 +122,7 @@ fn has_collision(
     false
 }
 
-fn find_spawn_pos( mut transforms_boundings_query: Query<(&Transform, &components::BoundingCircle)>) -> Point2<f32> {
+fn find_spawn_pos( transforms_boundings_query: &mut Query<(&Transform, &components::BoundingCircle)>) -> MeterVec2 {
     use rand::Rng;
 
     // TODO Quick 'n' dirty stuff
@@ -153,23 +138,18 @@ fn find_spawn_pos( mut transforms_boundings_query: Query<(&Transform, &component
         let x = rand::thread_rng().gen_range(-BOUND .. BOUND);
         let y = rand::thread_rng().gen_range(-BOUND .. BOUND);
 
-        let candidate_transform = {
-            let mut t = Transform::default();
-            t.set_translation_xyz(x, y, 0.0);
-            t
-        };
+        let candidate_transform = Transform::from_xyz(x, y, 0.0);
         if !has_collision(
             transforms_boundings_query,
             &collision::Collider{transform: &candidate_transform, bound: &candidate_bounding}
         ) {
-            return Point2::new(x, y);
+            return MeterVec2::from_pixel_vec(Vec2::new(x, y));
         }
     }
 
     log::warn!("Could not find a valid spawn place for player! Fallback to (0,0)");
-    Point2::new(0.0, 0.0)
+    MeterVec2::from_raw(0.0, 0.0)
 }
-*/
 
 pub struct SpawnPlayerEvent {
     pub client: components::Client,
