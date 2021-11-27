@@ -16,7 +16,7 @@ log = "0.4.14"
 ron = "0.6.4"
 num-traits = "0.2"
 num-derive = "0.3"
-blaminar = { path="../../blaminar" }
+blaminar = { git = "https://github.com/westinygame/blaminar" }
 
 [dev-dependencies]
 proptest = "0.10.1"
