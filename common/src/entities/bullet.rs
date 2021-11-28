@@ -1,9 +1,10 @@
-use crate::components::{Velocity, Projectile, Lifespan};
+use crate::components::{Velocity, Projectile, Lifespan, Damage};
 use std::time::Duration;
 use crate::metric_dimension::{Second, MeterPerSecVec2};
 use bevy::prelude::{Transform, Commands};
 
 pub fn spawn_bullet(commands: &mut Commands,
+                    damage: u16,
                     transform: Transform,
                     velocity: MeterPerSecVec2,
                     current_time: Duration,
@@ -16,5 +17,7 @@ pub fn spawn_bullet(commands: &mut Commands,
         transform,
         Velocity(velocity),
         Projectile {},
-        lifespan));
+        lifespan,
+        Damage(damage),
+        ));
 }

@@ -187,10 +187,9 @@ impl Mul<Vec2> for MeterPerSec {
     type Output = MeterPerSecVec2;
 
     fn mul(self, rhs: Vec2) -> Self::Output {
-        let raw_vec = self.0 * rhs;
         MeterPerSecVec2 {
-            x: MeterPerSec(self.0 * &raw_vec.x),
-            y: MeterPerSec(self.0 * &raw_vec.y)
+            x: MeterPerSec(self.0 * &rhs.x),
+            y: MeterPerSec(self.0 * &rhs.y)
         }
     }
 }

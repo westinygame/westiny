@@ -92,6 +92,8 @@ fn main() {
                     .after("physics"))
 
         .add_plugin(systems::CollisionPlugin)
+
+        .add_system_set(systems::weapon_handler_system_set())
         .run();
 }
 

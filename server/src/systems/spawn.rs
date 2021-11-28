@@ -1,6 +1,10 @@
 use crate::components;
 use crate::resources::ClientRegistry;
-use westiny_common::metric_dimension::length::{Meter, MeterVec2};
+use westiny_common::metric_dimension::{
+    length::{Meter, MeterVec2},
+    Second,
+    MeterPerSec
+};
 use bevy::prelude::*;
 use bevy::log::info;
 use westiny_common::collision;
@@ -86,6 +90,27 @@ pub fn spawn_player(mut commands: Commands,
     }
 }
 
+fn dummy_guns() -> [(components::weapon::Weapon, &'static str); 3] {
+    use components::weapon::{Weapon, WeaponDetails, Shot};
+    const revolver: WeaponDetails = WeaponDetails {
+        fire_rate: 7.2,
+        magazine_size: 6,
+        reload_time: Second(2.0),
+        damage: 5,
+        spread: 10.0,
+        bullet_distance_limit: Meter(7.5),
+        bullet_speed: MeterPerSec(12.5),
+        shot: Shot::Single,
+        pellet_number: 1,
+    };
+
+    [
+        (Weapon::new(revolver), "Revolver"),
+        (Weapon::new(revolver), "Another revolver"),
+        (Weapon::new(revolver), "One more revolver")
+    ]
+}
+
 fn create_player_entity(initial_pos: &MeterVec2,
                         commands: &mut Commands,
                         client: components::Client,
@@ -101,9 +126,9 @@ fn create_player_entity(initial_pos: &MeterVec2,
              .insert(components::Health(100))
              .insert(components::Input::default())
              .insert(components::Velocity::default())
-             .insert(components::BoundingCircle{ radius: Meter(0.5)});
+             .insert(components::BoundingCircle{ radius: Meter(0.5)})
+             .insert(components::weapon::Holster::new_with_guns(dummy_guns()));
          // respawn
-         // weapon::Holster
      }
 
 

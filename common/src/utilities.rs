@@ -33,6 +33,13 @@ pub fn set_rotation_toward_vector(transform: &mut bevy::transform::components::T
     transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
 }
 
+pub fn rotate_vec3_around_z(quat: &bevy::math::Quat, vec: &mut bevy::math::Vec3) {
+    *vec = quat.mul_vec3(*vec);
+    if(quat.z < 0.0) {
+        vec.x = -vec.x;
+    }
+}
+
 #[cfg(test)]
 mod test {
     // use super::*;

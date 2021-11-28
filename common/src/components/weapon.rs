@@ -52,7 +52,7 @@ impl Holster {
 
 pub struct Weapon {
     /// Time::absolute_time()
-    pub last_shot_time: f64,
+    pub last_shot_time: std::time::Duration,
     /// Content of the weapon magazine
     pub bullets_left_in_magazine: u32,
     /// When reload is started. Defined only while reloading.
@@ -66,7 +66,7 @@ pub struct Weapon {
 impl Weapon {
     pub fn new(details: WeaponDetails) -> Self {
         Weapon {
-            last_shot_time: 0.0,
+            last_shot_time: std::time::Duration::ZERO,
             bullets_left_in_magazine: details.magazine_size,
             reload_started_at: None,
             input_lifted: true,
@@ -74,8 +74,8 @@ impl Weapon {
         }
     }
 
-    pub fn is_allowed_to_shoot(&self, current_absolute_time: f64) -> bool {
-        let shoot_interval = 1.0 / self.details.fire_rate as f64;
+    pub fn is_allowed_to_shoot(&self, current_absolute_time: std::time::Duration) -> bool {
+        let shoot_interval = std::time::Duration::from_secs_f32(1.0 / self.details.fire_rate);
         let need_input_press = match self.details.shot {
             Shot::Single => true,
             Shot::Burst(_) => true,
