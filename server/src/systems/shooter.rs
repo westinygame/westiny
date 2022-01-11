@@ -1,5 +1,4 @@
 use crate::components::{
-    Damage,
     Client,
     weapon::Weapon,
     weapon::Holster,
@@ -15,9 +14,7 @@ use crate::resources::{
 use westiny_common::entities::spawn_bullet;
 use westiny_common::network::{PacketType, ShotEvent, PlayerUpdate};
 use westiny_common::metric_dimension::{
-    length::Meter,
     length::MeterVec2,
-    MeterPerSec,
     MeterPerSecVec2
 };
 use westiny_common::serialization::serialize;
@@ -34,11 +31,9 @@ use bevy::prelude::{
     ResMut,
     SystemSet,
     IntoSystem,
-    GlobalTransform,
     Transform,
     Vec3,
 };
-use std::time::Duration;
 use std::f32::consts::PI;
 
 pub fn weapon_handler_system_set() -> SystemSet {
@@ -331,9 +326,5 @@ mod test {
             })
             .run()
     }
-}
-
-impl ShooterSystem {
-
 }
 */

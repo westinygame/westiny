@@ -16,12 +16,10 @@ use crate::resources::collision::{
     ProjectileCollision,
     ProjectileCollisions
 };
-/*
 use crate::events::{
     EntityDelete,
     DamageEvent
 };
-*/
 use bevy::prelude::*;
 
 pub struct CollisionPlugin;
@@ -34,11 +32,9 @@ impl bevy::app::Plugin for CollisionPlugin {
         app.add_system_set(
                 collision_system_set()
                     .after("physics"));
-            /*
         app.add_system_set(
                 projectile_collision_system_set()
-                    .after("physics")
-                    */
+                    .after("physics"));
     }
 }
 
@@ -49,14 +45,12 @@ fn collision_system_set() -> SystemSet {
         .with_system(handle_obstacle_collisions.system())
 }
 
-/*
 fn projectile_collision_system_set() -> SystemSet {
     SystemSet::new()
         .label("projectile_collision")
         .with_system(collect_projectile_collisions.system())
-        .with_system(handle_projectile_collisions.system()))
+        .with_system(handle_projectile_collisions.system())
 }
-*/
 
 fn collect_collisions(moving_query: Query<(Entity, &Transform, &BoundingCircle), With<Velocity>>,
                       standing_query: Query<(Entity, &Transform, &BoundingCircle)>,
@@ -93,44 +87,51 @@ fn handle_obstacle_collisions(collision_res: Res<Collisions>,
     }
 }
 
-/*
-pub struct ProjectileCollisionSystem;
-
-impl<'s> System<'s> for ProjectileCollisionSystem {
-    type SystemData = (
-        WriteStorage<'s, Transform>,
-        ReadStorage<'s, Projectile>,
-        ReadStorage<'s, BoundingCircle>,
-        Entities<'s>,
-        WriteExpect<'s, ProjectileCollisions>
-        );
-    fn run(&mut self, (transforms, projectiles, bounding_circles, entities, mut collision_resource): Self::SystemData) {
-        collision_resource.0.clear();
-        for (projectile_transform, _, projectile_id) in (&transforms, &projectiles, &entities).join()
-        {
-            for (object_transform, object_bounds, object_id) in (&transforms, &bounding_circles, &entities).join()
+fn collect_projectile_collisions(mut collision_res: ResMut<ProjectileCollisions>,
+                                 projectile_query: Query<(Entity, &Transform), With<Projectile>>,
+                                 maybe_collidee_query: Query<(Entity, &Transform, &BoundingCircle), Without<Projectile>>) {
+    collision_res.0.clear();
+    for (projectile_id, projectile_transform) in projectile_query.iter() {
+        for (maybe_collidee_id, maybe_collidee_transform, maybe_collidee_bounds) in maybe_collidee_query.iter() {
+            if let Some(collision) = check_projectile_collision(
+                projectile_transform,
+                Collider{
+                    transform: maybe_collidee_transform,
+                    bound: maybe_collidee_bounds
+                })
             {
-                // unlikely
-                if projectile_id == object_id
-                {
-                    continue;
-                }
-
-                if let Some(collision) = check_projectile_collision(
-                    projectile_transform,
-                    Collider{transform: object_transform, bound: object_bounds})
-                {
-                    collision_resource.0.push(ProjectileCollision{
-                        projectile: projectile_id,
-                        target: object_id,
-                        vector: collision});
-                }
+                collision_res.0.push(ProjectileCollision{
+                    projectile: projectile_id,
+                    target: maybe_collidee_id,
+                    vector: collision
+                    });
             }
         }
     }
 }
 
+// Here Projectile components are not explicitly filtered. ProjectCollisionSystem is expected
+// to put proper entities in `collision.projectile`
+fn handle_projectile_collisions(    collision_res: Res<ProjectileCollisions>,
+                                mut entity_delete_ec: EventWriter<EntityDelete>,
+                                mut damage_ec: EventWriter<DamageEvent>,
+                                    healths: Query<&Health>,
+                                    damages: Query<&Damage>)
+{
+    for collision in &collision_res.0 {
+        if healths.get(collision.target).is_ok() {
+            if let Ok(damage) = damages.get(collision.projectile) {
+                damage_ec.send(DamageEvent {
+                    damage: *damage,
+                    target: collision.target
+                });
+            }
+        }
 
+        entity_delete_ec.send(EntityDelete{entity_id: collision.projectile});
+    }
+}
+/*
 
 pub struct ProjectileCollisionHandler;
 

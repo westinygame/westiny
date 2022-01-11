@@ -1,6 +1,5 @@
 use crate::components;
 use crate::resources::{ClientID, NetworkCommand};
-use derive_new::new;
 use bevy::prelude::{EventReader, Query};
 use bevy::log::debug;
 

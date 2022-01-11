@@ -5,5 +5,3 @@ authors = ["westinygame"]
 edition = "2018"
 
 [dependencies]
-amethyst = "0.15.3"
-amethyst_test = "0.15.3"

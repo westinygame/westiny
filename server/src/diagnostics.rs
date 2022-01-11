@@ -21,8 +21,7 @@ impl WestinyDiagnosticsPlugin {
         diag.add_measurement(Self::CLIENT_DIAG_ID, registry.client_count() as f64);
     }
 
-    fn setup_system(mut diagnostics: ResMut<Diagnostics>,
-                        clients: Res<ClientRegistry>) {
+    fn setup_system(mut diagnostics: ResMut<Diagnostics>) {
         diagnostics.add(Diagnostic::new(Self::CLIENT_DIAG_ID, "Number of online players", 1));
     }
 }

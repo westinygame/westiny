@@ -1,4 +1,4 @@
-use amethyst::core::ecs::Entity;
+use bevy::ecs::prelude::Entity;
 use crate::components::Damage;
 
 pub struct DamageEvent {

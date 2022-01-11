@@ -89,53 +89,65 @@ pub fn read_network_messages(mut client_registry:    ResMut<ClientRegistry>,
         }
     }
 
-// #[cfg(test)]
-// mod test {
-//     use super::*;
-//
-//     use amethyst::{Error, StateEventReader, core::math::Point2};
-//     use amethyst::prelude::*;
-//     use amethyst_test::prelude::*;
-//     use westiny_common::{network, components::{InputFlags, Input}, serialize};
-//     use westiny_common::metric_dimension::length::Meter;
-//
-//     fn create_testapp() -> AmethystApplication<GameData<'static, 'static>, StateEvent, StateEventReader>
-//     {
-//         amethyst::start_logger(Default::default());
-//         AmethystApplication::blank()
-//             .with_resource(EventChannel::<ClientNetworkEvent>::new())
-//             .with_resource(EventChannel::<NetworkCommand>::new())
-//             .with_setup(move |world: &mut World| {
-//                 let client_net_channel = world.fetch_mut::<EventChannel<ClientNetworkEvent>>().register_reader();
-//                 world.insert(client_net_channel);
-//
-//                 let command_channel = world.fetch_mut::<EventChannel<NetworkCommand>>().register_reader();
-//                 world.insert(command_channel);
-//             })
-//             .with_resource(ClientRegistry::new(1))
-//             .with_effect(|world| {
-//                 let mut network_event_channel = world.fetch_mut::<EventChannel<NetworkSimulationEvent>>();
-//                 let req = connection_request();
-//                 network_event_channel.single_write(
-//                     NetworkSimulationEvent::Message(
-//                         socket_addr(),
-//                         serialize(&req).unwrap().into()
-//                     )
-//                 );
-//             })
-//             .with_system_desc(NetworkMessageReceiverSystemDesc::default(), "receiver", &[])
-//             .with_assertion(|world: &mut World| {
-//                 let client_net_ec = world.fetch_mut::<EventChannel<ClientNetworkEvent>>();
-//                 let mut reader_id = world.write_resource::<ReaderId<ClientNetworkEvent>>();
-//
-//                 let events: Vec<&ClientNetworkEvent> = client_net_ec.read(&mut reader_id).collect();
-//                 assert_eq!(1, events.len(), "There should be exactly 1 ClientNetworkEvent on channel");
-//                 assert!(matches!(events[0], ClientNetworkEvent::ClientConnected(_)));
-//             })
-//     }
-//
-//
-//     #[test]
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::resources;
+    use bevy::prelude::*;
+    use std::net::{SocketAddr, IpAddr};
+    use blaminar::simulation::laminar::{LaminarConfig, LaminarPlugin};
+
+    #[test]
+    fn receiver_registers_client_on_connection_request() {
+        use std::str::FromStr;
+
+        let socket_address = SocketAddr::new(IpAddr::from_str("0.0.0.0").unwrap(), 1234);
+        App::build()
+            .insert_resource(ClientRegistry::new(64))
+            .insert_resource(resources::NetworkIdSupplier::new())
+            .add_plugins(MinimalPlugins)
+            .add_plugin(LaminarPlugin::new(socket_address, LaminarConfig::default()));
+    }
+
+    /*
+    fn create_testapp() -> AmethystApplication<GameData<'static, 'static>, StateEvent, StateEventReader>
+    {
+        amethyst::start_logger(Default::default());
+        AmethystApplication::blank()
+            .with_resource(EventChannel::<ClientNetworkEvent>::new())
+            .with_resource(EventChannel::<NetworkCommand>::new())
+            .with_setup(move |world: &mut World| {
+                let client_net_channel = world.fetch_mut::<EventChannel<ClientNetworkEvent>>().register_reader();
+                world.insert(client_net_channel);
+
+                let command_channel = world.fetch_mut::<EventChannel<NetworkCommand>>().register_reader();
+                world.insert(command_channel);
+            })
+            .with_resource(ClientRegistry::new(1))
+            .with_effect(|world| {
+                let mut network_event_channel = world.fetch_mut::<EventChannel<NetworkSimulationEvent>>();
+                let req = connection_request();
+                network_event_channel.single_write(
+                    NetworkSimulationEvent::Message(
+                        socket_addr(),
+                        serialize(&req).unwrap().into()
+                    )
+                );
+            })
+            .with_system_desc(NetworkMessageReceiverSystemDesc::default(), "receiver", &[])
+            .with_assertion(|world: &mut World| {
+                let client_net_ec = world.fetch_mut::<EventChannel<ClientNetworkEvent>>();
+                let mut reader_id = world.write_resource::<ReaderId<ClientNetworkEvent>>();
+
+                let events: Vec<&ClientNetworkEvent> = client_net_ec.read(&mut reader_id).collect();
+                assert_eq!(1, events.len(), "There should be exactly 1 ClientNetworkEvent on channel");
+                assert!(matches!(events[0], ClientNetworkEvent::ClientConnected(_)));
+            })
+    }
+    */
+
+
+//    #[test]
 //     fn receiver_registers_client_on_connection_request() -> Result<(), Error> {
 //         create_testapp()
 //             .with_effect(|world| {
@@ -217,4 +229,4 @@ pub fn read_network_messages(mut client_registry:    ResMut<ClientRegistry>,
 //     fn connection_request() -> network::PacketType {
 //         network::PacketType::ConnectionRequest { player_name: "Clint Westwood".to_string() }
 //     }
-// }
+}

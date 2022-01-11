@@ -65,6 +65,8 @@ fn main() {
         .add_event::<ClientNetworkEvent>()
         .add_event::<NetworkCommand>()
         .add_event::<systems::SpawnPlayerEvent>()
+        .add_event::<westiny_common::events::DamageEvent>()
+        .add_event::<westiny_common::events::EntityDelete>()
 
         .add_system(systems::read_network_messages.system()
                     .label("network_input"))

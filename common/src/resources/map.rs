@@ -4,9 +4,9 @@ use std::fmt::{Display, Formatter};
 use std::path::{Path, PathBuf};
 use std::io::{BufReader, Read};
 use crate::resources::map::MapError::{InvalidMapCharacter, SeedError};
-use crate::resources::{SpriteId, Seed};
+use crate::resources::Seed;
 use crate::entities;
-use bevy::prelude::{Commands, Entity, Vec2};
+use bevy::prelude::{Commands, Vec2};
 
 const BARREL_CHAR: char = 'x';
 const EMPTY_CHAR: char = ' ';

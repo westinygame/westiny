@@ -92,7 +92,7 @@ pub fn spawn_player(mut commands: Commands,
 
 fn dummy_guns() -> [(components::weapon::Weapon, &'static str); 3] {
     use components::weapon::{Weapon, WeaponDetails, Shot};
-    const revolver: WeaponDetails = WeaponDetails {
+    const REVOLVER: WeaponDetails = WeaponDetails {
         fire_rate: 7.2,
         magazine_size: 6,
         reload_time: Second(2.0),
@@ -105,9 +105,9 @@ fn dummy_guns() -> [(components::weapon::Weapon, &'static str); 3] {
     };
 
     [
-        (Weapon::new(revolver), "Revolver"),
-        (Weapon::new(revolver), "Another revolver"),
-        (Weapon::new(revolver), "One more revolver")
+        (Weapon::new(REVOLVER), "Revolver"),
+        (Weapon::new(REVOLVER), "Another revolver"),
+        (Weapon::new(REVOLVER), "One more revolver")
     ]
 }
 
