@@ -152,7 +152,7 @@ fn despawn_player(
     client_id: &ClientID,
 ) {
     for (entity, client) in query.iter() {
-        if client.id() == client_id {
+        if &client.id == client_id {
             entity_delete_channel.send(EntityDelete{entity_id: entity});
             return;
         }

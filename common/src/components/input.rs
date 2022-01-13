@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use bitflags;
 use crate::metric_dimension::length::{Meter, MeterVec2};
+use bevy::ecs::component::Component;
 
 const SELECTIONS: [InputFlags; 5] = [
     InputFlags::SELECT1,
@@ -31,7 +32,7 @@ bitflags::bitflags! {
 
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq, Component)]
 pub struct Input
 {
     pub flags : InputFlags,

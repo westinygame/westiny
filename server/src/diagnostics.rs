@@ -1,4 +1,4 @@
-use bevy::prelude::{Plugin, AppBuilder, IntoSystem, ResMut, Res, PluginGroup};
+use bevy::prelude::{Plugin, App, IntoSystem, ResMut, Res, PluginGroup};
 use bevy::diagnostic::{DiagnosticId, Diagnostic, Diagnostics, LogDiagnosticsPlugin, FrameTimeDiagnosticsPlugin};
 use crate::resources::ClientRegistry;
 use bevy::app::PluginGroupBuilder;
@@ -8,7 +8,7 @@ use bevy::utils::Duration;
 pub struct WestinyDiagnosticsPlugin;
 
 impl Plugin for WestinyDiagnosticsPlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_startup_system(Self::setup_system.system())
             .add_system(Self::log_clients.system());
     }
@@ -44,7 +44,7 @@ impl PluginGroup for DiagnosticPlugins {
 }
 
 impl Plugin for DiagnosticPlugins {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.init_resource::<Diagnostics>();
     }
 }

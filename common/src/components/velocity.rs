@@ -1,6 +1,8 @@
 use crate::metric_dimension::MeterPerSecVec2;
+use bevy::ecs::component::Component;
 
-#[derive(Debug)]
+
+#[derive(Debug, Component)]
 pub struct Velocity(pub MeterPerSecVec2);
 
 impl Default for Velocity {

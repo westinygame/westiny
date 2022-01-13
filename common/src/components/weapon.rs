@@ -1,12 +1,15 @@
 use std::time::Duration;
-pub use weapon_details::*;
 use crate::resources::weapon::{GunResource, GunId};
 use crate::metric_dimension::Second;
 use bevy::asset::Assets;
+use bevy::ecs::component::Component;
+
+pub use weapon_details::*;
 
 const NUMBER_OF_SLOTS: usize = 3;
 
 /// This is the first approach of the inventory. For now it stores fix number of guns
+#[derive(Component)]
 pub struct Holster {
     guns: [(Weapon, &'static str); NUMBER_OF_SLOTS],
     selected: usize

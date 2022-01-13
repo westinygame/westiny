@@ -25,7 +25,7 @@ use bevy::prelude::*;
 pub struct CollisionPlugin;
 
 impl bevy::app::Plugin for CollisionPlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.init_resource::<Collisions>()
            .init_resource::<ProjectileCollisions>();
 
@@ -69,7 +69,6 @@ fn collect_collisions(moving_query: Query<(Entity, &Transform, &BoundingCircle),
                 Collider{transform: &moving_transform, bound: &moving_bounds},
                 Collider{transform: &standing_transform, bound: &standing_bounds})
             {
-                bevy::log::info!("COLLISION!!! vec: {:?}", collision);
                 collision_res.0.push(Collision{collider: moving_id, collidee: standing_id, vector: collision});
             }
         }

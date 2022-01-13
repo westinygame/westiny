@@ -24,16 +24,6 @@ impl Default for ServerAddress {
     }
 }
 
-#[derive(Copy, Clone)]
-#[repr(usize)]
-pub enum SpriteId {
-    Player = 2,
-    Barrel = 3,
-    Corpse = 4,
-    Bullet = 5,
-    HandWithPistol = 6,
-}
-
 #[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Debug)]
 pub struct Seed(pub u64);
 

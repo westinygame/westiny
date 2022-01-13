@@ -2,19 +2,19 @@
 name = "westiny_server"
 version = "0.1.0"
 authors = ["Marton Suranyi"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 westiny_common = { path = "../common" }
-bevy = "0.5.0"
-anyhow = "1.0.38"
-thiserror = "1.0.23"
-serde = "1.0.123"
-derive-new = "0.5.8"
+bevy = "0.6.0"
+anyhow = "1.0.52"
+thiserror = "1.0.30"
+serde = "1.0.133"
+derive-new = "0.5.9"
 log = "0.4.14"
 pretty_env_logger = "0.4.0"
-rand = "0.8.3"
-blaminar = { git = "https://github.com/westinygame/blaminar", rev = "v0.1.0"}
+rand = "0.8.4"
+blaminar = { git = "https://github.com/westinygame/blaminar", rev = "v0.2.0"}
 
 [dev-dependencies]
 westiny_test = { path = "../test"}

@@ -48,7 +48,7 @@ fn main() {
     };
 
 
-    App::build()
+    App::new()
         .insert_resource(ClientRegistry::new(64))
         .insert_resource(resources::Seed(0)) // Hard-coded seed for now
         .insert_resource(resources::NetworkIdSupplier::new())

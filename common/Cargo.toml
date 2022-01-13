@@ -2,10 +2,10 @@
 name = "westiny_common"
 version = "0.1.0"
 authors = ["Abel Suranyi"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
-bevy = "0.5.0"
+bevy = "0.6.0"
 serde = "1.0.120"
 derive-new = "0.5.8"
 bitflags = "1.2.1"
@@ -16,7 +16,7 @@ log = "0.4.14"
 ron = "0.6.4"
 num-traits = "0.2"
 num-derive = "0.3"
-blaminar = { git = "https://github.com/westinygame/blaminar", rev = "v0.1.0" }
+blaminar = { git = "https://github.com/westinygame/blaminar", rev = "v0.2.0" }
 
 [dev-dependencies]
 proptest = "0.10.1"

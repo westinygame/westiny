@@ -1,7 +1,8 @@
 use std::time::Duration;
 use crate::metric_dimension::Second;
+use bevy::ecs::component::Component;
 
-#[derive(Debug)]
+#[derive(Debug, Component)]
 pub struct Lifespan
 {
     pub living_until: Duration,

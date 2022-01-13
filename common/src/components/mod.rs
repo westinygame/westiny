@@ -9,6 +9,7 @@ pub use player::Player;
 pub use projectile::Projectile;
 pub use respawn::Respawn;
 pub use velocity::Velocity;
+pub use sprite_id::*;
 
 mod input;
 mod network_id;
@@ -22,3 +23,4 @@ mod projectile;
 mod damage;
 mod eliminate;
 mod respawn;
+mod sprite_id;
