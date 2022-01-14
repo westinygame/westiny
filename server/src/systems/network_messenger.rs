@@ -102,7 +102,7 @@ mod test {
         use std::str::FromStr;
 
         let socket_address = SocketAddr::new(IpAddr::from_str("0.0.0.0").unwrap(), 1234);
-        App::build()
+        App::new()
             .insert_resource(ClientRegistry::new(64))
             .insert_resource(resources::NetworkIdSupplier::new())
             .add_plugins(MinimalPlugins)
