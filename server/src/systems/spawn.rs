@@ -96,7 +96,7 @@ fn dummy_guns() -> [(components::weapon::Weapon, &'static str); 3] {
         fire_rate: 7.2,
         magazine_size: 6,
         reload_time: Second(2.0),
-        damage: 5,
+        damage: 20,
         spread: 10.0,
         bullet_distance_limit: Meter(7.5),
         bullet_speed: MeterPerSec(12.5),

@@ -41,15 +41,17 @@ impl bevy::app::Plugin for CollisionPlugin {
 fn collision_system_set() -> SystemSet {
     SystemSet::new()
         .label("collision")
-        .with_system(collect_collisions.system())
-        .with_system(handle_obstacle_collisions.system())
+        .with_system(collect_collisions)
+        .with_system(handle_obstacle_collisions)
 }
 
 fn projectile_collision_system_set() -> SystemSet {
     SystemSet::new()
-        .label("projectile_collision")
-        .with_system(collect_projectile_collisions.system())
-        .with_system(handle_projectile_collisions.system())
+        .with_system(collect_projectile_collisions
+                     .label("collect_projectile_collisions"))
+        .with_system(handle_projectile_collisions
+                     .label("projectile_collision")
+                     .after("collect_projectile_collisions"))
 }
 
 fn collect_collisions(moving_query: Query<(Entity, &Transform, &BoundingCircle), With<Velocity>>,
@@ -130,32 +132,3 @@ fn handle_projectile_collisions(    collision_res: Res<ProjectileCollisions>,
         entity_delete_ec.send(EntityDelete{entity_id: collision.projectile});
     }
 }
-/*
-
-pub struct ProjectileCollisionHandler;
-
-impl<'s> System<'s> for ProjectileCollisionHandler {
-    type SystemData = (
-        ReadExpect<'s, ProjectileCollisions>,
-        Write<'s, EventChannel<EntityDelete>>,
-        Write<'s, EventChannel<DamageEvent>>,
-        ReadStorage<'s, Health>,
-        ReadStorage<'s, Damage>,
-        );
-
-    // Here Projectile components are not explicitly filtered. ProjectCollisionSystem is expected
-    // to put proper entities in `collision.projectile`
-    fn run(&mut self, (collisions, mut entity_delete_channel, mut damage_event, healths, damages): Self::SystemData) {
-
-        for collision in &collisions.0 {
-            if healths.contains(collision.target) {
-                if let Some(damage) = damages.get(collision.projectile) {
-                    damage_event.single_write(DamageEvent { damage: *damage, target: collision.target })
-            }}
-
-            entity_delete_channel.single_write(EntityDelete{entity_id: collision.projectile})
-        }
-
-    }
-}
-*/

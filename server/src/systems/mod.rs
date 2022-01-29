@@ -1,26 +1,26 @@
 pub use client_introduction::introduce_new_clients;
 pub use command_transformer::transform_commands;
-// pub use entity_delete_broadcaster::EntityDeleteBroadcasterSystemDesc;
+pub use entity_delete_broadcaster::entity_delete_system_set;
 pub use entity_state_broadcaster::broadcast_entity_state;
-// pub use health::HealthSystemDesc;
+pub use health::handle_damage;
 pub use network_messenger::read_network_messages;
 pub use player_movement::apply_input;
 pub use shooter::weapon_handler_system_set;
 // pub use spawn::{SpawnPlayerEvent, SpawnSystemDesc, RespawnSystem};
 pub use spawn::{SpawnPlayerEvent, spawn_player};
-// pub use death::DeathSystem;
+pub use death::handle_death;
 pub use westiny_common::systems::*;
 
 mod network_messenger;
 mod client_introduction;
 mod command_transformer;
-// mod entity_delete_broadcaster;
+mod entity_delete_broadcaster;
 mod entity_state_broadcaster;
 mod shooter;
 mod player_movement;
-// mod health;
+mod health;
 mod spawn;
-// mod death;
+mod death;
 
 use bevy::prelude::{Commands, Res};
 use crate::resources;

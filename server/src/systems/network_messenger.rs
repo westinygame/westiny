@@ -31,7 +31,7 @@ pub fn read_network_messages(mut client_registry:    ResMut<ClientRegistry>,
                 match process_payload(addr, payload, &mut client_registry, &mut client_network_ec, &mut network_command_ec) {
                     Ok(_) => debug!("Message from {} processed successfully.", addr),
                     Err(e) => {
-                        error!("Could not process message! {}, payload: {:?}", e, payload)
+                        //error!("Could not process message! {}, payload: {:?}", e, payload)
                     }
                 }
             }

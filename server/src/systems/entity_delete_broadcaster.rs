@@ -1,53 +1,46 @@
-use derive_new::new;
-use amethyst::ecs::{Read, ReadStorage, ReadExpect, Write, System, SystemData, Entities};
-use amethyst::derive::SystemDesc;
-use amethyst::shrev::{ReaderId, EventChannel};
-use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
-
 use crate::resources::ClientRegistry;
 use crate::components::NetworkId;
 use westiny_common::events::EntityDelete;
-use westiny_common::{network, serialize};
+use westiny_common::{network, serialization::serialize};
+use blaminar::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
+use bevy::prelude::{Commands, EventReader, Query, Res, ResMut, SystemSet, IntoSystem, ParallelSystemDescriptorCoercion, Entity};
 
-// This system does two things:
-//  - deletes the entities
-//  - notifies the clients if the entity has NetworkId
-
-#[derive(SystemDesc, new)]
-#[system_desc(name(EntityDeleteBroadcasterSystemDesc))]
-pub struct EntityDeleteBroadcasterSystem {
-    #[system_desc(event_channel_reader)]
-    reader: ReaderId<EntityDelete>,
+pub fn entity_delete_system_set() -> SystemSet
+{
+    SystemSet::new()
+        .label("entity_delete")
+        .with_system(broadcast_net_id_deletion.system()
+                     .label("entity_delete_broadcaster"))
+        .with_system(delete_entities
+                     .label("entity_delete")
+                     .after("entity_delete_broadcaster"))
 }
 
-impl<'s> System<'s> for EntityDeleteBroadcasterSystem {
-    type SystemData = (
-        Read<'s, EventChannel<EntityDelete>>,
-        Entities<'s>,
-        ReadExpect<'s, ClientRegistry>,
-        Write<'s, TransportResource>,
-        ReadStorage<'s, NetworkId>,
-        );
+fn broadcast_net_id_deletion(mut entity_deletions: EventReader<EntityDelete>,
+                             network_ids: Query<&NetworkId>,
+                             clients: Res<ClientRegistry>,
+                             mut net: ResMut<TransportResource>) {
+    for EntityDelete{entity_id: entity} in entity_deletions.iter() {
+        if let Ok(&network_id) = network_ids.get(*entity) {
+            let network_entity_delete = network::NetworkEntityDelete {network_id};
+            let message = serialize(&network::PacketType::EntityDelete(network_entity_delete))
+                .expect("NetworkEntityDelete could not be serialized");
 
-    fn run(&mut self, (id_channel, entities, clients, mut net, network_ids): Self::SystemData) {
-        for EntityDelete{entity_id} in id_channel.read(&mut self.reader) {
-            log::debug!("Delete entity: {:?}", entity_id);
-            if let Some(network_id) = network_ids.get(*entity_id) {
-                log::debug!("Notify client about entity deletion: {:?}, network_id:{:?}", entity_id, network_id);
-                send_to_clients(&clients, &mut net, network::NetworkEntityDelete{network_id: *network_id});
-            }
-            entities.delete(*entity_id).expect("Could not delete entity!");
+            clients.get_clients().iter().for_each(|&client|{
+                net.send_with_requirements(client.addr, &message, DeliveryRequirement::Reliable, UrgencyRequirement::OnTick)
+            });
         }
     }
 }
 
-fn send_to_clients(clients: &ClientRegistry, net: &mut TransportResource, network_entity_delete: network::NetworkEntityDelete)
-{
-    let message = serialize(&network::PacketType::EntityDelete(network_entity_delete))
-        .expect("NetworkEntityDelete could not be serialized");
-
-    clients.get_clients().iter().for_each(|&client|{
-        net.send_with_requirements(client.addr, &message, DeliveryRequirement::Reliable, UrgencyRequirement::OnTick)
+fn delete_entities(mut commands: Commands,
+                   mut entity_deletions: EventReader<EntityDelete>) {
+    // for deduplication -> bevy crashes if despawn is called on a nonexistent entity
+    let mut deleted: Vec<Entity> = vec!{};
+    for del in entity_deletions.iter() {
+        if !deleted.contains(&del.entity_id) {
+            commands.entity(del.entity_id).despawn();
+            deleted.push(del.entity_id);
+        }
     }
-    );
 }
