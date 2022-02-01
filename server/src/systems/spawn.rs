@@ -1,73 +1,55 @@
 use crate::components;
 use crate::resources::ClientRegistry;
-use bevy::log::info;
 use bevy::prelude::*;
 use westiny_common::collision;
+use westiny_common::events::EntityDelete;
 use westiny_common::metric_dimension::{
     length::{Meter, MeterVec2},
     MeterPerSec, Second,
 };
-//use westiny_common::events::EntityDelete;
 
-// pub struct RespawnSystem;
-//
-// impl<'s> System<'s> for RespawnSystem {
-//     type SystemData = (
-//         ReadStorage<'s, components::Respawn>,
-//         ReadStorage<'s, components::Eliminated>,
-//         ReadStorage<'s, components::NetworkId>,
-//         ReadStorage<'s, components::Client>,
-//         ReadStorage<'s, Transform>,
-//         Read<'s, Time>,
-//         ReadExpect<'s, LazyUpdate>,
-//         Entities<'s>,
-//         WriteExpect<'s, EventChannel<EntityDelete>>,
-//         WriteExpect<'s, EventChannel<SpawnPlayerEvent>>,
-//     );
-//
-//     fn run(&mut self, data: Self::SystemData) {
-//         let (
-//             respawns,
-//             eliminates,
-//             net_ids,
-//             clients,
-//             transforms,
-//             time,
-//             lazy,
-//             entities,
-//             mut entity_delete_event_channel,
-//             mut spawn_player_event_channel,
-//         ) = data;
-//
-//         for (respawn, eliminate, net_id, client, opt_transform, entity)
-//                 in (&respawns, &eliminates, &net_ids, &clients, (&transforms).maybe(), &entities).join() {
-//             if opt_transform.is_some() {
-//                 // has not been removed yet
-//                 // create a new entity that is waiting until respawn time expires.
-//                 lazy.create_entity(&entities)
-//                     .with(*respawn)
-//                     .with(*eliminate)
-//                     .with(*net_id)
-//                     .with(*client)
-//                     .build();
-//             } else {
-//                 // we're waiting for respawn time expiration
-//                 if time.absolute_time_seconds() - eliminate.elimination_time_sec >= respawn.respawn_duration.as_secs_f64() {
-//                     // if expired
-//
-//                     log::debug!("Request player spawn");
-//                     spawn_player_event_channel.single_write(SpawnPlayerEvent {
-//                         client: *client,
-//                         network_id: *net_id,
-//                     });
-//
-//                     entity_delete_event_channel.single_write(EntityDelete { entity_id: entity });
-//                 }
-//             }
-//         }
-//     }
-// }
-//
+pub fn respawn_player(
+    mut commands: Commands,
+    query: Query<(
+        Entity,
+        &components::Respawn,
+        &components::Eliminated,
+        &components::NetworkId,
+        &components::Client,
+        Option<&Transform>,
+    )>,
+    time: Res<Time>,
+    mut spawn_player_event: EventWriter<SpawnPlayerEvent>,
+    mut entity_delete_event: EventWriter<EntityDelete>,
+) {
+    for (entity, &respawn, &eliminate, &net_id, &client, maybe_transform) in query.iter() {
+        if maybe_transform.is_some() {
+            // has not been removed yet
+            // create a new entity that is waiting until respawn time expires.
+            commands
+                .spawn()
+                .insert(respawn)
+                .insert(eliminate)
+                .insert(net_id)
+                .insert(client);
+        } else {
+            // we're waiting for respawn time expiration
+            if time.seconds_since_startup() - eliminate.elimination_time_sec
+                >= respawn.respawn_duration.as_secs_f64()
+            {
+                // if expired
+
+                log::debug!("Request player spawn");
+                spawn_player_event.send(SpawnPlayerEvent {
+                    client: client,
+                    network_id: net_id,
+                });
+
+                entity_delete_event.send(EntityDelete { entity_id: entity });
+            }
+        }
+    }
+}
 
 pub fn spawn_player(
     mut commands: Commands,
@@ -141,8 +123,10 @@ fn create_player_entity(
         .insert(components::Input::default())
         .insert(components::Velocity::default())
         .insert(components::BoundingCircle { radius: Meter(0.5) })
-        .insert(components::weapon::Holster::new_with_guns(dummy_guns()));
-    // respawn
+        .insert(components::weapon::Holster::new_with_guns(dummy_guns()))
+        .insert(components::Respawn {
+            respawn_duration: std::time::Duration::from_secs(5),
+        });
 }
 
 fn has_collision(

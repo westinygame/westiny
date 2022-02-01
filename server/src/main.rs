@@ -105,11 +105,13 @@ fn main() {
         .add_system(systems::handle_death.label("death").after("health"))
         .add_system_set(systems::weapon_handler_system_set().label("weapon_handler"))
         .add_system(systems::lifespan_system.label("lifespan"))
+        .add_system(systems::respawn_player.label("respawn").after("health"))
         .add_system_set(
             systems::entity_delete_system_set()
                 .label("entity_delete_ss")
                 .after("projectile_collision")
                 .after("death")
+                .after("respawn")
                 .after("introduce_client")
                 .after("lifespan"),
         )

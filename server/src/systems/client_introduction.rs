@@ -10,7 +10,6 @@ use crate::{
     resources::{ClientID, ClientNetworkEvent, ClientRegistry, NetworkIdSupplier},
     systems::spawn::SpawnPlayerEvent,
 };
-use bevy::log::info;
 use bevy::prelude::{Entity, EventReader, EventWriter, Query, Res, ResMut};
 use blaminar::simulation::{DeliveryRequirement, TransportResource, UrgencyRequirement};
 
@@ -41,9 +40,10 @@ pub fn introduce_new_clients(
                     added_clients.iter().find(|(cli_id, _)| cli_id == client_id)
                 {
                     // player has been spawned just in the current frame
-                    info!(
+                    log::info!(
                         "Player for {:?} already spawned: {:?}, not respawning.",
-                        client_id, net_id
+                        client_id,
+                        net_id
                     );
                     *net_id
                 } else {
@@ -51,9 +51,10 @@ pub fn introduce_new_clients(
                     let net_id = (|| {
                         for (net_id, client) in spawned_clients_query.iter() {
                             if client.id == *client_id {
-                                info!(
+                                log::info!(
                                     "{:?} already connected, its entity already spawned: {:?}",
-                                    client.id, net_id
+                                    client.id,
+                                    net_id
                                 );
                                 return Some(*net_id);
                             }
