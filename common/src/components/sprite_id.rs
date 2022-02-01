@@ -1,7 +1,9 @@
 use bevy::ecs::component::Component;
 
 #[derive(Component)]
-pub struct SpriteComponent{pub id: SpriteId}
+pub struct SpriteComponent {
+    pub id: SpriteId,
+}
 
 #[derive(Copy, Clone)]
 #[repr(usize)]

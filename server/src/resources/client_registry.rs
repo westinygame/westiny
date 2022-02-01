@@ -140,7 +140,9 @@ mod test {
         assert_eq!(handle.addr, address);
         assert_eq!(handle.player_name.0, "NariFeco");
 
-        let handle_by_addr = reg.find_by_addr(&address).expect("client by address is not found");
+        let handle_by_addr = reg
+            .find_by_addr(&address)
+            .expect("client by address is not found");
         assert_eq!(handle.player_name, handle_by_addr.player_name);
         assert_eq!(handle.id, handle_by_addr.id);
         assert_eq!(handle.addr, handle_by_addr.addr);

@@ -1,6 +1,6 @@
-use serde::{Serialize, Deserialize};
-use derive_new::new;
 use bevy::ecs::component::Component;
+use derive_new::new;
+use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize, Hash, new, Component)]
 pub struct NetworkId {

@@ -1,6 +1,6 @@
 use crate::components::weapon::WeaponDetails;
-use bevy::prelude::Commands;
 use bevy::asset::{AssetServer, Handle};
+use bevy::prelude::Commands;
 
 pub struct GunResource {
     weapons: [Handle<WeaponDetails>; 3],
@@ -22,7 +22,9 @@ impl GunResource {
         let shotgun = asset_server.load("shotgun.gun");
         let rifle = asset_server.load("rifle.gun");
 
-        commands.insert_resource(GunResource { weapons: [revolver, shotgun, rifle] });
+        commands.insert_resource(GunResource {
+            weapons: [revolver, shotgun, rifle],
+        });
     }
 
     pub fn get_gun(&self, id: GunId) -> Handle<WeaponDetails> {

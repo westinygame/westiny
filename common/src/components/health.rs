@@ -1,7 +1,7 @@
-use serde::{Serialize, Deserialize};
-use std::ops::SubAssign;
 use crate::components::Damage;
 use bevy::ecs::component::Component;
+use serde::{Deserialize, Serialize};
+use std::ops::SubAssign;
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, Component)]
 #[cfg_attr(test, derive(PartialEq))]

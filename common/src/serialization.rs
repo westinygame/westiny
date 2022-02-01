@@ -1,6 +1,6 @@
+use crate::network::PacketType;
 use anyhow::Result;
 use thiserror::Error;
-use crate::network::PacketType;
 
 #[derive(Error, Debug)]
 #[error("Could not encode packet: {0:?}")]
@@ -22,9 +22,9 @@ pub fn deserialize(buf: &[u8]) -> Result<PacketType, DecodeError> {
 mod tests {
 
     use super::*;
-    use crate::components::{Input, InputFlags, NetworkId, EntityType};
-    use crate::network::EntityState;
+    use crate::components::{EntityType, Input, InputFlags, NetworkId};
     use crate::metric_dimension::length::{Meter, MeterVec2};
+    use crate::network::EntityState;
     use proptest::prelude::*;
 
     fn packet_enum_strategy() -> impl Strategy<Value = PacketType> {
@@ -68,9 +68,7 @@ mod tests {
     }
 
     fn entity_type_strategy() -> impl Strategy<Value = EntityType> {
-        prop_oneof![
-            Just(EntityType::Player),
-        ]
+        prop_oneof![Just(EntityType::Player),]
     }
 
     prop_compose! {
@@ -78,7 +76,6 @@ mod tests {
             MeterVec2::
         }
     }
-
 
     proptest! {
         #[test]

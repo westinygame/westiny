@@ -1,8 +1,7 @@
 use crate::metric_dimension::length::MeterVec2;
 use bevy::prelude::Entity;
 
-pub struct Collision
-{
+pub struct Collision {
     pub collider: Entity, // moving
     pub collidee: Entity,
     pub vector: MeterVec2,
@@ -29,4 +28,3 @@ impl Default for ProjectileCollisions {
         ProjectileCollisions(Vec::new())
     }
 }
-

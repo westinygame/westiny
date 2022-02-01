@@ -1,8 +1,8 @@
-use westiny_common::MoveDirection;
-use westiny_common::components::{Velocity, Input, InputFlags};
-use westiny_common::utilities::set_rotation_toward_vector;
-use westiny_common::metric_dimension::{MeterPerSecVec2, MeterPerSec};
 use bevy::prelude::*;
+use westiny_common::components::{Input, InputFlags, Velocity};
+use westiny_common::metric_dimension::{MeterPerSec, MeterPerSecVec2};
+use westiny_common::utilities::set_rotation_toward_vector;
+use westiny_common::MoveDirection;
 
 pub fn apply_input(mut query: Query<(&mut Transform, &mut Velocity, &Input)>) {
     for (mut transform, mut velocity, input) in query.iter_mut() {
@@ -13,23 +13,18 @@ pub fn apply_input(mut query: Query<(&mut Transform, &mut Velocity, &Input)>) {
     }
 }
 
-fn move_directions_from_input(input: &Input) -> Vec<MoveDirection>
-{
+fn move_directions_from_input(input: &Input) -> Vec<MoveDirection> {
     let mut directions = Vec::new();
-    if input.flags.intersects(InputFlags::FORWARD)
-    {
+    if input.flags.intersects(InputFlags::FORWARD) {
         directions.push(MoveDirection::Forward);
     }
-    if input.flags.intersects(InputFlags::BACKWARD)
-    {
+    if input.flags.intersects(InputFlags::BACKWARD) {
         directions.push(MoveDirection::Backward);
     }
-    if input.flags.intersects(InputFlags::LEFT)
-    {
+    if input.flags.intersects(InputFlags::LEFT) {
         directions.push(MoveDirection::StrafeLeft);
     }
-    if input.flags.intersects(InputFlags::RIGHT)
-    {
+    if input.flags.intersects(InputFlags::RIGHT) {
         directions.push(MoveDirection::StrafeRight);
     }
     directions
@@ -38,12 +33,12 @@ fn move_directions_from_input(input: &Input) -> Vec<MoveDirection>
 const PLAYER_MAX_WALK_SPEED: MeterPerSec = MeterPerSec(4.0);
 
 // TODO It would be better to use a more generic IntoIterator instead of the specific vector type.
-fn get_velocity (transform: &Transform,
-                 move_inputs: &Vec<MoveDirection>) -> Velocity {
+fn get_velocity(transform: &Transform, move_inputs: &Vec<MoveDirection>) -> Velocity {
     if move_inputs.is_empty() {
         Velocity::default()
     } else {
-        let velocities: Vec<MeterPerSecVec2> = move_inputs.into_iter()
+        let velocities: Vec<MeterPerSecVec2> = move_inputs
+            .into_iter()
             .map(|dir| as_vector2(*dir))
             .collect();
 
@@ -53,8 +48,9 @@ fn get_velocity (transform: &Transform,
 }
 
 fn vector_avg<'a, I>(velocities: I) -> MeterPerSecVec2
-    where I: IntoIterator<Item=&'a MeterPerSecVec2> {
-
+where
+    I: IntoIterator<Item = &'a MeterPerSecVec2>,
+{
     let mut sum_vec = MeterPerSecVec2::from_raw(0.0, 0.0);
     let mut len = 0;
 
@@ -68,36 +64,36 @@ fn vector_avg<'a, I>(velocities: I) -> MeterPerSecVec2
 
 fn as_vector2(move_dir: MoveDirection) -> MeterPerSecVec2 {
     match move_dir {
-        MoveDirection::Forward     => MeterPerSecVec2 {
-                                          x: MeterPerSec(0.0),
-                                          y: -PLAYER_MAX_WALK_SPEED
-                                      },
-        MoveDirection::Backward    => MeterPerSecVec2 {
-                                          x: MeterPerSec(0.0),
-                                          y: PLAYER_MAX_WALK_SPEED / 2.0
-                                      },
-        MoveDirection::StrafeLeft  => MeterPerSecVec2 {
-                                          x: PLAYER_MAX_WALK_SPEED / 2.0,
-                                          y: MeterPerSec(0.0)
-                                      },
+        MoveDirection::Forward => MeterPerSecVec2 {
+            x: MeterPerSec(0.0),
+            y: -PLAYER_MAX_WALK_SPEED,
+        },
+        MoveDirection::Backward => MeterPerSecVec2 {
+            x: MeterPerSec(0.0),
+            y: PLAYER_MAX_WALK_SPEED / 2.0,
+        },
+        MoveDirection::StrafeLeft => MeterPerSecVec2 {
+            x: PLAYER_MAX_WALK_SPEED / 2.0,
+            y: MeterPerSec(0.0),
+        },
         MoveDirection::StrafeRight => MeterPerSecVec2 {
-                                          x: -PLAYER_MAX_WALK_SPEED / 2.0,
-                                          y: MeterPerSec(0.0)
-                                      }
+            x: -PLAYER_MAX_WALK_SPEED / 2.0,
+            y: MeterPerSec(0.0),
+        },
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use westiny_test::assert_delta;
-    use std::f32::consts::PI;
     use bevy::prelude::Transform;
+    use std::f32::consts::PI;
+    use westiny_test::assert_delta;
 
     const FACING_UP: f32 = PI;
     const FACING_DOWN: f32 = 0.0;
-    const FACING_LEFT: f32 = 3.0*PI/2.0;
-    const FACING_RIGHT: f32 = PI/2.0;
+    const FACING_LEFT: f32 = 3.0 * PI / 2.0;
+    const FACING_RIGHT: f32 = PI / 2.0;
 
     mod test_get_velocity {
         use super::*;

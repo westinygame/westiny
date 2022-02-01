@@ -2,8 +2,9 @@ use serde::Deserialize;
 use std::io::Read;
 
 pub fn read_ron<T>(ron_path: &std::path::Path) -> anyhow::Result<T>
-    where T: for<'a> Deserialize<'a> {
-
+where
+    T: for<'a> Deserialize<'a>,
+{
     let content = {
         let mut file = std::fs::File::open(ron_path)?;
         let mut buffer = Vec::new();
@@ -18,13 +19,15 @@ pub fn read_ron<T>(ron_path: &std::path::Path) -> anyhow::Result<T>
     Ok(deserialized)
 }
 
-pub fn set_rotation_toward_vector(transform: &mut bevy::transform::components::Transform, vector: &bevy::math::Vec2) {
-    use bevy::math::{Vec2, Vec3, Quat};
+pub fn set_rotation_toward_vector(
+    transform: &mut bevy::transform::components::Transform,
+    vector: &bevy::math::Vec2,
+) {
+    use bevy::math::{Quat, Vec2, Vec3};
     let dir_vec = *vector - transform.translation.truncate();
     let angle = {
         let abs_angle = dir_vec.angle_between(Vec2::new(0.0, -1.0));
-        if dir_vec.x < 0.0
-        {
+        if dir_vec.x < 0.0 {
             2.0 * std::f32::consts::PI - abs_angle
         } else {
             abs_angle
@@ -43,13 +46,13 @@ pub fn rotate_vec3_around_z(quat: &bevy::math::Quat, vec: &mut bevy::math::Vec3)
 #[cfg(test)]
 mod test {
     use super::*;
-    use westiny_test::f32_eq;
     use std::f32::consts::PI;
+    use westiny_test::f32_eq;
 
     const FACING_UP: f32 = PI;
     const FACING_DOWN: f32 = 0.0;
-    const FACING_LEFT: f32 = -PI/2.0;
-    const FACING_RIGHT: f32 = PI/2.0;
+    const FACING_LEFT: f32 = -PI / 2.0;
+    const FACING_RIGHT: f32 = PI / 2.0;
 
     mod test_set_rotation_toward_vector {
         use super::*;

@@ -1,9 +1,8 @@
-use crate::components::{Velocity};
+use crate::components::Velocity;
 use crate::metric_dimension::Second;
 use bevy::prelude::*;
 
-pub fn physics(time: Res<Time>,
-               mut query: Query<(&mut Transform, &Velocity)>) {
+pub fn physics(time: Res<Time>, mut query: Query<(&mut Transform, &Velocity)>) {
     for (mut transform, velocity) in query.iter_mut() {
         update_position(&mut transform, &velocity, &time)
     }
@@ -19,8 +18,8 @@ fn update_position(transform: &mut Transform, velocity: &Velocity, time: &Time) 
 #[cfg(test)]
 mod test {
     use super::*;
-    use amethyst::core::math::Vector2;
     use crate::metric_dimension::MeterPerSec;
+    use amethyst::core::math::Vector2;
 
     #[test]
     fn test_update_position() {

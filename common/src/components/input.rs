@@ -1,7 +1,7 @@
-use serde::{Serialize, Deserialize};
-use bitflags;
 use crate::metric_dimension::length::{Meter, MeterVec2};
 use bevy::ecs::component::Component;
+use bitflags;
+use serde::{Deserialize, Serialize};
 
 const SELECTIONS: [InputFlags; 5] = [
     InputFlags::SELECT1,
@@ -33,25 +33,28 @@ bitflags::bitflags! {
 }
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize, PartialEq, Component)]
-pub struct Input
-{
-    pub flags : InputFlags,
-    pub cursor : MeterVec2
+pub struct Input {
+    pub flags: InputFlags,
+    pub cursor: MeterVec2,
 }
 
 impl Input {
     /// returns the first SELECT value if any of them is active. Otherwise returns None
     pub fn get_selection(&self) -> Option<&InputFlags> {
-        SELECTIONS.iter().find(|&select| self.flags.intersects(*select))
+        SELECTIONS
+            .iter()
+            .find(|&select| self.flags.intersects(*select))
     }
 }
 
-impl Default for Input
-{
+impl Default for Input {
     fn default() -> Self {
-        Input{
+        Input {
             flags: InputFlags::NOP,
-            cursor: MeterVec2 { x: Meter(0.0), y: Meter(0.0) },
+            cursor: MeterVec2 {
+                x: Meter(0.0),
+                y: Meter(0.0),
+            },
         }
     }
 }

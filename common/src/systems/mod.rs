@@ -1,7 +1,7 @@
-pub use physics::physics;
 pub use collision::CollisionPlugin;
 pub use lifespan::lifespan_system;
+pub use physics::physics;
 
-mod physics;
 mod collision;
 mod lifespan;
+mod physics;

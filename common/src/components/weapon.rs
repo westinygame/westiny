@@ -1,8 +1,8 @@
-use std::time::Duration;
-use crate::resources::weapon::{GunResource, GunId};
 use crate::metric_dimension::Second;
+use crate::resources::weapon::{GunId, GunResource};
 use bevy::asset::Assets;
 use bevy::ecs::component::Component;
+use std::time::Duration;
 
 pub use weapon_details::*;
 
@@ -12,32 +12,55 @@ const NUMBER_OF_SLOTS: usize = 3;
 #[derive(Component)]
 pub struct Holster {
     guns: [(Weapon, &'static str); NUMBER_OF_SLOTS],
-    selected: usize
+    selected: usize,
 }
 
 impl Holster {
     pub fn new(gun_resource: &GunResource, assets: &Assets<WeaponDetails>) -> Self {
         let guns = [
-            (Weapon::new(assets.get(gun_resource.get_gun(GunId::Revolver)).unwrap().clone()), "Revolver"),
-            (Weapon::new(assets.get(gun_resource.get_gun(GunId::Shotgun)).unwrap().clone()), "Shotgun"),
-            (Weapon::new(assets.get(gun_resource.get_gun(GunId::Rifle)).unwrap().clone()), "Rifle")
+            (
+                Weapon::new(
+                    assets
+                        .get(gun_resource.get_gun(GunId::Revolver))
+                        .unwrap()
+                        .clone(),
+                ),
+                "Revolver",
+            ),
+            (
+                Weapon::new(
+                    assets
+                        .get(gun_resource.get_gun(GunId::Shotgun))
+                        .unwrap()
+                        .clone(),
+                ),
+                "Shotgun",
+            ),
+            (
+                Weapon::new(
+                    assets
+                        .get(gun_resource.get_gun(GunId::Rifle))
+                        .unwrap()
+                        .clone(),
+                ),
+                "Rifle",
+            ),
         ];
 
         Holster { guns, selected: 0 }
     }
 
     pub fn new_with_guns(guns: [(Weapon, &'static str); NUMBER_OF_SLOTS]) -> Self {
-        Holster {
-            guns,
-            selected: 0
-        }
+        Holster { guns, selected: 0 }
     }
 
     pub fn switch(&mut self, slot: usize) -> Option<&'static str> {
         if let Some(newly_selected) = self.guns.get(slot) {
             self.selected = slot;
             Some(newly_selected.1)
-        } else { None }
+        } else {
+            None
+        }
     }
 
     pub fn active_slot(&self) -> usize {
@@ -82,7 +105,7 @@ impl Weapon {
         let need_input_press = match self.details.shot {
             Shot::Single => true,
             Shot::Burst(_) => true,
-            Shot::Auto => false
+            Shot::Auto => false,
         };
         let input_ok: bool = !need_input_press || self.input_lifted;
 
@@ -102,10 +125,10 @@ impl Weapon {
 }
 
 mod weapon_details {
-    use serde::Deserialize;
     use crate::metric_dimension::length::Meter;
     use crate::metric_dimension::{MeterPerSec, Second};
     use bevy::reflect::TypeUuid;
+    use serde::Deserialize;
 
     #[derive(Debug, PartialEq, Deserialize, Clone)]
     pub enum Shot {
@@ -116,7 +139,7 @@ mod weapon_details {
         Burst(u32),
         /// constant shooting, it will shoot while mouse button held down
         #[allow(dead_code)] // Please remove this allow when using Auto
-        Auto
+        Auto,
     }
 
     #[derive(Deserialize, Clone, PartialEq, TypeUuid)]

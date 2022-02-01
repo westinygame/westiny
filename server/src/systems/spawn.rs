@@ -1,13 +1,12 @@
 use crate::components;
 use crate::resources::ClientRegistry;
+use bevy::log::info;
+use bevy::prelude::*;
+use westiny_common::collision;
 use westiny_common::metric_dimension::{
     length::{Meter, MeterVec2},
-    Second,
-    MeterPerSec
+    MeterPerSec, Second,
 };
-use bevy::prelude::*;
-use bevy::log::info;
-use westiny_common::collision;
 //use westiny_common::events::EntityDelete;
 
 // pub struct RespawnSystem;
@@ -70,28 +69,37 @@ use westiny_common::collision;
 // }
 //
 
-
-pub fn spawn_player(mut commands: Commands,
-                    mut spawn_player_ec: EventReader<SpawnPlayerEvent>,
-                    client_registry: Res<ClientRegistry>,
-                    mut transforms_boundings_query: Query<(&Transform, &components::BoundingCircle)>
-                ) {
-
+pub fn spawn_player(
+    mut commands: Commands,
+    mut spawn_player_ec: EventReader<SpawnPlayerEvent>,
+    client_registry: Res<ClientRegistry>,
+    mut transforms_boundings_query: Query<(&Transform, &components::BoundingCircle)>,
+) {
     for spawn_event in spawn_player_ec.iter() {
         let spawn_pos = find_spawn_pos(&mut transforms_boundings_query);
-        info!("Spawn position found for player at ({},{})", spawn_pos.x.0, spawn_pos.y.0);
-        create_player_entity(&spawn_pos,
-                             &mut commands,
-                             spawn_event.client,
-                             spawn_event.network_id,
-                             // &gun_resource
-                                  );
-        info!("Player created for {}", client_registry.find_client(spawn_event.client.id).unwrap().player_name);
+        info!(
+            "Spawn position found for player at ({},{})",
+            spawn_pos.x.0, spawn_pos.y.0
+        );
+        create_player_entity(
+            &spawn_pos,
+            &mut commands,
+            spawn_event.client,
+            spawn_event.network_id,
+            // &gun_resource
+        );
+        info!(
+            "Player created for {}",
+            client_registry
+                .find_client(spawn_event.client.id)
+                .unwrap()
+                .player_name
+        );
     }
 }
 
 fn dummy_guns() -> [(components::weapon::Weapon, &'static str); 3] {
-    use components::weapon::{Weapon, WeaponDetails, Shot};
+    use components::weapon::{Shot, Weapon, WeaponDetails};
     const REVOLVER: WeaponDetails = WeaponDetails {
         fire_rate: 7.2,
         magazine_size: 6,
@@ -107,66 +115,76 @@ fn dummy_guns() -> [(components::weapon::Weapon, &'static str); 3] {
     [
         (Weapon::new(REVOLVER), "Revolver"),
         (Weapon::new(REVOLVER), "Another revolver"),
-        (Weapon::new(REVOLVER), "One more revolver")
+        (Weapon::new(REVOLVER), "One more revolver"),
     ]
 }
 
-fn create_player_entity(initial_pos: &MeterVec2,
-                        commands: &mut Commands,
-                        client: components::Client,
-                        network_id: components::NetworkId,
-                        // gun_resource: &GunResource,
-     ) {
-         commands.spawn()
-             .insert(client)
-             .insert(network_id)
-             .insert(components::Player)
-             .insert(Transform::from_xyz(initial_pos.x.into_pixel(), initial_pos.y.into_pixel(), 0.0))
-             .insert(GlobalTransform::identity())
-             .insert(components::Health(100))
-             .insert(components::Input::default())
-             .insert(components::Velocity::default())
-             .insert(components::BoundingCircle{ radius: Meter(0.5)})
-             .insert(components::weapon::Holster::new_with_guns(dummy_guns()));
-         // respawn
-     }
-
+fn create_player_entity(
+    initial_pos: &MeterVec2,
+    commands: &mut Commands,
+    client: components::Client,
+    network_id: components::NetworkId,
+    // gun_resource: &GunResource,
+) {
+    commands
+        .spawn()
+        .insert(client)
+        .insert(network_id)
+        .insert(components::Player)
+        .insert(Transform::from_xyz(
+            initial_pos.x.into_pixel(),
+            initial_pos.y.into_pixel(),
+            0.0,
+        ))
+        .insert(GlobalTransform::identity())
+        .insert(components::Health(100))
+        .insert(components::Input::default())
+        .insert(components::Velocity::default())
+        .insert(components::BoundingCircle { radius: Meter(0.5) })
+        .insert(components::weapon::Holster::new_with_guns(dummy_guns()));
+    // respawn
+}
 
 fn has_collision(
     transforms_boundings_query: &mut Query<(&Transform, &components::BoundingCircle)>,
-    collider: &collision::Collider
+    collider: &collision::Collider,
 ) -> bool {
     for (transform, bound) in transforms_boundings_query.iter() {
         if let Some(_) = collision::check_body_collision(
-            collision::Collider{transform, bound},
-            collider.clone())
-        {
+            collision::Collider { transform, bound },
+            collider.clone(),
+        ) {
             return true;
         }
     }
     false
 }
 
-fn find_spawn_pos( transforms_boundings_query: &mut Query<(&Transform, &components::BoundingCircle)>) -> MeterVec2 {
+fn find_spawn_pos(
+    transforms_boundings_query: &mut Query<(&Transform, &components::BoundingCircle)>,
+) -> MeterVec2 {
     use rand::Rng;
 
     // TODO Quick 'n' dirty stuff
     const MAX_TRIAL_ITERATION: u32 = 1024;
     const MAP_SIZE: u32 = 64;
     const TILE_SIZE: u32 = 16;
-    const BOUND: f32 = (MAP_SIZE/2 * TILE_SIZE) as f32;
+    const BOUND: f32 = (MAP_SIZE / 2 * TILE_SIZE) as f32;
 
     let candidate_bounding = components::BoundingCircle { radius: Meter(0.5) };
 
     for _ in 0..MAX_TRIAL_ITERATION {
         // TODO hardcoded range: should be calculated from map data
-        let x = rand::thread_rng().gen_range(-BOUND .. BOUND);
-        let y = rand::thread_rng().gen_range(-BOUND .. BOUND);
+        let x = rand::thread_rng().gen_range(-BOUND..BOUND);
+        let y = rand::thread_rng().gen_range(-BOUND..BOUND);
 
         let candidate_transform = Transform::from_xyz(x, y, 0.0);
         if !has_collision(
             transforms_boundings_query,
-            &collision::Collider{transform: &candidate_transform, bound: &candidate_bounding}
+            &collision::Collider {
+                transform: &candidate_transform,
+                bound: &candidate_bounding,
+            },
         ) {
             return MeterVec2::from_pixel_vec(Vec2::new(x, y));
         }

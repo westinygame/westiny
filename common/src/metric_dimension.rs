@@ -1,13 +1,9 @@
-use std::ops::{Mul, Div, AddAssign, Neg, Add, Sub};
 use crate::metric_dimension::length::Meter;
-use serde::{Serialize, Deserialize};
-use std::fmt::{Debug,
-               Display,
-               Formatter
-};
+use bevy::prelude::{Quat, Vec2};
+use serde::{Deserialize, Serialize};
+use std::fmt::{Debug, Display, Formatter};
+use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
 use std::time::Duration;
-use bevy::prelude::{Vec2, Quat};
-
 
 macro_rules! impl_trait {
     (impl $trait:ident :: $method:ident ::< $other:ty > for $base:ident -> $output:ident) => {
@@ -25,18 +21,18 @@ macro_rules! impl_trait {
             fn $method(self, rhs: ThinVec<$other>) -> Self::Output {
                 ThinVec::<$output> {
                     x: self.$method(rhs.x),
-                    y: self.$method(rhs.y)
+                    y: self.$method(rhs.y),
                 }
             }
         }
-    }
+    };
 }
 
-impl_trait!{ impl Div::div::<Second> for Meter -> MeterPerSec }
-impl_trait!{ impl Mul::mul::<MeterPerSec> for Second -> Meter }
-impl_trait!{ impl Div::div::<MeterPerSec> for Meter -> Second }
-impl_trait!{ impl Sub::sub::<Meter> for Meter -> Meter }
-impl_trait!{ impl Add::add::<Meter> for Meter -> Meter }
+impl_trait! { impl Div::div::<Second> for Meter -> MeterPerSec }
+impl_trait! { impl Mul::mul::<MeterPerSec> for Second -> Meter }
+impl_trait! { impl Div::div::<MeterPerSec> for Meter -> Second }
+impl_trait! { impl Sub::sub::<Meter> for Meter -> Meter }
+impl_trait! { impl Add::add::<Meter> for Meter -> Meter }
 
 const PIXEL_PER_METER: u16 = 32;
 
@@ -57,7 +53,7 @@ pub mod length {
 
     pub struct MeterVec3 {
         pub xy: MeterVec2,
-        pub z: Meter
+        pub z: Meter,
     }
 
     impl Meter {
@@ -74,14 +70,14 @@ pub mod length {
         pub fn from_raw(x: f32, y: f32) -> MeterVec2 {
             MeterVec2 {
                 x: Meter(x),
-                y: Meter(y)
+                y: Meter(y),
             }
         }
 
         pub fn from_pixel_vec(vec: Vec2) -> Self {
             Self {
                 x: Meter::from_pixel(vec.x),
-                y: Meter::from_pixel(vec.y)
+                y: Meter::from_pixel(vec.y),
             }
         }
 
@@ -105,7 +101,7 @@ pub mod length {
         fn mul(self, rhs: Vec3) -> Self::Output {
             MeterVec3 {
                 xy: self * rhs.truncate(),
-                z: Meter::from_pixel(rhs.z.clone())
+                z: Meter::from_pixel(rhs.z.clone()),
             }
         }
     }
@@ -132,7 +128,7 @@ pub mod length {
         fn mul(self, rhs: Vec2) -> Self::Output {
             MeterVec2 {
                 x: Meter(self.0 * &rhs.x),
-                y: Meter(self.0 * &rhs.y)
+                y: Meter(self.0 * &rhs.y),
             }
         }
     }
@@ -189,7 +185,7 @@ impl Mul<Vec2> for MeterPerSec {
     fn mul(self, rhs: Vec2) -> Self::Output {
         MeterPerSecVec2 {
             x: MeterPerSec(self.0 * &rhs.x),
-            y: MeterPerSec(self.0 * &rhs.y)
+            y: MeterPerSec(self.0 * &rhs.y),
         }
     }
 }
@@ -218,7 +214,7 @@ impl MeterPerSecVec2 {
     pub fn from_raw(x: f32, y: f32) -> Self {
         MeterPerSecVec2 {
             x: MeterPerSec(x),
-            y: MeterPerSec(y)
+            y: MeterPerSec(y),
         }
     }
     pub fn from_raw_vec(vec: Vec2) -> Self {
@@ -228,7 +224,7 @@ impl MeterPerSecVec2 {
     pub fn from_pixel_per_sec(vec: Vec2) -> Self {
         MeterPerSecVec2 {
             x: MeterPerSec::from_pixel_per_sec(vec.x),
-            y: MeterPerSec::from_pixel_per_sec(vec.y)
+            y: MeterPerSec::from_pixel_per_sec(vec.y),
         }
     }
 
@@ -242,7 +238,11 @@ impl MeterPerSecVec2 {
         } else {
             rotation.clone()
         };
-        Self::from_raw_vec(corrected_rotation.mul_vec3(self.xy().extend(0.0)).truncate())
+        Self::from_raw_vec(
+            corrected_rotation
+                .mul_vec3(self.xy().extend(0.0))
+                .truncate(),
+        )
     }
 
     pub fn into_pixel_per_sec_vec(self) -> Vec2 {
@@ -256,7 +256,7 @@ impl Div<f32> for MeterPerSecVec2 {
     fn div(self, rhs: f32) -> Self::Output {
         MeterPerSecVec2 {
             x: self.x / rhs,
-            y: self.y / rhs
+            y: self.y / rhs,
         }
     }
 }

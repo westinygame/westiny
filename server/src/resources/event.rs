@@ -11,8 +11,5 @@ pub enum ClientNetworkEvent {
 
 #[derive(Debug, PartialEq)]
 pub enum NetworkCommand {
-    Input {
-        id: ClientID,
-        input: Input
-    }
+    Input { id: ClientID, input: Input },
 }

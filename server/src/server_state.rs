@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use derive_new::new;
+use std::path::PathBuf;
 // use westiny_common::resources::map::build_map;
 // use westiny_common::events::WestinyEvent;
 
@@ -14,11 +14,6 @@ impl ServerState {
     //         .expect("Map could not be created");
     // }
 }
-
-
-
-
-
 
 // impl State<GameData<'static, 'static>, WestinyEvent> for ServerState {
 //     fn on_start(&mut self, data: StateData<'_, GameData<'static, 'static>>) {

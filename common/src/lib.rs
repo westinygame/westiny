@@ -1,18 +1,18 @@
-use serde::{Serialize, Deserialize};
 use blaminar::simulation::laminar::LaminarConfig;
-use std::time::Duration;
+use serde::{Deserialize, Serialize};
 use std::fmt;
+use std::time::Duration;
 
+pub mod collision;
 pub mod components;
-pub mod resources;
-pub mod systems;
-pub mod network;
-pub mod serialization;
 pub mod entities;
 pub mod events;
-pub mod utilities;
 pub mod metric_dimension;
-pub mod collision;
+pub mod network;
+pub mod resources;
+pub mod serialization;
+pub mod systems;
+pub mod utilities;
 
 /// The move direction relative to facing
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]

@@ -1,15 +1,15 @@
-pub use audio::{SoundId, AudioQueue};
+pub use audio::{AudioQueue, SoundId};
 pub use cursor_pos::CursorPosition;
 
 mod audio;
+pub mod collision;
 mod cursor_pos;
 pub mod map;
-pub mod collision;
 pub mod weapon;
 
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::net::SocketAddr;
-use serde::{Serialize, Deserialize};
 
 const DEFAULT_SERVER_PORT: u16 = 5745;
 
@@ -20,7 +20,9 @@ pub struct ServerAddress {
 
 impl Default for ServerAddress {
     fn default() -> Self {
-        ServerAddress { address: SocketAddr::new("127.0.0.1".parse().unwrap(), DEFAULT_SERVER_PORT)}
+        ServerAddress {
+            address: SocketAddr::new("127.0.0.1".parse().unwrap(), DEFAULT_SERVER_PORT),
+        }
     }
 }
 

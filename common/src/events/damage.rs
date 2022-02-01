@@ -1,5 +1,5 @@
-use bevy::ecs::prelude::Entity;
 use crate::components::Damage;
+use bevy::ecs::prelude::Entity;
 
 pub struct DamageEvent {
     pub damage: Damage,

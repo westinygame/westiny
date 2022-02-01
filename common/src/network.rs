@@ -1,21 +1,17 @@
-use serde::{Serialize, Deserialize};
-use derive_new::new;
-use std::fmt::{Display, Debug, Formatter};
-use crate::components::{Input, NetworkId, Health};
+use crate::components::{Health, Input, NetworkId};
+use crate::metric_dimension::{length::MeterVec2, MeterPerSecVec2, Second};
 use crate::resources::Seed;
 use crate::PlayerName;
-use crate::metric_dimension::{Second, MeterPerSecVec2, length::MeterVec2};
+use derive_new::new;
+use serde::{Deserialize, Serialize};
+use std::fmt::{Debug, Display, Formatter};
 
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(test, derive(Clone, PartialEq))]
 pub enum PacketType {
-    ConnectionRequest {
-        player_name: String
-    },
+    ConnectionRequest { player_name: String },
     ConnectionResponse(Result<ClientInitialData>),
-    InputState {
-        input: Input
-    },
+    InputState { input: Input },
     EntityStateUpdate(Vec<EntityState>),
     EntityDelete(NetworkEntityDelete),
     PlayerUpdate(PlayerUpdate),
@@ -76,7 +72,7 @@ pub enum PlayerUpdate {
         name: String,
         magazine_size: u32,
         ammo_in_magazine: u32,
-    }
+    },
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize, Debug, PartialEq)]
@@ -89,7 +85,7 @@ impl Display for ErrorKind {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let literal = match self {
             ErrorKind::AlreadyConnected => "Client already connected",
-            ErrorKind::Other => "Other error"
+            ErrorKind::Other => "Other error",
         };
 
         write!(f, "{}", literal)

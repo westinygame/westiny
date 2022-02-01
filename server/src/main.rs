@@ -1,5 +1,5 @@
+use std::net::{IpAddr, SocketAddr};
 use std::path::PathBuf;
-use std::net::{SocketAddr, IpAddr};
 use std::str::FromStr;
 
 use westiny_common::resources::ServerAddress;
@@ -8,17 +8,17 @@ use westiny_common::NetworkConfig;
 
 use blaminar::simulation::laminar::LaminarPlugin;
 
-use bevy::prelude::*;
 use bevy::log::LogPlugin;
+use bevy::prelude::*;
 
-use crate::resources::{ClientRegistry, ClientNetworkEvent, NetworkCommand};
 use crate::diagnostics::DiagnosticPlugins;
+use crate::resources::{ClientNetworkEvent, ClientRegistry, NetworkCommand};
 
-pub mod resources;
-pub mod systems;
 pub mod components;
-pub mod server_state;
 pub mod diagnostics;
+pub mod resources;
+pub mod server_state;
+pub mod systems;
 
 fn main() {
     let resources_dir = PathBuf::from("resources");
@@ -26,13 +26,15 @@ fn main() {
         let ron_path = resources_dir.join("server_network.ron");
         read_ron::<ServerAddress>(&ron_path)
             .map(|addr| addr.address.port())
-            .unwrap_or_else(|err|{
+            .unwrap_or_else(|err| {
                 let srv_port = ServerAddress::default().address.port();
-                log::warn!("Failed to read server network configuration file: {}, error: [{}] \
+                log::warn!(
+                    "Failed to read server network configuration file: {}, error: [{}] \
                 Using default server port ({})",
-                           ron_path.as_os_str().to_str().unwrap(),
-                           err,
-                           srv_port);
+                    ron_path.as_os_str().to_str().unwrap(),
+                    err,
+                    srv_port
+                );
                 srv_port
             })
     };
@@ -41,81 +43,75 @@ fn main() {
     log::info!("Start listening on {}", socket_address);
 
     let laminar_config = {
-    let ron_path = resources_dir.join("protocol.ron");
-    read_ron::<NetworkConfig>(&ron_path)
-        .map(|net_conf| net_conf.into())
-        .expect(&format!("Failed to load Laminar protocol configuration file: {}", ron_path.as_os_str().to_str().unwrap()))
+        let ron_path = resources_dir.join("protocol.ron");
+        read_ron::<NetworkConfig>(&ron_path)
+            .map(|net_conf| net_conf.into())
+            .expect(&format!(
+                "Failed to load Laminar protocol configuration file: {}",
+                ron_path.as_os_str().to_str().unwrap()
+            ))
     };
-
 
     App::new()
         .insert_resource(ClientRegistry::new(64))
         .insert_resource(resources::Seed(0)) // Hard-coded seed for now
         .insert_resource(resources::NetworkIdSupplier::new())
         .insert_resource(resources::ResourcesDir(resources_dir))
-
         .add_event::<ClientNetworkEvent>()
         .add_event::<NetworkCommand>()
         .add_event::<systems::SpawnPlayerEvent>()
         .add_event::<westiny_common::events::DamageEvent>()
         .add_event::<westiny_common::events::EntityDelete>()
-
         .add_plugins(MinimalPlugins)
         .add_plugin(LogPlugin)
         .add_plugins(DiagnosticPlugins)
         .add_plugin(LaminarPlugin::new(socket_address, laminar_config))
         // .add_plugin(RonAssetPlugin::<WeaponDetails>::new(&["gun"]))
-
         .add_startup_system(systems::build_map)
-
-
-        .add_system(systems::read_network_messages
-                    .label("network_input"))
-
-        .add_system(systems::introduce_new_clients
-                    .label("introduce_client")
-                    .after("network_input"))
-        .add_system(systems::spawn_player
-                    .label("spawn_player")
-                    .after("introduce_client"))
-
-        .add_system(systems::transform_commands
-                    .label("transform_commands")
-                    .after("network_input"))
-        .add_system(systems::apply_input
-                    .label("apply_input")
-                    .after("transform_commands"))
-        .add_system(systems::physics
-                    .label("physics")
-                    .after("apply_input"))
-
-        .add_system(systems::broadcast_entity_state
-                    .label("broadcast_entity_state")
-                    .after("introduce_client")
-                    .after("physics"))
-
+        .add_system(systems::read_network_messages.label("network_input"))
+        .add_system(
+            systems::introduce_new_clients
+                .label("introduce_client")
+                .after("network_input"),
+        )
+        .add_system(
+            systems::spawn_player
+                .label("spawn_player")
+                .after("introduce_client"),
+        )
+        .add_system(
+            systems::transform_commands
+                .label("transform_commands")
+                .after("network_input"),
+        )
+        .add_system(
+            systems::apply_input
+                .label("apply_input")
+                .after("transform_commands"),
+        )
+        .add_system(systems::physics.label("physics").after("apply_input"))
+        .add_system(
+            systems::broadcast_entity_state
+                .label("broadcast_entity_state")
+                .after("introduce_client")
+                .after("physics"),
+        )
         .add_plugin(systems::CollisionPlugin)
-
-        .add_system(systems::handle_damage
-                    .label("health")
-                    .after("projectile_collision"))
-
-        .add_system(systems::handle_death
-                    .label("death")
-                    .after("health"))
-
-        .add_system_set(systems::weapon_handler_system_set()
-                        .label("weapon_handler"))
-
-        .add_system(systems::lifespan_system
-                    .label("lifespan"))
-
-        .add_system_set(systems::entity_delete_system_set()
-                        .label("entity_delete_ss")
-                        .after("projectile_collision")
-                        .after("death")
-                        .after("introduce_client")
-                        .after("lifespan"))
-
+        .add_system(
+            systems::handle_damage
+                .label("health")
+                .after("projectile_collision"),
+        )
+        .add_system(systems::handle_death.label("death").after("health"))
+        .add_system_set(systems::weapon_handler_system_set().label("weapon_handler"))
+        .add_system(systems::lifespan_system.label("lifespan"))
+        .add_system_set(
+            systems::entity_delete_system_set()
+                .label("entity_delete_ss")
+                .after("projectile_collision")
+                .after("death")
+                .after("introduce_client")
+                .after("lifespan"),
+        )
         .run();
 }
