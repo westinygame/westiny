@@ -1,12 +1,9 @@
 use crate::components;
-use crate::resources::ClientRegistry;
+use crate::resources::{ClientRegistry, weapon::GunResource};
 use bevy::prelude::*;
 use westiny_common::collision;
 use westiny_common::events::EntityDelete;
-use westiny_common::metric_dimension::{
-    length::{Meter, MeterVec2},
-    MeterPerSec, Second,
-};
+use westiny_common::metric_dimension::length::{Meter, MeterVec2};
 
 pub fn respawn_player(
     mut commands: Commands,
@@ -55,6 +52,7 @@ pub fn spawn_player(
     mut commands: Commands,
     mut spawn_player_ec: EventReader<SpawnPlayerEvent>,
     client_registry: Res<ClientRegistry>,
+    gun_resource: Res<GunResource>,
     mut transforms_boundings_query: Query<(&Transform, &components::BoundingCircle)>,
 ) {
     for spawn_event in spawn_player_ec.iter() {
@@ -68,7 +66,7 @@ pub fn spawn_player(
             &mut commands,
             spawn_event.client,
             spawn_event.network_id,
-            // &gun_resource
+            &gun_resource
         );
         info!(
             "Player created for {}",
@@ -80,33 +78,12 @@ pub fn spawn_player(
     }
 }
 
-fn dummy_guns() -> [(components::weapon::Weapon, &'static str); 3] {
-    use components::weapon::{Shot, Weapon, WeaponDetails};
-    const REVOLVER: WeaponDetails = WeaponDetails {
-        fire_rate: 7.2,
-        magazine_size: 6,
-        reload_time: Second(2.0),
-        damage: 20,
-        spread: 10.0,
-        bullet_distance_limit: Meter(7.5),
-        bullet_speed: MeterPerSec(12.5),
-        shot: Shot::Single,
-        pellet_number: 1,
-    };
-
-    [
-        (Weapon::new(REVOLVER), "Revolver"),
-        (Weapon::new(REVOLVER), "Another revolver"),
-        (Weapon::new(REVOLVER), "One more revolver"),
-    ]
-}
-
 fn create_player_entity(
     initial_pos: &MeterVec2,
     commands: &mut Commands,
     client: components::Client,
     network_id: components::NetworkId,
-    // gun_resource: &GunResource,
+    gun_resource: &GunResource,
 ) {
     commands
         .spawn()
@@ -123,7 +100,7 @@ fn create_player_entity(
         .insert(components::Input::default())
         .insert(components::Velocity::default())
         .insert(components::BoundingCircle { radius: Meter(0.5) })
-        .insert(components::weapon::Holster::new_with_guns(dummy_guns()))
+        .insert(components::weapon::Holster::new(gun_resource))
         .insert(components::Respawn {
             respawn_duration: std::time::Duration::from_secs(5),
         });

@@ -1,6 +1,5 @@
 use crate::metric_dimension::Second;
 use crate::resources::weapon::{GunId, GunResource};
-use bevy::asset::Assets;
 use bevy::ecs::component::Component;
 use std::time::Duration;
 
@@ -16,33 +15,18 @@ pub struct Holster {
 }
 
 impl Holster {
-    pub fn new(gun_resource: &GunResource, assets: &Assets<WeaponDetails>) -> Self {
+    pub fn new(gun_resource: &GunResource) -> Self {
         let guns = [
             (
-                Weapon::new(
-                    assets
-                        .get(gun_resource.get_gun(GunId::Revolver))
-                        .unwrap()
-                        .clone(),
-                ),
+                Weapon::new(gun_resource.get_gun(GunId::Revolver)),
                 "Revolver",
             ),
             (
-                Weapon::new(
-                    assets
-                        .get(gun_resource.get_gun(GunId::Shotgun))
-                        .unwrap()
-                        .clone(),
-                ),
+                Weapon::new(gun_resource.get_gun(GunId::Shotgun)),
                 "Shotgun",
             ),
             (
-                Weapon::new(
-                    assets
-                        .get(gun_resource.get_gun(GunId::Rifle))
-                        .unwrap()
-                        .clone(),
-                ),
+                Weapon::new(gun_resource.get_gun(GunId::Rifle)),
                 "Rifle",
             ),
         ];

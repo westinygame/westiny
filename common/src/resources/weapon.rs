@@ -1,9 +1,8 @@
 use crate::components::weapon::WeaponDetails;
-use bevy::asset::{AssetServer, Handle};
-use bevy::prelude::Commands;
+use crate::utilities::read_ron;
 
 pub struct GunResource {
-    weapons: [Handle<WeaponDetails>; 3],
+    weapons: [WeaponDetails; 3],
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -14,20 +13,16 @@ pub enum GunId {
     Rifle,
 }
 
-const WEAPON_ASSET_DIR: &'static str = "assets/weapons/";
-
 impl GunResource {
-    pub fn setup_gun_resource(commands: &mut Commands, asset_server: &mut AssetServer) {
-        let revolver = asset_server.load("revolver.gun");
-        let shotgun = asset_server.load("shotgun.gun");
-        let rifle = asset_server.load("rifle.gun");
+    pub fn load(weapons_dir: &std::path::Path) -> anyhow::Result<Self> {
+        let revolver = read_ron::<WeaponDetails>(&weapons_dir.join("revolver.ron"))?;
+        let shotgun = read_ron::<WeaponDetails>(&weapons_dir.join("shotgun.ron"))?;
+        let rifle = read_ron::<WeaponDetails>(&weapons_dir.join("rifle.ron"))?;
 
-        commands.insert_resource(GunResource {
-            weapons: [revolver, shotgun, rifle],
-        });
+        return Ok(Self { weapons: [revolver, shotgun, rifle] })
     }
 
-    pub fn get_gun(&self, id: GunId) -> Handle<WeaponDetails> {
+    pub fn get_gun(&self, id: GunId) -> WeaponDetails {
         self.weapons[id as usize].clone()
         // panics if there's no WeaponDetails at the given GunId. There should be
     }

@@ -2,7 +2,7 @@ use crate::components::{
     weapon::Holster, weapon::Weapon, BoundingCircle, Client, Input, InputFlags,
 };
 use crate::resources::{ClientID, ClientRegistry, StreamId};
-use bevy::prelude::{Commands, IntoSystem, Query, Res, ResMut, SystemSet, Time, Transform, Vec3};
+use bevy::prelude::{Commands, Query, Res, ResMut, SystemSet, Time, Transform, Vec3};
 use blaminar::simulation::{DeliveryRequirement, TransportResource, UrgencyRequirement};
 use std::f32::consts::PI;
 use westiny_common::entities::spawn_bullet;

@@ -17,8 +17,9 @@ use crate::resources::{ClientNetworkEvent, ClientRegistry, NetworkCommand};
 pub mod components;
 pub mod diagnostics;
 pub mod resources;
-pub mod server_state;
 pub mod systems;
+
+const WEAPONS_DIR: &'static str = "assets/weapons";
 
 fn main() {
     let resources_dir = PathBuf::from("resources");
@@ -52,10 +53,15 @@ fn main() {
             ))
     };
 
+    let weapons_path = resources_dir.join(WEAPONS_DIR);
+    let gun_resource = resources::weapon::GunResource::load(&weapons_path)
+        .expect(&format!("Unable to load weapons from directory: {:?}", std::fs::canonicalize(weapons_path).unwrap()));
+
     App::new()
         .insert_resource(ClientRegistry::new(64))
         .insert_resource(resources::Seed(0)) // Hard-coded seed for now
         .insert_resource(resources::NetworkIdSupplier::new())
+        .insert_resource(gun_resource)
         .insert_resource(resources::ResourcesDir(resources_dir))
         .add_event::<ClientNetworkEvent>()
         .add_event::<NetworkCommand>()
