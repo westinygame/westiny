@@ -13,7 +13,7 @@ use std::net::SocketAddr;
 
 const DEFAULT_SERVER_PORT: u16 = 5745;
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, PartialEq)]
 pub struct ServerAddress {
     pub address: SocketAddr,
 }
@@ -26,7 +26,7 @@ impl Default for ServerAddress {
     }
 }
 
-#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Copy, Clone, Serialize, Deserialize, Eq, PartialEq, Debug, Hash)]
 pub struct Seed(pub u64);
 
 impl Display for Seed {

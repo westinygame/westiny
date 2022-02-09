@@ -287,8 +287,9 @@ mod shooter {
 mod test {
     use super::*;
     use crate::components::weapon::WeaponDetails;
-    use crate::components::{weapon, Input, InputFlags, Lifespan, Projectile, Velocity};
+    use crate::components::{weapon, Input, InputFlags};
     use bevy::prelude::{App, Commands, Transform};
+    use bevy::core::CorePlugin;
     use std::net::SocketAddr;
     use westiny_common::metric_dimension::length::Meter;
     use westiny_common::metric_dimension::MeterPerSec;
@@ -351,10 +352,13 @@ mod test {
             )
             .unwrap();
 
+        let mut time = bevy::prelude::Time::default();
+        time.update();
+
         App::new()
-            .add_plugins(bevy::MinimalPlugins)
             .insert_resource(client_registry)
             .insert_resource(TransportResource::new())
+            .insert_resource(time)
             .add_startup_system(spawn_shooting_player)
             .add_system(shooter::shoot)
             .add_assert_system(|net: ResMut<TransportResource>| {
@@ -381,7 +385,6 @@ mod test {
                     }
                 })
             })
-            .exit_after_nth_frame(0)
             .run();
     }
 }

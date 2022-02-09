@@ -47,7 +47,7 @@ pub fn rotate_vec3_around_z(quat: &bevy::math::Quat, vec: &mut bevy::math::Vec3)
 mod test {
     use super::*;
     use std::f32::consts::PI;
-    use westiny_test::f32_eq;
+    use westiny_test::*;
 
     const FACING_UP: f32 = PI;
     const FACING_DOWN: f32 = 0.0;
@@ -56,6 +56,8 @@ mod test {
 
     mod test_set_rotation_toward_vector {
         use super::*;
+        use bevy::prelude::Transform;
+        use bevy::math::Vec2;
 
         macro_rules! test_set_rotation_toward_vector {
             ($($name:ident: $vector_coord:expr, $expected:expr,)*) => {
@@ -64,13 +66,13 @@ mod test {
                     fn $name() {
                         let mut transform = &mut Transform::default();
 
-                        let ref_vector = Vector2::new($vector_coord.0, $vector_coord.1);
+                        let ref_vector = Vec2::new($vector_coord.0, $vector_coord.1);
 
                         set_rotation_toward_vector(&mut transform, &ref_vector);
 
-                        let angle = transform.rotation().axis().map(|vec| vec.z).unwrap_or(1.0) * transform.rotation().angle();
+                        let (_, angle) = transform.rotation.to_axis_angle();
                         // sin is called to normalize the angles (e.g. -PI = PI)
-                        assert!(f32_eq(f32::sin($expected), angle.sin()), "Expected angle: {}, Actual angle: {}", $expected, angle);
+                        assert_delta!(f32::sin($expected), angle.sin(), 0.0001)
                     }
                 )*
             }

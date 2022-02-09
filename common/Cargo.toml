@@ -20,4 +20,4 @@ blaminar = { git = "https://github.com/westinygame/blaminar", rev = "v0.2.0" }
 
 [dev-dependencies]
 proptest = "0.10.1"
-#westiny_test = { path = "../test" }
+westiny_test = { path = "../test" }

@@ -9,16 +9,16 @@ pub trait TestApp {
     where
         T: Resource;
 
-    fn add_assert_system<P>(&mut self, system: impl IntoSystemDescriptor<P>) -> &mut Self;
+    fn send_event<T>(&mut self, event: T) -> &mut Self
+        where
+            T: Resource;
 
-    fn exit_after_nth_frame(&mut self, n: u8) -> &mut Self;
+    fn add_assert_system<P>(&mut self, system: impl IntoSystemDescriptor<P>) -> &mut Self;
 }
 
 struct EventsToSend<T>(Vec<Option<T>>)
 where
     T: Resource;
-struct CurrentFrameNumber(u8);
-struct TargetFrameNumber(u8);
 
 fn send_event_system<T>(mut writer: EventWriter<T>, mut event_res: ResMut<EventsToSend<T>>)
 where
@@ -40,24 +40,15 @@ impl TestApp for App {
             .add_system_to_stage(CoreStage::PreUpdate, send_event_system::<T>)
     }
 
-    fn add_assert_system<P>(&mut self, system: impl IntoSystemDescriptor<P>) -> &mut Self {
-        self.add_system_to_stage(CoreStage::PostUpdate, system)
+    fn send_event<T>(&mut self, event: T) -> &mut Self
+        where
+            T: Resource
+    {
+        self.send_events(vec![Some(event)])
     }
 
-    fn exit_after_nth_frame(&mut self, n: u8) -> &mut Self {
-        self.insert_resource(CurrentFrameNumber(0u8))
-            .insert_resource(TargetFrameNumber(n))
-            .add_system_to_stage(
-                CoreStage::Last,
-                |mut exit: EventWriter<AppExit>,
-                 mut current_frame: ResMut<CurrentFrameNumber>,
-                 target_frame: Res<TargetFrameNumber>| {
-                    if current_frame.0 >= target_frame.0 {
-                        exit.send(AppExit);
-                    }
-                    current_frame.0 += 1u8;
-                },
-            )
+    fn add_assert_system<P>(&mut self, system: impl IntoSystemDescriptor<P>) -> &mut Self {
+        self.add_system_to_stage(CoreStage::PostUpdate, system)
     }
 }
 
@@ -101,6 +92,28 @@ pub mod assertion {
                 std::any::type_name::<T>()
             );
             assert_eq!(*maybe_event.unwrap(), expected);
+        };
+        system.into_descriptor()
+    }
+
+    pub fn assert_current_state<T>(expected: T) -> SystemDescriptor
+        where
+        T: Resource
+        + bevy::ecs::schedule::StateData
+    {
+        use bevy::ecs::prelude::State;
+        let system = move |state: Res<State<T>>| {
+            assert_eq!(state.current(), &expected);
+        };
+        system.into_descriptor()
+    }
+
+    pub fn assert_resource<T>(expected: T) -> SystemDescriptor
+        where
+        T: Resource + std::fmt::Debug + std::cmp::PartialEq
+    {
+        let system = move |res: Res<T>| {
+            assert_eq!(*res, expected);
         };
         system.into_descriptor()
     }

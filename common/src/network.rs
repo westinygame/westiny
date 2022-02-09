@@ -20,7 +20,7 @@ pub enum PacketType {
     PlayerDeath(PlayerDeath),
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, Eq, PartialEq, Hash)]
 pub struct ClientInitialData {
     pub player_network_id: NetworkId,
     pub seed: Seed,

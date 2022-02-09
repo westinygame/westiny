@@ -1,27 +1,23 @@
-use amethyst::prelude::*;
-use amethyst::ecs::World;
-use amethyst::assets::Loader;
-use amethyst::audio::{SourceHandle, OggFormat};
+use bevy::prelude::{AssetServer, AssetHandle, Res};
 
 pub struct Sounds
 {
-    pub handles: [SourceHandle; 3],
-
+    pub handles: [AssetHandle; 3],
 }
 
-pub fn initialize_audio(world: &mut World)
+pub fn initialize_audio(
+    server: Res<AssetServer>,
+    sounds: Res<Sounds>)
 {
     let sounds = {
         let loader = world.read_resource::<Loader>();
         Sounds {
             handles: [
-                loader.load("audio/shot.ogg", OggFormat, (), &world.read_resource()),
-                loader.load("audio/handgun_ready.ogg", OggFormat, (), &world.read_resource()),
-                loader.load("audio/ouch.ogg", OggFormat, (), &world.read_resource()),
+                server.load("audio/shot.ogg"),
+                server.load("audio/handgun_ready.ogg"),
+                server.load("audio/ouch.ogg"),
             ]
         }
     };
-
-    world.insert(sounds);
 }
 

@@ -1,21 +1,18 @@
 [package]
 name = "westiny_client"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Abel Suranyi"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 westiny_common = { path = "../common" }
-amethyst = "0.15.3"
-amethyst_test = "0.15.3"
-serde = "1.0.120"
-anyhow = "1.0.38"
+bevy = "0.6.0"
+serde = "1.0.133"
+anyhow = "1.0.52"
 derive-new = "0.5.9"
 log = "0.4.14"
+blaminar = { git = "https://github.com/westinygame/blaminar", rev = "v0.2.0"}
 
-[features]
-default = ["vulkan", "tiles"]
-empty = ["amethyst/empty"]
-metal = ["amethyst/metal"]
-vulkan = ["amethyst/vulkan"]
-tiles = ["amethyst/tiles"]
+[dev-dependencies]
+westiny_test = { path = "../test"}
+

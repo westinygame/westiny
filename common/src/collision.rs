@@ -59,8 +59,7 @@ mod test {
     #[test]
     fn test_body_collision() {
         let origin = Transform::default();
-        let mut point = Transform::default();
-        point.set_translation_xyz(10.0, 0.0, 0.0);
+        let mut point = Transform::from_xyz(10.0, 0.0, 0.0);
 
         let small_bounds = BoundingCircle {
             radius: Meter::from_pixel(4.0),
@@ -70,7 +69,7 @@ mod test {
         };
 
         // no collision
-        point.set_translation_xyz(10.0, 0.0, 0.0);
+        point = Transform::from_xyz(10.0, 0.0, 0.0);
         assert_eq!(
             check_body_collision(
                 Collider {
@@ -87,7 +86,7 @@ mod test {
         );
 
         // regular collision
-        point.set_translation_xyz(10.0, 0.0, 0.0);
+        point = Transform::from_xyz(10.0, 0.0, 0.0);
         assert_eq!(
             check_body_collision(
                 Collider {
@@ -99,12 +98,12 @@ mod test {
                     bound: &big_bounds
                 }
             ),
-            Some(Vector2::new(Meter::from_pixel(2.0), Meter::zero())),
+            Some(MeterVec2::from_pixel_vec(Vec2::new(2.0, 0.0))),
             "Regular collision"
         );
 
         // disance equals to radius
-        point.set_translation_xyz(6.0, 0.0, 0.0);
+        point = Transform::from_xyz(6.0, 0.0, 0.0);
         assert_eq!(
             check_body_collision(
                 Collider {
@@ -116,12 +115,12 @@ mod test {
                     bound: &big_bounds
                 }
             ),
-            Some(Vector2::new(Meter::from_pixel(6.0), Meter::zero())),
+            Some(MeterVec2::from_pixel_vec(Vec2::new(6.0, 0.0))),
             "Distance equals to radius"
         );
 
         // matching points
-        point.set_translation_xyz(0.0, 0.0, 0.0);
+        point = Transform::from_xyz(0.0, 0.0, 0.0);
         assert_eq!(
             check_body_collision(
                 Collider {
@@ -133,11 +132,11 @@ mod test {
                     bound: &big_bounds
                 }
             ),
-            Some(Vector2::new(Meter::from_pixel(12.0), Meter::zero())),
+            Some(MeterVec2::from_pixel_vec(Vec2::new(12.0, 0.0))),
             "Matching points"
         );
 
-        point.set_translation_xyz(-5.0, 0.0, 0.0);
+        point = Transform::from_xyz(-5.0, 0.0, 0.0);
         assert_eq!(
             check_body_collision(
                 Collider {
@@ -149,11 +148,11 @@ mod test {
                     bound: &big_bounds
                 }
             ),
-            Some(Vector2::new(Meter::from_pixel(-7.0), Meter::zero()))
+            Some(MeterVec2::from_pixel_vec(Vec2::new(-7.0, 0.0))),
         );
 
         // touching outline, not considered as a collision
-        point.set_translation_xyz(10.0, 0.0, 0.0);
+        point = Transform::from_xyz(10.0, 0.0, 0.0);
         assert_eq!(
             check_body_collision(
                 Collider {
@@ -184,26 +183,23 @@ mod test {
 
         assert_eq!(
             check_projectile_collision(
-                Transform::default().set_translation_xyz(0.0, 2.0, 0.0),
+                &Transform::from_xyz(0.0, 2.0, 0.0),
                 collider.clone()
             ),
-            Some(Vector2::new(
-                Meter::from_pixel(0.0),
-                Meter::from_pixel(-2.0)
-            ))
+            Some(MeterVec2::from_pixel_vec(Vec2::new(0.0, -2.0)))
         );
 
         assert_eq!(
             check_projectile_collision(
-                Transform::default().set_translation_xyz(0.0, 0.0, 0.0),
+                &Transform::from_xyz(0.0, 0.0, 0.0),
                 collider.clone()
             ),
-            Some(Vector2::new(Meter::from_pixel(4.0), Meter::from_pixel(0.0)))
+            Some(MeterVec2::from_pixel_vec(Vec2::new(4.0, 0.0)))
         );
 
         assert_eq!(
             check_projectile_collision(
-                Transform::default().set_translation_xyz(0.0, 4.0, 0.0),
+                &Transform::from_xyz(0.0, 4.0, 0.0),
                 collider.clone()
             ),
             None
@@ -211,7 +207,7 @@ mod test {
 
         assert_eq!(
             check_projectile_collision(
-                Transform::default().set_translation_xyz(3.6, 3.6, 0.0),
+                &Transform::from_xyz(3.6, 3.6, 0.0),
                 collider.clone()
             ),
             None

@@ -10,15 +10,15 @@ license-file = "LICENSE"
 members = [
     ".",
     "server",
-    #"client"
-    #"common",
+    "client",
+    "common",
     "test"
 ]
 # Add everything to default-members as well, e.g. cargo test will execute them as well.
 default-members = [
     ".",
     "server",
-    #"client",
-    #"common",
+    "client",
+    "common",
     "test"
 ]

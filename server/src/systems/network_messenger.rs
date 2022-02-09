@@ -122,7 +122,6 @@ mod test {
     struct TestAppParams {
         client_registry_capacity: usize,
         preloaded_clients: Vec<(SocketAddr, String)>,
-        exit_after_frame: u8,
         send_event: NetworkSimulationEvent,
     }
 
@@ -138,7 +137,6 @@ mod test {
             .insert_resource(client_registry)
             .insert_resource(resources::NetworkIdSupplier::new)
             .add_system(read_network_messages)
-            .exit_after_nth_frame(params.exit_after_frame)
             .send_events(vec![Some(params.send_event)]);
         appl
     }
@@ -172,7 +170,6 @@ mod test {
                 ),
                 (disconnecting_addr.clone(), "masik".to_string()),
             ],
-            exit_after_frame: 0,
             send_event: NetworkSimulationEvent::Disconnect(disconnecting_addr),
         };
 
@@ -211,7 +208,6 @@ mod test {
                 make_socket_addr("123.234.000.111", 3333),
                 "egyik".to_string(),
             )],
-            exit_after_frame: 0,
             send_event: NetworkSimulationEvent::Message(connecting_addr, connection_request()),
         };
 
@@ -234,7 +230,6 @@ mod test {
         let params = TestAppParams {
             client_registry_capacity: 0,
             preloaded_clients: vec![],
-            exit_after_frame: 0,
             send_event: NetworkSimulationEvent::Message(connecting_addr, connection_request()),
         };
         make_testapp(params)
@@ -252,7 +247,6 @@ mod test {
         let params = TestAppParams {
             client_registry_capacity: 10,
             preloaded_clients: vec![(connecting_addr.clone(), "asdasd".to_string())],
-            exit_after_frame: 0,
             send_event: NetworkSimulationEvent::Message(connecting_addr, connection_request()),
         };
         make_testapp(params)
@@ -282,7 +276,6 @@ mod test {
         let params = TestAppParams {
             client_registry_capacity: 1,
             preloaded_clients: vec![(addr.clone(), "Bacsi".to_string())],
-            exit_after_frame: 0,
             send_event: NetworkSimulationEvent::Message(addr, network_input(input)),
         };
 
@@ -305,7 +298,6 @@ mod test {
         let params = TestAppParams {
             client_registry_capacity: 0,
             preloaded_clients: vec![],
-            exit_after_frame: 0,
             send_event: NetworkSimulationEvent::Message(addr, network_input(input)),
         };
 

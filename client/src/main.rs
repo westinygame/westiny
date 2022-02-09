@@ -1,38 +1,34 @@
-use amethyst::audio::AudioBundle;
-use amethyst::utils::application_root_dir;
-use amethyst::{GameDataBuilder, CoreApplication};
-use amethyst::core::TransformBundle;
-use amethyst::renderer::{RenderingBundle, RenderToWindow, RenderFlat2D, types::DefaultBackend};
-use amethyst::ui::{RenderUi, UiBundle};
-use amethyst::tiles::{RenderTiles2D, MortonEncoder};
-use amethyst::network::simulation::laminar::{LaminarSocket, LaminarNetworkBundle};
 use std::net::{SocketAddr, IpAddr};
 use std::str::FromStr;
 use serde::Deserialize;
-use amethyst::input::InputBundle;
 
-use crate::resources::GroundTile;
-use westiny_common::events::{WestinyEvent, WestinyEventReader};
+//use crate::resources::GroundTile;
+//use westiny_common::events::{WestinyEvent, WestinyEventReader};
 use westiny_common::utilities::read_ron;
+use crate::resources::ServerAddress;
 use westiny_common::NetworkConfig;
+
+use blaminar::simulation::{TransportResource, laminar::LaminarPlugin, NetworkSimulationEvent};
+
+use bevy::prelude::*;
 
 mod systems;
 mod resources;
-mod entities;
+//mod entities;
 mod states;
-mod bindings;
-mod components;
+//mod bindings;
+//mod components;
 
-#[cfg(test)]
-mod test_helpers;
+//#[cfg(test)]
+//mod test_helpers;
 
-fn main() -> amethyst::Result<()> {
-    amethyst::start_logger(Default::default());
-
-    let app_root = application_root_dir()?;
-    let common_resources_dir = app_root.join("../resources");
-    let resources_dir = app_root.join("assets");
-    let display_config = resources_dir.join("display_config.ron");
+fn main() {
+    let application_root_dir = {
+        let cargo_manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+        std::path::PathBuf::from(cargo_manifest_dir)
+    };
+    let common_resources_dir = application_root_dir.join("../resources");
+    let resources_dir = application_root_dir.join("resources");
 
     let client_port: u16 = {
         let ron_path = resources_dir.join("client_network.ron");
@@ -47,16 +43,34 @@ fn main() -> amethyst::Result<()> {
             client_port
         }).0
     };
-    let client_socket = SocketAddr::new(IpAddr::from_str("0.0.0.0")?, client_port);
+    let client_socket = SocketAddr::new(IpAddr::from_str("0.0.0.0").unwrap(), client_port);
 
-    let laminar_config= {
+    let laminar_config = {
         let ron_path = common_resources_dir.join("protocol.ron");
         read_ron::<NetworkConfig>(&ron_path)
             .map(|net_conf| net_conf.into())
             .expect(&format!("Failed to load Laminar protocol configuration file: {}", ron_path.as_os_str().to_str().unwrap()))
     };
 
-    let socket = LaminarSocket::bind_with_config(client_socket, laminar_config)?;
+    App::new()
+        .add_plugins(DefaultPlugins)
+
+        .insert_resource(get_server_address())
+        .init_resource::<TransportResource>()
+
+        .add_event::<NetworkSimulationEvent>()
+
+        .add_plugin(LaminarPlugin::new(client_socket, laminar_config))
+
+        .add_state(states::AppState::Connect)
+        .add_system_set(states::connection::connect_state_systems())
+
+        .run();
+}
+/*
+fn main() -> amethyst::Result<()> {
+    let display_config = resources_dir.join("display_config.ron");
+
     let key_bindings = resources_dir.join("input.ron");
     let input_bundle = InputBundle::<bindings::MovementBindingTypes>::new().with_bindings_from_file(key_bindings)?;
 
@@ -87,6 +101,7 @@ fn main() -> amethyst::Result<()> {
     game.run();
     Ok(())
 }
+*/
 
 const DEFAULT_CLIENT_PORT: u16 = 4557;
 
@@ -95,5 +110,27 @@ pub struct ClientPort(pub u16);
 impl Default for ClientPort {
     fn default() -> Self {
         ClientPort(DEFAULT_CLIENT_PORT)
+    }
+}
+
+fn get_server_address() -> ServerAddress {
+    let address_result = std::env::var("WESTINY_SERVER_ADDRESS")
+        .map_err(|err| {
+            anyhow::Error::from(err)
+        })
+        .and_then(|env| SocketAddr::from_str(&env)
+            .map_err(|err|anyhow::Error::from(err)))
+        .map(|addr| ServerAddress { address:addr });
+
+    match address_result {
+        Ok(addr) => {
+            log::info!("Server address: {}", addr.address);
+            addr
+        }
+        Err(err) => {
+            let addr = ServerAddress::default();
+            log::warn!("Server address has not been configured. Error: {}. Using default address: {}", err, addr.address);
+            addr
+        }
     }
 }

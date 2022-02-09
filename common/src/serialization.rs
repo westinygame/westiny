@@ -23,7 +23,7 @@ mod tests {
 
     use super::*;
     use crate::components::{EntityType, Input, InputFlags, NetworkId};
-    use crate::metric_dimension::length::{Meter, MeterVec2};
+    use crate::metric_dimension::length::MeterVec2;
     use crate::network::EntityState;
     use proptest::prelude::*;
 
@@ -50,12 +50,12 @@ mod tests {
     prop_compose! {
         fn entity_state_update_gen()(id in network_id_gen(),
                                      pos in arb_point2(),
-                                     rot in any::<f32>()) -> PacketType {
+                                     ang in any::<f32>()) -> PacketType {
             PacketType::EntityStateUpdate(
                 vec![EntityState {
                         network_id: id,
                         position: pos,
-                        rotation: rot,
+                        angle: ang,
                     }]
             )
         }
@@ -73,7 +73,7 @@ mod tests {
 
     prop_compose! {
         fn arb_point2()(x in any::<f32>(), y in any::<f32>()) -> MeterVec2 {
-            MeterVec2::
+            MeterVec2::from_raw(x, y)
         }
     }
 
