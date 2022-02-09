@@ -19,7 +19,9 @@ impl GunResource {
         let shotgun = read_ron::<WeaponDetails>(&weapons_dir.join("shotgun.ron"))?;
         let rifle = read_ron::<WeaponDetails>(&weapons_dir.join("rifle.ron"))?;
 
-        return Ok(Self { weapons: [revolver, shotgun, rifle] })
+        return Ok(Self {
+            weapons: [revolver, shotgun, rifle],
+        });
     }
 
     pub fn get_gun(&self, id: GunId) -> WeaponDetails {

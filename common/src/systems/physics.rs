@@ -18,15 +18,12 @@ fn update_position(transform: &mut Transform, velocity: &Velocity, delta_time: S
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::metric_dimension::{MeterPerSecVec2, length::Meter};
+    use crate::metric_dimension::{length::Meter, MeterPerSecVec2};
 
     #[test]
     fn test_update_position() {
-        let mut transform = Transform::from_xyz(
-            Meter(100.0).into_pixel(),
-            Meter(100.0).into_pixel(),
-            0.0
-            );
+        let mut transform =
+            Transform::from_xyz(Meter(100.0).into_pixel(), Meter(100.0).into_pixel(), 0.0);
 
         let velocity = Velocity(MeterPerSecVec2::from_raw(-50.0, -50.0));
 

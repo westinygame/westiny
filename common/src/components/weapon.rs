@@ -21,14 +21,8 @@ impl Holster {
                 Weapon::new(gun_resource.get_gun(GunId::Revolver)),
                 "Revolver",
             ),
-            (
-                Weapon::new(gun_resource.get_gun(GunId::Shotgun)),
-                "Shotgun",
-            ),
-            (
-                Weapon::new(gun_resource.get_gun(GunId::Rifle)),
-                "Rifle",
-            ),
+            (Weapon::new(gun_resource.get_gun(GunId::Shotgun)), "Shotgun"),
+            (Weapon::new(gun_resource.get_gun(GunId::Rifle)), "Rifle"),
         ];
 
         Holster { guns, selected: 0 }

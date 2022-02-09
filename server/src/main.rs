@@ -54,8 +54,10 @@ fn main() {
     };
 
     let weapons_path = resources_dir.join(WEAPONS_DIR);
-    let gun_resource = resources::weapon::GunResource::load(&weapons_path)
-        .expect(&format!("Unable to load weapons from directory: {:?}", std::fs::canonicalize(weapons_path).unwrap()));
+    let gun_resource = resources::weapon::GunResource::load(&weapons_path).expect(&format!(
+        "Unable to load weapons from directory: {:?}",
+        std::fs::canonicalize(weapons_path).unwrap()
+    ));
 
     App::new()
         .insert_resource(ClientRegistry::new(64))

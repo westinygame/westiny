@@ -1,19 +1,19 @@
-use std::net::{SocketAddr, IpAddr};
-use std::str::FromStr;
 use serde::Deserialize;
+use std::net::{IpAddr, SocketAddr};
+use std::str::FromStr;
 
 //use crate::resources::GroundTile;
 //use westiny_common::events::{WestinyEvent, WestinyEventReader};
-use westiny_common::utilities::read_ron;
 use crate::resources::ServerAddress;
+use westiny_common::utilities::read_ron;
 use westiny_common::NetworkConfig;
 
-use blaminar::simulation::{TransportResource, laminar::LaminarPlugin, NetworkSimulationEvent};
+use blaminar::simulation::{laminar::LaminarPlugin, NetworkSimulationEvent, TransportResource};
 
 use bevy::prelude::*;
 
-mod systems;
 mod resources;
+mod systems;
 //mod entities;
 mod states;
 //mod bindings;
@@ -34,14 +34,17 @@ fn main() {
         let ron_path = resources_dir.join("client_network.ron");
         read_ron::<ClientPort>(&ron_path)
             .unwrap_or_else(|err| {
-            let client_port: ClientPort = Default::default();
-            log::warn!("Failed to read client network configuration file: {}, error: [{}] \
+                let client_port: ClientPort = Default::default();
+                log::warn!(
+                    "Failed to read client network configuration file: {}, error: [{}] \
             Using default client port ({})",
-                   ron_path.as_os_str().to_str().unwrap(),
-                   err,
-                   client_port.0);
-            client_port
-        }).0
+                    ron_path.as_os_str().to_str().unwrap(),
+                    err,
+                    client_port.0
+                );
+                client_port
+            })
+            .0
     };
     let client_socket = SocketAddr::new(IpAddr::from_str("0.0.0.0").unwrap(), client_port);
 
@@ -49,22 +52,20 @@ fn main() {
         let ron_path = common_resources_dir.join("protocol.ron");
         read_ron::<NetworkConfig>(&ron_path)
             .map(|net_conf| net_conf.into())
-            .expect(&format!("Failed to load Laminar protocol configuration file: {}", ron_path.as_os_str().to_str().unwrap()))
+            .expect(&format!(
+                "Failed to load Laminar protocol configuration file: {}",
+                ron_path.as_os_str().to_str().unwrap()
+            ))
     };
 
     App::new()
         .add_plugins(DefaultPlugins)
-
         .insert_resource(get_server_address())
         .init_resource::<TransportResource>()
-
         .add_event::<NetworkSimulationEvent>()
-
         .add_plugin(LaminarPlugin::new(client_socket, laminar_config))
-
         .add_state(states::AppState::Connect)
         .add_system_set(states::connection::connect_state_systems())
-
         .run();
 }
 /*
@@ -115,12 +116,9 @@ impl Default for ClientPort {
 
 fn get_server_address() -> ServerAddress {
     let address_result = std::env::var("WESTINY_SERVER_ADDRESS")
-        .map_err(|err| {
-            anyhow::Error::from(err)
-        })
-        .and_then(|env| SocketAddr::from_str(&env)
-            .map_err(|err|anyhow::Error::from(err)))
-        .map(|addr| ServerAddress { address:addr });
+        .map_err(|err| anyhow::Error::from(err))
+        .and_then(|env| SocketAddr::from_str(&env).map_err(|err| anyhow::Error::from(err)))
+        .map(|addr| ServerAddress { address: addr });
 
     match address_result {
         Ok(addr) => {
@@ -129,7 +127,11 @@ fn get_server_address() -> ServerAddress {
         }
         Err(err) => {
             let addr = ServerAddress::default();
-            log::warn!("Server address has not been configured. Error: {}. Using default address: {}", err, addr.address);
+            log::warn!(
+                "Server address has not been configured. Error: {}. Using default address: {}",
+                err,
+                addr.address
+            );
             addr
         }
     }

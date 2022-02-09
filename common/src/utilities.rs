@@ -56,8 +56,8 @@ mod test {
 
     mod test_set_rotation_toward_vector {
         use super::*;
-        use bevy::prelude::Transform;
         use bevy::math::Vec2;
+        use bevy::prelude::Transform;
 
         macro_rules! test_set_rotation_toward_vector {
             ($($name:ident: $vector_coord:expr, $expected:expr,)*) => {

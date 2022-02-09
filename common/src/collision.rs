@@ -182,34 +182,22 @@ mod test {
         };
 
         assert_eq!(
-            check_projectile_collision(
-                &Transform::from_xyz(0.0, 2.0, 0.0),
-                collider.clone()
-            ),
+            check_projectile_collision(&Transform::from_xyz(0.0, 2.0, 0.0), collider.clone()),
             Some(MeterVec2::from_pixel_vec(Vec2::new(0.0, -2.0)))
         );
 
         assert_eq!(
-            check_projectile_collision(
-                &Transform::from_xyz(0.0, 0.0, 0.0),
-                collider.clone()
-            ),
+            check_projectile_collision(&Transform::from_xyz(0.0, 0.0, 0.0), collider.clone()),
             Some(MeterVec2::from_pixel_vec(Vec2::new(4.0, 0.0)))
         );
 
         assert_eq!(
-            check_projectile_collision(
-                &Transform::from_xyz(0.0, 4.0, 0.0),
-                collider.clone()
-            ),
+            check_projectile_collision(&Transform::from_xyz(0.0, 4.0, 0.0), collider.clone()),
             None
         );
 
         assert_eq!(
-            check_projectile_collision(
-                &Transform::from_xyz(3.6, 3.6, 0.0),
-                collider.clone()
-            ),
+            check_projectile_collision(&Transform::from_xyz(3.6, 3.6, 0.0), collider.clone()),
             None
         );
     }

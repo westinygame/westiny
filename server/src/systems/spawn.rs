@@ -1,5 +1,5 @@
 use crate::components;
-use crate::resources::{ClientRegistry, weapon::GunResource};
+use crate::resources::{weapon::GunResource, ClientRegistry};
 use bevy::prelude::*;
 use westiny_common::collision;
 use westiny_common::events::EntityDelete;
@@ -66,7 +66,7 @@ pub fn spawn_player(
             &mut commands,
             spawn_event.client,
             spawn_event.network_id,
-            &gun_resource
+            &gun_resource,
         );
         info!(
             "Player created for {}",

@@ -288,8 +288,8 @@ mod test {
     use super::*;
     use crate::components::weapon::WeaponDetails;
     use crate::components::{weapon, Input, InputFlags};
-    use bevy::prelude::{App, Commands, Transform};
     use bevy::core::CorePlugin;
+    use bevy::prelude::{App, Commands, Transform};
     use std::net::SocketAddr;
     use westiny_common::metric_dimension::length::Meter;
     use westiny_common::metric_dimension::MeterPerSec;

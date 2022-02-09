@@ -10,8 +10,8 @@ pub trait TestApp {
         T: Resource;
 
     fn send_event<T>(&mut self, event: T) -> &mut Self
-        where
-            T: Resource;
+    where
+        T: Resource;
 
     fn add_assert_system<P>(&mut self, system: impl IntoSystemDescriptor<P>) -> &mut Self;
 }
@@ -41,8 +41,8 @@ impl TestApp for App {
     }
 
     fn send_event<T>(&mut self, event: T) -> &mut Self
-        where
-            T: Resource
+    where
+        T: Resource,
     {
         self.send_events(vec![Some(event)])
     }
@@ -97,9 +97,8 @@ pub mod assertion {
     }
 
     pub fn assert_current_state<T>(expected: T) -> SystemDescriptor
-        where
-        T: Resource
-        + bevy::ecs::schedule::StateData
+    where
+        T: Resource + bevy::ecs::schedule::StateData,
     {
         use bevy::ecs::prelude::State;
         let system = move |state: Res<State<T>>| {
@@ -109,8 +108,8 @@ pub mod assertion {
     }
 
     pub fn assert_resource<T>(expected: T) -> SystemDescriptor
-        where
-        T: Resource + std::fmt::Debug + std::cmp::PartialEq
+    where
+        T: Resource + std::fmt::Debug + std::cmp::PartialEq,
     {
         let system = move |res: Res<T>| {
             assert_eq!(*res, expected);
