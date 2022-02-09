@@ -112,7 +112,7 @@ mod test {
     use bevy::prelude::*;
     use std::net::{IpAddr, SocketAddr};
     use westiny_common::PlayerName;
-    use westiny_test::{assertion, TestApp};
+    use w_bevy_test::{assertion, TestApp};
 
     fn make_socket_addr(ip: &str, port: u16) -> SocketAddr {
         use std::str::FromStr;
@@ -174,7 +174,7 @@ mod test {
         };
 
         make_testapp(params)
-            .add_assert_system(assertion::event_count::<ClientNetworkEvent>(1))
+            .add_assert_system(assertion::assert_event_count::<ClientNetworkEvent>(1))
             // ClientDisconnected event sent
             .add_assert_system(assertion::assert_event(
                 ClientNetworkEvent::ClientDisconnected(
@@ -280,7 +280,7 @@ mod test {
         };
 
         make_testapp(params)
-            .add_assert_system(assertion::event_count::<NetworkCommand>(1))
+            .add_assert_system(assertion::assert_event_count::<NetworkCommand>(1))
             .add_assert_system(assertion::assert_event(NetworkCommand::Input {
                 id: ClientID(0),
                 input,
@@ -302,7 +302,7 @@ mod test {
         };
 
         make_testapp(params)
-            .add_assert_system(assertion::event_count::<NetworkCommand>(0))
+            .add_assert_system(assertion::assert_event_count::<NetworkCommand>(0))
             .run();
     }
 }

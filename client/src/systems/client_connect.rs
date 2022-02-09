@@ -69,7 +69,7 @@ mod test {
     use westiny_common::components::{EntityType, NetworkId};
     use westiny_common::network::{self, PacketType};
     use westiny_common::resources::Seed;
-    use westiny_test::*;
+    use w_bevy_test::*;
 
     const SOCKET_ADDRESS: ([u8; 4], u16) = ([127, 0, 0, 1], 9999);
 

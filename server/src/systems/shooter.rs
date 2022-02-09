@@ -288,13 +288,12 @@ mod test {
     use super::*;
     use crate::components::weapon::WeaponDetails;
     use crate::components::{weapon, Input, InputFlags};
-    use bevy::core::CorePlugin;
     use bevy::prelude::{App, Commands, Transform};
     use std::net::SocketAddr;
     use westiny_common::metric_dimension::length::Meter;
     use westiny_common::metric_dimension::MeterPerSec;
     use westiny_common::metric_dimension::Second;
-    use westiny_test::TestApp;
+    use w_bevy_test::TestApp;
 
     fn spawn_shooting_player(mut commands: Commands) {
         let input = Input {
