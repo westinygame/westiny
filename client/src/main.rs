@@ -8,7 +8,7 @@ use crate::resources::ServerAddress;
 use westiny_common::utilities::read_ron;
 use westiny_common::NetworkConfig;
 
-use blaminar::simulation::{laminar::LaminarPlugin, NetworkSimulationEvent, TransportResource};
+use blaminar::prelude::{LaminarPlugin, TransportResource, LaminarLabel, NetworkSimulationEvent};
 
 use bevy::prelude::*;
 
@@ -65,7 +65,21 @@ fn main() {
         .add_event::<NetworkSimulationEvent>()
         .add_plugin(LaminarPlugin::new(client_socket, laminar_config))
         .add_state(states::AppState::Connect)
-        .add_system_set(states::connection::connect_state_systems())
+        .add_startup_system(systems::setup_camera)
+        .add_system_set(
+            SystemSet::on_update(states::AppState::Connect)
+                .after(LaminarLabel)
+                .with_system(systems::send_connection_request)
+                .with_system(systems::receive_connection_response)
+        )
+        .add_system_set(
+            SystemSet::on_exit(states::AppState::Connect)
+                .with_system(|| log::info!("Exitting connect state"))
+        )
+        .add_system_set(
+            SystemSet::on_enter(states::AppState::Play)
+                .with_system(states::play::spawn_ball)
+        )
         .run();
 }
 /*

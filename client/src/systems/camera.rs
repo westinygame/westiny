@@ -1,16 +1,11 @@
-use amethyst::input::InputHandler;
-use amethyst::derive::SystemDesc;
-use amethyst::ecs::{Read, System, SystemData, ReadStorage, WriteStorage};
-use amethyst::core::Transform;
-use amethyst::core::math::Vector3;
-
-use amethyst::ecs::prelude::Join;
-use amethyst::renderer::Camera;
-
 use westiny_common::components::Player;
-use crate::bindings::{MovementBindingTypes, AxisBinding};
+use bevy::prelude::{Sprite, Color, OrthographicCameraBundle, Vec3, Transform, SpriteBundle, Commands};
 
+pub fn setup_camera(mut commands: Commands) {
+    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+}
 
+/*
 #[derive(SystemDesc)]
 pub struct CameraMovementSystem;
 
@@ -60,3 +55,4 @@ impl<'s> System<'s> for CameraMovementSystem {
         }
     }
 }
+*/

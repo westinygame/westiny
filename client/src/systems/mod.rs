@@ -1,5 +1,5 @@
 //pub use audio_player::AudioPlayerSystem;
-//pub use camera_movement::CameraMovementSystem;
+pub use camera::setup_camera;
 //pub use cursor_pos_update::CursorPosUpdateSystem;
 //pub use hud_update::HudUpdateSystem;
 //pub use input_state::InputStateSystem;
@@ -10,7 +10,7 @@
 //pub use shooter::ShooterSystemDesc;
 //pub use westiny_common::systems::*;
 //pub use player_update::PlayerUpdateSystemDesc;
-pub use client_connect::connect_to_server;
+pub use client_connect::{send_connection_request, receive_connection_response};
 
 //mod audio_player;
 //mod hud_update;
@@ -19,7 +19,7 @@ pub use client_connect::connect_to_server;
 //mod network_entity_delete;
 //mod notification_bar;
 //mod input_state;
-//mod camera_movement;
+mod camera;
 //mod cursor_pos_update;
 mod client_connect;
 //mod shooter;

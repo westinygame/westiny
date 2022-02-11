@@ -111,11 +111,16 @@ mod test {
     use bevy::ecs::schedule::{IntoSystemDescriptor, SystemDescriptor};
     use bevy::prelude::*;
     use std::net::{IpAddr, SocketAddr};
-    use westiny_common::PlayerName;
     use w_bevy_test::{assertion, TestApp};
+    use westiny_common::PlayerName;
 
     fn make_socket_addr(ip: &str, port: u16) -> SocketAddr {
         use std::str::FromStr;
+        println!("IP: {}", ip);
+        let res_ip = IpAddr::from_str(ip);
+        if let Err(err) = res_ip {
+            println!("{}", err);
+        }
         SocketAddr::new(IpAddr::from_str(ip).unwrap(), port)
     }
 
@@ -141,7 +146,7 @@ mod test {
         appl
     }
 
-    fn assert_client_in_registry_producer(
+    fn assert_client_in_registry(
         client_addr: SocketAddr,
         expected_in_registry: bool,
     ) -> SystemDescriptor {
@@ -159,15 +164,12 @@ mod test {
 
     #[test]
     fn test_disconnect_client_happy_path() {
-        let disconnecting_addr = make_socket_addr("111.222.000.222", 1111);
+        let disconnecting_addr = make_socket_addr("127.0.0.1", 1111);
 
         let params = TestAppParams {
             client_registry_capacity: 2,
             preloaded_clients: vec![
-                (
-                    make_socket_addr("123.234.000.111", 3333),
-                    "egyik".to_string(),
-                ),
+                (make_socket_addr("127.0.0.1", 3333), "egyik".to_string()),
                 (disconnecting_addr.clone(), "masik".to_string()),
             ],
             send_event: NetworkSimulationEvent::Disconnect(disconnecting_addr),
@@ -183,19 +185,16 @@ mod test {
                 ),
             ))
             // Disconnected client removed from registry
-            .add_assert_system(assert_client_in_registry_producer(
-                disconnecting_addr,
-                false,
-            ))
+            .add_assert_system(assert_client_in_registry(disconnecting_addr, false))
             .run();
     }
 
-    fn connection_request() -> blaminar::Bytes {
+    fn connection_request_event(requesting_addr: SocketAddr) -> NetworkSimulationEvent {
         let payload = westiny_common::serialization::serialize(&PacketType::ConnectionRequest {
             player_name: "Westwood".to_string(),
         })
         .unwrap();
-        blaminar::Bytes::from(payload)
+        NetworkSimulationEvent::Message(requesting_addr, blaminar::Bytes::from(payload))
     }
 
     #[test]
@@ -204,19 +203,13 @@ mod test {
 
         let params = TestAppParams {
             client_registry_capacity: 2,
-            preloaded_clients: vec![(
-                make_socket_addr("123.234.000.111", 3333),
-                "egyik".to_string(),
-            )],
-            send_event: NetworkSimulationEvent::Message(connecting_addr, connection_request()),
+            preloaded_clients: vec![(make_socket_addr("192.168.0.15", 3333), "egyik".to_string())],
+            send_event: connection_request_event(connecting_addr.clone()),
         };
 
         make_testapp(params)
             // assert client is in registry
-            .add_assert_system(assert_client_in_registry_producer(
-                connecting_addr.clone(),
-                true,
-            ))
+            .add_assert_system(assert_client_in_registry(connecting_addr, true))
             .add_assert_system(assertion::assert_event(
                 ClientNetworkEvent::ClientConnected(ClientID(1)),
             ))
@@ -230,13 +223,10 @@ mod test {
         let params = TestAppParams {
             client_registry_capacity: 0,
             preloaded_clients: vec![],
-            send_event: NetworkSimulationEvent::Message(connecting_addr, connection_request()),
+            send_event: connection_request_event(connecting_addr),
         };
         make_testapp(params)
-            .add_assert_system(assert_client_in_registry_producer(
-                connecting_addr.clone(),
-                false,
-            ))
+            .add_assert_system(assert_client_in_registry(connecting_addr, false))
             .run();
     }
 
@@ -247,14 +237,12 @@ mod test {
         let params = TestAppParams {
             client_registry_capacity: 10,
             preloaded_clients: vec![(connecting_addr.clone(), "asdasd".to_string())],
-            send_event: NetworkSimulationEvent::Message(connecting_addr, connection_request()),
+            send_event: connection_request_event(connecting_addr),
         };
+
         make_testapp(params)
             .add_assert_system(|reg: Res<ClientRegistry>| assert_eq!(reg.client_count(), 1))
-            .add_assert_system(assert_client_in_registry_producer(
-                connecting_addr.clone(),
-                true,
-            ))
+            .add_assert_system(assert_client_in_registry(connecting_addr, true))
             .run();
     }
 
