@@ -1,5 +1,5 @@
 use crate::metric_dimension::length::Meter;
-use bevy::prelude::{Quat, Vec2};
+use bevy::prelude::{Quat, Transform, Vec2};
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Add, AddAssign, Div, Mul, Neg, Sub};
@@ -83,6 +83,10 @@ pub mod length {
 
         pub fn into_pixel_vec(self) -> Vec2 {
             Vec2::new(self.x.into_pixel(), self.y.into_pixel())
+        }
+
+        pub fn into_transform(self, z: Meter) -> Transform {
+            Transform::from_xyz(self.x.into_pixel(), self.y.into_pixel(), z.into_pixel())
         }
     }
 

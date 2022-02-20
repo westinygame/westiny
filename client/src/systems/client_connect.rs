@@ -1,13 +1,10 @@
-use crate::resources::ServerAddress;
+use crate::resources::{PlayerNetworkId, Seed, ServerAddress};
 use crate::states::AppState;
-use bevy::prelude::{EventReader, Res, ResMut, State, Local, Time};
+use bevy::prelude::{EventReader, Local, Res, ResMut, State, Time};
 use blaminar::simulation::{
-    DeliveryRequirement,
-    NetworkSimulationEvent,
-    TransportResource,
-    UrgencyRequirement,
+    DeliveryRequirement, NetworkSimulationEvent, TransportResource, UrgencyRequirement,
 };
-use westiny_common::network::PacketType::{ConnectionRequest, ConnectionResponse, EntityStateUpdate};
+use westiny_common::network::PacketType::{ConnectionRequest, ConnectionResponse};
 use westiny_common::serialization::{deserialize, serialize};
 
 const PLAYER_NAME_MAGIC: &str = "Narancsos_Feco";
@@ -23,8 +20,8 @@ pub fn send_connection_request(
     server_addr: Res<ServerAddress>,
     mut net: ResMut<TransportResource>,
     time: Res<Time>,
-    mut last_run: Local<LastRun>)
-{
+    mut last_run: Local<LastRun>,
+) {
     if time.time_since_startup() - last_run.0 < std::time::Duration::from_secs(1u64) {
         return;
     }
@@ -46,8 +43,10 @@ pub fn send_connection_request(
 pub fn receive_connection_response(
     server_addr: Res<ServerAddress>,
     mut net_event: EventReader<NetworkSimulationEvent>,
-    mut app_state: ResMut<State<AppState>>)
-{
+    mut app_state: ResMut<State<AppState>>,
+    mut seed: ResMut<Seed>,
+    mut player_network_id: ResMut<PlayerNetworkId>,
+) {
     for event in net_event.iter() {
         match event {
             NetworkSimulationEvent::Message(addr, msg) => {
@@ -61,14 +60,16 @@ pub fn receive_connection_response(
                     Ok(packet) => match packet {
                         ConnectionResponse(Ok(init_data)) => {
                             log::info!("Connection established");
-                            app_state.set(AppState::Play)
+                            app_state
+                                .set(AppState::Play)
                                 .expect("Failed to set AppState to Play");
+                            *seed = init_data.seed;
+                            player_network_id.0 = init_data.player_network_id;
                             return;
                         }
                         ConnectionResponse(Err(err)) => {
                             log::error!("Conection refused. Reason: {}", err)
                         }
-                        //EntityStateUpdate(_) => log::debug!("EntityStateUpdate received"),
                         _ => log::error!("Unexpected package from server: {:02x?}", packet),
                     },
                     Err(err) => log::error!(

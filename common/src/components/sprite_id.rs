@@ -1,11 +1,6 @@
 use bevy::ecs::component::Component;
 
-#[derive(Component)]
-pub struct SpriteComponent {
-    pub id: SpriteId,
-}
-
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Component)]
 #[repr(usize)]
 pub enum SpriteId {
     Player = 2,

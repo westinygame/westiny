@@ -1,6 +1,6 @@
-use crate::components::{BoundingCircle, SpriteComponent, SpriteId};
+use crate::components::{BoundingCircle, SpriteId};
 use crate::metric_dimension::length::Meter;
-use bevy::prelude::{Commands, GlobalTransform, Transform, Vec2};
+use bevy::prelude::{Bundle, Commands, Transform, Vec2};
 
 const BARREL_HEIGHT: f32 = 1.0;
 const BARREL_DIAMETER: Meter = Meter(1.0);
@@ -12,14 +12,17 @@ pub fn place_barrel(commands: &mut Commands, pos: Vec2) {
         BARREL_HEIGHT,
     );
 
-    commands
-        .spawn()
-        .insert(transform)
-        .insert(GlobalTransform::identity())
-        .insert(BoundingCircle {
+    commands.spawn_bundle(BarrelBundle {
+        bounding_circle: BoundingCircle {
             radius: BARREL_DIAMETER / 2f32,
-        })
-        .insert(SpriteComponent {
-            id: SpriteId::Barrel,
-        });
+        },
+        sprite_sheet_bundle: super::SimpleSpriteSheetBundle::new(transform, SpriteId::Barrel),
+    });
+}
+
+#[derive(Bundle)]
+pub struct BarrelBundle {
+    bounding_circle: BoundingCircle,
+    #[bundle]
+    sprite_sheet_bundle: super::SimpleSpriteSheetBundle,
 }

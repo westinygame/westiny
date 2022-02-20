@@ -10,5 +10,3 @@ mod client_registry;
 mod event;
 mod network_id_supplier;
 mod network_stream_id;
-
-pub struct ResourcesDir(pub std::path::PathBuf);

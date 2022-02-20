@@ -1,5 +1,6 @@
 pub use audio::{AudioQueue, SoundId};
 pub use cursor_pos::CursorPosition;
+pub use map::build_map;
 
 mod audio;
 pub mod collision;
@@ -33,4 +34,9 @@ impl Display for Seed {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
     }
+}
+
+pub struct ResourcesDir {
+    pub common_resources: std::path::PathBuf,
+    pub crate_resources: std::path::PathBuf,
 }

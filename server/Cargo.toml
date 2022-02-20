@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 westiny_common = { path = "../common" }
-bevy = "0.6.0"
+bevy = "0.6.1"
 anyhow = "1.0.52"
 thiserror = "1.0.30"
 serde = "1.0.133"
@@ -14,8 +14,8 @@ derive-new = "0.5.9"
 log = "0.4.14"
 pretty_env_logger = "0.4.0"
 rand = "0.8.4"
-blaminar = { git = "https://github.com/westinygame/blaminar", rev = "v0.2.0" }
+blaminar = { git = "https://github.com/westinygame/blaminar" }
 
 [dev-dependencies]
 westiny_test = { path = "../test"}
-w-bevy_test = { git = "https://github.com/westinygame/w-bevy_test", rev = "f84c815f3864a769288a62c09ec4677ed77eb168" }
+w-bevy_test = { git = "https://github.com/westinygame/w-bevy_test" }

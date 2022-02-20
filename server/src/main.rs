@@ -6,7 +6,7 @@ use westiny_common::resources::ServerAddress;
 use westiny_common::utilities::read_ron;
 use westiny_common::NetworkConfig;
 
-use blaminar::simulation::laminar::LaminarPlugin;
+use blaminar::prelude::LaminarPlugin;
 
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
@@ -64,7 +64,10 @@ fn main() {
         .insert_resource(resources::Seed(0)) // Hard-coded seed for now
         .insert_resource(resources::NetworkIdSupplier::new())
         .insert_resource(gun_resource)
-        .insert_resource(resources::ResourcesDir(resources_dir))
+        .insert_resource(resources::ResourcesDir {
+            common_resources: resources_dir.clone(),
+            crate_resources: resources_dir,
+        })
         .add_event::<ClientNetworkEvent>()
         .add_event::<NetworkCommand>()
         .add_event::<systems::SpawnPlayerEvent>()

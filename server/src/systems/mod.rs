@@ -20,18 +20,3 @@ mod network_messenger;
 mod player_movement;
 mod shooter;
 mod spawn;
-
-use crate::resources;
-use bevy::prelude::{Commands, Res};
-
-pub fn build_map(
-    commands: Commands,
-    seed: Res<resources::Seed>,
-    res_dir: Res<resources::ResourcesDir>,
-) {
-    let res = resources::map::build_map(commands, *seed, &res_dir.0.join("map"));
-    match res {
-        Ok(()) => bevy::log::info!("Map built"),
-        Err(err) => bevy::log::error!("{}", err),
-    };
-}

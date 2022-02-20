@@ -1,11 +1,10 @@
-use amethyst::ecs::{Component, VecStorage};
+use bevy::prelude::Component;
 
 #[derive(Debug, Clone, Component)]
-#[storage(VecStorage)]
 pub struct WeaponInfo {
     pub magazine_size: u32,
     pub bullets_in_magazine: u32,
-    pub name: String
+    pub name: String,
 }
 
 impl Default for WeaponInfo {

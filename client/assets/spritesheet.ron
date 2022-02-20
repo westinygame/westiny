@@ -1,4 +1,4 @@
-List((
+(
     texture_width: 128,
     texture_height: 128,
     sprites: [
@@ -52,4 +52,4 @@ List((
             height: 26,
         ),
     ],
-))
+)

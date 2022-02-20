@@ -5,19 +5,24 @@ use std::str::FromStr;
 //use crate::resources::GroundTile;
 //use westiny_common::events::{WestinyEvent, WestinyEventReader};
 use crate::resources::ServerAddress;
-use westiny_common::utilities::read_ron;
-use westiny_common::NetworkConfig;
+use westiny_common::{
+    network::{
+        EntityState, NetworkEntityDelete, PlayerDeath, PlayerNotification, PlayerUpdate, ShotEvent,
+    },
+    utilities::read_ron,
+    NetworkConfig,
+};
 
-use blaminar::prelude::{LaminarPlugin, TransportResource, LaminarLabel, NetworkSimulationEvent};
+use blaminar::prelude::{LaminarLabel, LaminarPlugin, NetworkSimulationEvent, TransportResource};
 
 use bevy::prelude::*;
 
+mod entities;
 mod resources;
-mod systems;
-//mod entities;
 mod states;
+mod systems;
 //mod bindings;
-//mod components;
+mod components;
 
 //#[cfg(test)]
 //mod test_helpers;
@@ -28,7 +33,7 @@ fn main() {
         std::path::PathBuf::from(cargo_manifest_dir)
     };
     let common_resources_dir = application_root_dir.join("../resources");
-    let resources_dir = application_root_dir.join("resources");
+    let resources_dir = application_root_dir.join("assets");
 
     let client_port: u16 = {
         let ron_path = resources_dir.join("client_network.ron");
@@ -60,28 +65,41 @@ fn main() {
 
     App::new()
         .add_plugins(DefaultPlugins)
-        .insert_resource(get_server_address())
-        .init_resource::<TransportResource>()
-        .add_event::<NetworkSimulationEvent>()
         .add_plugin(LaminarPlugin::new(client_socket, laminar_config))
+        .insert_resource(get_server_address())
+        .insert_resource(resources::Seed(10))
+        .insert_resource(resources::ResourcesDir {
+            common_resources: common_resources_dir,
+            crate_resources: resources_dir,
+        })
+        .init_resource::<TransportResource>()
+        .init_resource::<resources::SpriteResource>()
+        .init_resource::<resources::PlayerNetworkId>()
+        .add_event::<NetworkSimulationEvent>()
+        .add_event::<Vec<EntityState>>()
+        .add_event::<PlayerUpdate>()
+        .add_event::<PlayerDeath>()
+        .add_event::<PlayerNotification>()
+        .add_event::<NetworkEntityDelete>()
+        .add_event::<ShotEvent>()
         .add_state(states::AppState::Connect)
-        .add_startup_system(systems::setup_camera)
+        .add_startup_system(resources::initialize_sprite_resource)
+        .add_system_to_stage(CoreStage::PostUpdate, systems::add_sprite_to_new_sprite_id)
         .add_system_set(
             SystemSet::on_update(states::AppState::Connect)
                 .after(LaminarLabel)
                 .with_system(systems::send_connection_request)
-                .with_system(systems::receive_connection_response)
+                .with_system(systems::receive_connection_response),
         )
         .add_system_set(
             SystemSet::on_exit(states::AppState::Connect)
-                .with_system(|| log::info!("Exitting connect state"))
+                .with_system(|| log::debug!("Exitting connect state")),
         )
-        .add_system_set(
-            SystemSet::on_enter(states::AppState::Play)
-                .with_system(states::play::spawn_ball)
-        )
+        .add_system_set(states::play::setup_system_set())
+        .add_system_set(states::play::system_set())
         .run();
 }
+
 /*
 fn main() -> amethyst::Result<()> {
     let display_config = resources_dir.join("display_config.ron");
