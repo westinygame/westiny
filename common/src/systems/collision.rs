@@ -52,11 +52,11 @@ fn collect_collisions(
             if let Some(collision) = check_body_collision(
                 Collider {
                     transform: &moving_transform,
-                    bound: &moving_bounds,
+                    bound: moving_bounds,
                 },
                 Collider {
                     transform: &standing_transform,
-                    bound: &standing_bounds,
+                    bound: standing_bounds,
                 },
             ) {
                 collision_res.0.push(Collision {

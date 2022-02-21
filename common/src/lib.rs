@@ -28,11 +28,12 @@ pub struct NetworkConfig {
     hartbeat_interval: u8,
 }
 
-impl Into<LaminarConfig> for NetworkConfig {
-    fn into(self) -> LaminarConfig {
-        let mut laminar = LaminarConfig::default();
-        laminar.heartbeat_interval = Some(Duration::from_secs(self.hartbeat_interval as u64));
-        laminar
+impl From<NetworkConfig> for LaminarConfig {
+    fn from(net: NetworkConfig) -> LaminarConfig {
+        LaminarConfig {
+            heartbeat_interval: Some(Duration::from_secs(net.hartbeat_interval as u64)),
+            ..Default::default()
+        }
     }
 }
 

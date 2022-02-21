@@ -31,6 +31,7 @@ macro_rules! impl_trait {
 impl_trait! { impl Div::div::<Second> for Meter -> MeterPerSec }
 impl_trait! { impl Mul::mul::<MeterPerSec> for Second -> Meter }
 impl_trait! { impl Div::div::<MeterPerSec> for Meter -> Second }
+impl_trait! { impl Add::add::<MeterPerSec> for MeterPerSec -> MeterPerSec }
 impl_trait! { impl Sub::sub::<Meter> for Meter -> Meter }
 impl_trait! { impl Add::add::<Meter> for Meter -> Meter }
 
@@ -105,7 +106,7 @@ pub mod length {
         fn mul(self, rhs: Vec3) -> Self::Output {
             MeterVec3 {
                 xy: self * rhs.truncate(),
-                z: Meter::from_pixel(rhs.z.clone()),
+                z: Meter::from_pixel(rhs.z),
             }
         }
     }
@@ -131,8 +132,8 @@ pub mod length {
 
         fn mul(self, rhs: Vec2) -> Self::Output {
             MeterVec2 {
-                x: Meter(self.0 * &rhs.x),
-                y: Meter(self.0 * &rhs.y),
+                x: Meter(self.0 * rhs.x),
+                y: Meter(self.0 * rhs.y),
             }
         }
     }
@@ -188,8 +189,8 @@ impl Mul<Vec2> for MeterPerSec {
 
     fn mul(self, rhs: Vec2) -> Self::Output {
         MeterPerSecVec2 {
-            x: MeterPerSec(self.0 * &rhs.x),
-            y: MeterPerSec(self.0 * &rhs.y),
+            x: MeterPerSec(self.0 * rhs.x),
+            y: MeterPerSec(self.0 * rhs.y),
         }
     }
 }
@@ -240,7 +241,7 @@ impl MeterPerSecVec2 {
         let corrected_rotation = if rotation.z < 0.0 {
             rotation.inverse()
         } else {
-            rotation.clone()
+            *rotation
         };
         Self::from_raw_vec(
             corrected_rotation
@@ -269,5 +270,16 @@ impl AddAssign<MeterPerSecVec2> for MeterPerSecVec2 {
     fn add_assign(&mut self, rhs: MeterPerSecVec2) {
         self.x += rhs.x;
         self.y += rhs.y;
+    }
+}
+
+impl Add<MeterPerSecVec2> for MeterPerSecVec2 {
+    type Output = MeterPerSecVec2;
+
+    fn add(self, rhs: MeterPerSecVec2) -> Self::Output {
+        MeterPerSecVec2 {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+        }
     }
 }

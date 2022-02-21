@@ -10,7 +10,7 @@ use westiny_common::serialization::{deserialize, serialize};
 const PLAYER_NAME_MAGIC: &str = "Narancsos_Feco";
 
 fn get_player_name() -> String {
-    std::env::var("USER").unwrap_or(PLAYER_NAME_MAGIC.to_string())
+    std::env::var("USER").unwrap_or_else(|_| PLAYER_NAME_MAGIC.to_string())
 }
 
 #[derive(Default)]
@@ -56,7 +56,7 @@ pub fn receive_connection_response(
                     continue;
                 }
 
-                match deserialize(&msg) {
+                match deserialize(msg) {
                     Ok(packet) => match packet {
                         ConnectionResponse(Ok(init_data)) => {
                             log::info!("Connection established");

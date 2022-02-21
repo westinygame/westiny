@@ -17,12 +17,11 @@ use blaminar::prelude::{LaminarLabel, LaminarPlugin, NetworkSimulationEvent, Tra
 
 use bevy::prelude::*;
 
+mod components;
 mod entities;
 mod resources;
 mod states;
 mod systems;
-//mod bindings;
-mod components;
 
 //#[cfg(test)]
 //mod test_helpers;
@@ -57,15 +56,18 @@ fn main() {
         let ron_path = common_resources_dir.join("protocol.ron");
         read_ron::<NetworkConfig>(&ron_path)
             .map(|net_conf| net_conf.into())
-            .expect(&format!(
-                "Failed to load Laminar protocol configuration file: {}",
-                ron_path.as_os_str().to_str().unwrap()
-            ))
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to load Laminar protocol configuration file: {}",
+                    ron_path.as_os_str().to_str().unwrap()
+                )
+            })
     };
 
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(LaminarPlugin::new(client_socket, laminar_config))
+        .add_plugin(bevy_ecs_tilemap::TilemapPlugin)
         .insert_resource(get_server_address())
         .insert_resource(resources::Seed(10))
         .insert_resource(resources::ResourcesDir {
@@ -83,58 +85,19 @@ fn main() {
         .add_event::<NetworkEntityDelete>()
         .add_event::<ShotEvent>()
         .add_state(states::AppState::Connect)
-        .add_startup_system(resources::initialize_sprite_resource)
+        .add_startup_system(resources::initialize_sprite_resource.label("init_sprite_resource"))
+        .add_startup_system(resources::initialize_sprite_resource.label("init_sprite_resource"))
         .add_system_to_stage(CoreStage::PostUpdate, systems::add_sprite_to_new_sprite_id)
-        .add_system_set(
-            SystemSet::on_update(states::AppState::Connect)
-                .after(LaminarLabel)
-                .with_system(systems::send_connection_request)
-                .with_system(systems::receive_connection_response),
-        )
+        .add_system(entities::tilemap::set_texture_filters_to_nearest) // Boilerplate to tilemap
+        .add_system_set(states::connection::connect_state_systems().after(LaminarLabel))
         .add_system_set(
             SystemSet::on_exit(states::AppState::Connect)
                 .with_system(|| log::debug!("Exitting connect state")),
         )
         .add_system_set(states::play::setup_system_set())
-        .add_system_set(states::play::system_set())
+        .add_system_set(states::play::system_set().after(LaminarLabel))
         .run();
 }
-
-/*
-fn main() -> amethyst::Result<()> {
-    let display_config = resources_dir.join("display_config.ron");
-
-    let key_bindings = resources_dir.join("input.ron");
-    let input_bundle = InputBundle::<bindings::MovementBindingTypes>::new().with_bindings_from_file(key_bindings)?;
-
-    let game_data = GameDataBuilder::default()
-        .with_bundle(TransformBundle::new())?
-        .with_bundle(input_bundle)?
-        .with_bundle(UiBundle::<bindings::MovementBindingTypes>::new())?
-        .with_bundle(RenderingBundle::<DefaultBackend>::new()
-            .with_plugin(
-                RenderToWindow::from_config_path(display_config)?
-                    .with_clear([0.0, 0.0, 0.0, 1.0])
-            )
-            .with_plugin(RenderFlat2D::default())
-            .with_plugin(RenderTiles2D::<GroundTile, MortonEncoder>::default())
-            .with_plugin(RenderUi::default())
-            )?
-        .with_bundle(LaminarNetworkBundle::new(Some(socket)))?
-        .with_bundle(AudioBundle::default())?
-        ;
-
-    let mut game =
-        CoreApplication::<_, WestinyEvent, WestinyEventReader>::build(
-            &resources_dir,
-            states::connection::ConnectState::new(&common_resources_dir),
-        )?.build(game_data)?;
-
-    log::info!("Starting client");
-    game.run();
-    Ok(())
-}
-*/
 
 const DEFAULT_CLIENT_PORT: u16 = 4557;
 
@@ -148,8 +111,8 @@ impl Default for ClientPort {
 
 fn get_server_address() -> ServerAddress {
     let address_result = std::env::var("WESTINY_SERVER_ADDRESS")
-        .map_err(|err| anyhow::Error::from(err))
-        .and_then(|env| SocketAddr::from_str(&env).map_err(|err| anyhow::Error::from(err)))
+        .map_err(anyhow::Error::from)
+        .and_then(|env| SocketAddr::from_str(&env).map_err(anyhow::Error::from))
         .map(|addr| ServerAddress { address: addr });
 
     match address_result {

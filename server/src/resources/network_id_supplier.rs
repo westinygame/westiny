@@ -16,7 +16,7 @@ impl NetworkIdSupplier {
 
     pub fn next(&mut self, entity_type: EntityType) -> components::NetworkId {
         let next = self.next_ids.entry(entity_type).or_insert(0);
-        let network_id = NetworkId::new(entity_type, next.clone());
+        let network_id = NetworkId::new(entity_type, *next);
         *next += 1;
         network_id
     }

@@ -28,7 +28,7 @@ mod weapon_switcher {
         mut input_query: Query<(&Input, &mut Holster, Option<&Client>)>,
     ) {
         for (input, mut holster, maybe_client) in input_query.iter_mut() {
-            if let Some(selected_slot) = selected_slot(&input) {
+            if let Some(selected_slot) = selected_slot(input) {
                 if holster.active_slot() == selected_slot {
                     continue;
                 }
@@ -49,10 +49,12 @@ mod weapon_switcher {
                             ammo_in_magazine: gun.bullets_left_in_magazine,
                         });
 
-                        let payload = serialize(&payload_packet).expect(&format!(
-                            "Failed to serialize 'WeaponSwitch' packet: {:?}",
-                            payload_packet
-                        ));
+                        let payload = serialize(&payload_packet).unwrap_or_else(|_| {
+                            panic!(
+                                "Failed to serialize 'WeaponSwitch' packet: {:?}",
+                                payload_packet
+                            )
+                        });
                         net.send_with_requirements(
                             client.addr,
                             &payload,
@@ -88,10 +90,7 @@ fn send_ammo_update(
     let address = client_registry
         .find_client(*client_id)
         .map(|handle| handle.addr)
-        .ok_or(anyhow::anyhow!(
-            "Client with id {:?} not found in registry",
-            client_id
-        ))?;
+        .ok_or_else(|| anyhow::anyhow!("Client with id {:?} not found in registry", client_id))?;
     net.send_with_requirements(
         address,
         &payload,
@@ -130,7 +129,7 @@ mod reloader {
     fn check_reload_finish(
         time: &Time,
         client_registry: &ClientRegistry,
-        mut net: &mut TransportResource,
+        net: &mut TransportResource,
         weapon: &mut Weapon,
         client: Option<&Client>,
         reload_start: &std::time::Duration,
@@ -144,9 +143,9 @@ mod reloader {
             if let Some(client) = client {
                 if let Err(err) = send_ammo_update(
                     &client.id,
-                    &client_registry,
+                    client_registry,
                     weapon.bullets_left_in_magazine,
-                    &mut net,
+                    net,
                 ) {
                     log::error!(
                         "Failed to send AmmoUpdate to client {:?}. Error: {}",
@@ -162,6 +161,7 @@ mod reloader {
 mod shooter {
     use super::*;
 
+    #[allow(clippy::type_complexity)]
     pub fn shoot(
         mut commands: Commands,
         time: Res<Time>,
@@ -179,9 +179,7 @@ mod shooter {
             let mut weapon = holster.active_gun_mut();
             if input.flags.intersects(InputFlags::SHOOT) {
                 if weapon.is_allowed_to_shoot(time.time_since_startup()) {
-                    let mut bullet_transform = Transform::default();
-                    bullet_transform.translation = shooter_transform.translation;
-                    bullet_transform.rotation = shooter_transform.rotation;
+                    let mut bullet_transform = *shooter_transform;
 
                     let mut direction3d = Vec3::Y;
                     westiny_common::utilities::rotate_vec3_around_z(
@@ -189,8 +187,7 @@ mod shooter {
                         &mut direction3d,
                     );
                     if let Some(bound) = maybe_bound {
-                        bullet_transform.translation =
-                            bullet_transform.translation - bound.radius.into_pixel() * direction3d;
+                        bullet_transform.translation -= bound.radius.into_pixel() * direction3d;
                     }
 
                     for _pellet_idx in 0..weapon.details.pellet_number {
@@ -203,7 +200,7 @@ mod shooter {
                         spawn_bullet(
                             &mut commands,
                             weapon.details.damage,
-                            bullet_transform.clone(),
+                            bullet_transform,
                             velocity,
                             time.time_since_startup(),
                             weapon.bullet_lifespan_sec(),
@@ -212,7 +209,7 @@ mod shooter {
                         broadcast_shot_event(
                             &client_registry,
                             &mut net,
-                            &weapon,
+                            weapon,
                             &bullet_transform,
                             &velocity,
                         );

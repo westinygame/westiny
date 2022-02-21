@@ -2,6 +2,7 @@ use crate::components::SpriteId;
 use crate::resources::SpriteResource;
 use bevy::prelude::{Added, Commands, Entity, Query, Res, TextureAtlasSprite, Visibility, Without};
 
+#[allow(clippy::type_complexity)]
 pub fn add_sprite_to_new_sprite_id(
     mut commands: Commands,
     entities_to_add_sprite: Query<

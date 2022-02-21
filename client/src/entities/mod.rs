@@ -1,9 +1,9 @@
 pub use player::{create_player_character, create_this_player};
-//pub use tilemap::initialize_tilemap;
+pub use tilemap::initialize_tilemap;
 pub use westiny_common::entities::*;
 
 mod player;
-//mod tilemap;
+pub mod tilemap;
 
 use crate::components::{Lifespan, SpriteId};
 use bevy::prelude::{Bundle, Transform};

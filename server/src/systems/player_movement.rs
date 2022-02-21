@@ -8,7 +8,7 @@ pub fn apply_input(mut query: Query<(&mut Transform, &mut Velocity, &Input)>) {
     for (mut transform, mut velocity, input) in query.iter_mut() {
         set_rotation_toward_vector(&mut transform, &input.cursor.into_pixel_vec());
 
-        let move_inputs = move_directions_from_input(&input);
+        let move_inputs = move_directions_from_input(input);
         *velocity = get_velocity(&transform, &move_inputs);
     }
 }
@@ -32,34 +32,21 @@ fn move_directions_from_input(input: &Input) -> Vec<MoveDirection> {
 
 const PLAYER_MAX_WALK_SPEED: MeterPerSec = MeterPerSec(4.0);
 
-// TODO It would be better to use a more generic IntoIterator instead of the specific vector type.
-fn get_velocity(transform: &Transform, move_inputs: &Vec<MoveDirection>) -> Velocity {
-    if move_inputs.is_empty() {
-        Velocity::default()
-    } else {
-        let velocities: Vec<MeterPerSecVec2> = move_inputs
-            .into_iter()
-            .map(|dir| as_vector2(*dir))
-            .collect();
-
-        let velocity_vec = vector_avg(&velocities);
-        Velocity(velocity_vec.rotate(&transform.rotation))
-    }
-}
-
-fn vector_avg<'a, I>(velocities: I) -> MeterPerSecVec2
+fn get_velocity<'a, I>(transform: &Transform, move_inputs: I) -> Velocity
 where
-    I: IntoIterator<Item = &'a MeterPerSecVec2>,
+    I: IntoIterator<Item = &'a MoveDirection>,
 {
-    let mut sum_vec = MeterPerSecVec2::from_raw(0.0, 0.0);
-    let mut len = 0;
+    let (cnt, sum) = move_inputs
+        .into_iter()
+        .map(|dir| as_vector2(*dir))
+        .enumerate()
+        .fold(
+            (1, MeterPerSecVec2::from_raw(0.0, 0.0)),
+            |(_, acc), (num, dir)| (num + 1, acc + dir),
+        );
 
-    for &vel in velocities {
-        sum_vec += vel;
-        len += 1;
-    }
-
-    sum_vec / (len as f32)
+    let avg_vec = sum / (cnt as f32);
+    Velocity(avg_vec.rotate(&transform.rotation))
 }
 
 fn as_vector2(move_dir: MoveDirection) -> MeterPerSecVec2 {

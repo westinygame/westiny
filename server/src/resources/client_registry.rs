@@ -52,7 +52,7 @@ impl ClientRegistry {
             return Err(AddError::ServerIsFull);
         }
 
-        match self.find_by_addr_or_name(&addr, player_name) {
+        match self.find_by_addr_or_name(addr, player_name) {
             Some(h) if h.player_name.0 == player_name && &h.addr == addr => Ok(h.id),
             Some(_) => Err(AddError::Unauthorized),
             None => Ok(self.add_new_client(*addr, player_name)),
@@ -89,7 +89,7 @@ impl ClientRegistry {
         let id = ClientID(self.next_id);
         self.next_id += 1;
         self.clients.push(ClientHandle {
-            id: id,
+            id,
             addr,
             player_name: PlayerName(player_name.into()),
         });

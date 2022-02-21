@@ -1,10 +1,10 @@
 pub use audio::{AudioQueue, SoundId};
-pub use cursor_pos::CursorPosition;
+//pub use cursor_pos::CursorPosition;
 pub use map::build_map;
 
 mod audio;
 pub mod collision;
-mod cursor_pos;
+//mod cursor_pos;
 pub mod map;
 pub mod weapon;
 

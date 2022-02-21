@@ -7,13 +7,8 @@ pub struct Collision {
     pub vector: MeterVec2,
 }
 
+#[derive(Default)]
 pub struct Collisions(pub Vec<Collision>);
-
-impl Default for Collisions {
-    fn default() -> Self {
-        Collisions(Vec::new())
-    }
-}
 
 pub struct ProjectileCollision {
     pub projectile: Entity,
@@ -21,10 +16,5 @@ pub struct ProjectileCollision {
     pub vector: MeterVec2,
 }
 
+#[derive(Default)]
 pub struct ProjectileCollisions(pub Vec<ProjectileCollision>);
-
-impl Default for ProjectileCollisions {
-    fn default() -> Self {
-        ProjectileCollisions(Vec::new())
-    }
-}

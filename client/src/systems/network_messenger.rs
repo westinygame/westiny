@@ -30,8 +30,8 @@ pub fn receive_network_messages(
             }
             NetworkSimulationEvent::Message(addr, payload) => {
                 match process_payload(
-                    &addr,
-                    &payload,
+                    addr,
+                    payload,
                     &mut entity_states,
                     &mut player_update,
                     &mut entity_delete,
@@ -54,6 +54,7 @@ pub fn receive_network_messages(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn process_payload(
     addr: &SocketAddr,
     payload: &[u8],

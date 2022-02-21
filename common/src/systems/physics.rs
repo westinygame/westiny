@@ -4,7 +4,7 @@ use bevy::prelude::*;
 
 pub fn physics(time: Res<Time>, mut query: Query<(&mut Transform, &Velocity)>) {
     for (mut transform, velocity) in query.iter_mut() {
-        update_position(&mut transform, &velocity, Second(time.delta_seconds()))
+        update_position(&mut transform, velocity, Second(time.delta_seconds()))
     }
 }
 

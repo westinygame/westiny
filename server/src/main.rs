@@ -19,7 +19,7 @@ pub mod diagnostics;
 pub mod resources;
 pub mod systems;
 
-const WEAPONS_DIR: &'static str = "assets/weapons";
+const WEAPONS_DIR: &str = "assets/weapons";
 
 fn main() {
     let resources_dir = PathBuf::from("resources");
@@ -47,17 +47,21 @@ fn main() {
         let ron_path = resources_dir.join("protocol.ron");
         read_ron::<NetworkConfig>(&ron_path)
             .map(|net_conf| net_conf.into())
-            .expect(&format!(
-                "Failed to load Laminar protocol configuration file: {}",
-                ron_path.as_os_str().to_str().unwrap()
-            ))
+            .unwrap_or_else(|_| {
+                panic!(
+                    "Failed to load Laminar protocol configuration file: {}",
+                    ron_path.as_os_str().to_str().unwrap()
+                )
+            })
     };
 
     let weapons_path = resources_dir.join(WEAPONS_DIR);
-    let gun_resource = resources::weapon::GunResource::load(&weapons_path).expect(&format!(
-        "Unable to load weapons from directory: {:?}",
-        std::fs::canonicalize(weapons_path).unwrap()
-    ));
+    let gun_resource = resources::weapon::GunResource::load(&weapons_path).unwrap_or_else(|_| {
+        panic!(
+            "Unable to load weapons from directory: {:?}",
+            std::fs::canonicalize(weapons_path).unwrap()
+        )
+    });
 
     App::new()
         .insert_resource(ClientRegistry::new(64))
@@ -74,10 +78,10 @@ fn main() {
         .add_event::<westiny_common::events::DamageEvent>()
         .add_event::<westiny_common::events::EntityDelete>()
         .add_plugins(MinimalPlugins)
-        .add_plugin(LogPlugin)
         .add_plugins(DiagnosticPlugins)
+        .add_plugin(LogPlugin)
+        .add_plugin(TransformPlugin)
         .add_plugin(LaminarPlugin::new(socket_address, laminar_config))
-        // .add_plugin(RonAssetPlugin::<WeaponDetails>::new(&["gun"]))
         .add_startup_system(systems::build_map)
         .add_system(systems::read_network_messages.label("network_input"))
         .add_system(
@@ -100,7 +104,11 @@ fn main() {
                 .label("apply_input")
                 .after("transform_commands"),
         )
-        .add_system(systems::physics.label("physics").after("apply_input"))
+        .add_system(
+            systems::physics
+                .label("physics")
+                .after("apply_input")
+        )
         .add_system(
             systems::broadcast_entity_state
                 .label("broadcast_entity_state")

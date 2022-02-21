@@ -23,8 +23,8 @@ pub fn update_network_entities(
 
     for (net_id, mut transform) in network_transforms.iter_mut() {
         if let Some(state) = entity_states.get(net_id) {
-            update_transform(&mut transform, &state);
-            entity_states.remove(&net_id);
+            update_transform(&mut transform, state);
+            entity_states.remove(net_id);
         }
     }
 
@@ -35,12 +35,13 @@ pub fn update_network_entities(
             player_net_id.0,
             new_state.position.into_transform(Meter(0.0)),
         );
+        log::debug!("Player spawned at {:?}", new_state.position);
         entity_states.remove(&player_net_id.0);
     }
 
     for (net_id, entity_state) in entity_states {
         let mut transform = Transform::default();
-        update_transform(&mut transform, &entity_state);
+        update_transform(&mut transform, entity_state);
 
         // Yeah it looks silly but there will be more network entities
         match net_id.entity_type {
@@ -50,7 +51,7 @@ pub fn update_network_entities(
 
     player_death
         .iter()
-        .map(|death| death.position.clone().into_transform(Meter(0.0)))
+        .map(|death| death.position.into_transform(Meter(0.0)))
         .for_each(|transform| {
             commands.spawn_bundle(CorpseBundle::new(transform, time.time_since_startup()));
         });

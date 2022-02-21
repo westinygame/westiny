@@ -13,6 +13,7 @@ use crate::{
 use bevy::prelude::{Entity, EventReader, EventWriter, Query, Res, ResMut};
 use blaminar::simulation::{DeliveryRequirement, TransportResource, UrgencyRequirement};
 
+#[allow(clippy::too_many_arguments)]
 pub fn introduce_new_clients(
     mut client_network_ec: EventReader<ClientNetworkEvent>,
     mut entity_delete_ec: EventWriter<EntityDelete>,
@@ -31,10 +32,9 @@ pub fn introduce_new_clients(
     for client_network_event in client_network_ec.iter() {
         match client_network_event {
             ClientNetworkEvent::ClientConnected(client_id) => {
-                let client_handle = client_registry.find_client(*client_id).expect(&format!(
-                    "Client [client_id: {:?}] not found in registry",
-                    client_id
-                ));
+                let client_handle = client_registry.find_client(*client_id).unwrap_or_else(|| {
+                    panic!("Client [client_id: {:?}] not found in registry", client_id)
+                });
 
                 let entity_network_id = if let Some((_, net_id)) =
                     added_clients.iter().find(|(cli_id, _)| cli_id == client_id)

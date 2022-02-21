@@ -1,7 +1,7 @@
 //pub use audio_player::AudioPlayerSystem;
 //pub use cursor_pos_update::CursorPosUpdateSystem;
 //pub use hud_update::HudUpdateSystem;
-//pub use input_state::InputStateSystem;
+pub use input_state::handle_user_inputs;
 //pub use notification_bar::NotificationBarSystemDesc;
 //pub use network_entity_delete::NetworkEntityDeleteSystemDesc;
 pub use network_entity_update::update_network_entities;
@@ -18,8 +18,8 @@ mod network_entity_update;
 mod network_messenger;
 //mod network_entity_delete;
 //mod notification_bar;
-//mod input_state;
 pub mod camera;
+mod input_state;
 //mod cursor_pos_update;
 mod client_connect;
 //mod shooter;

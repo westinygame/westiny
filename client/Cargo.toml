@@ -12,6 +12,7 @@ anyhow = "1.0.52"
 derive-new = "0.5.9"
 log = "0.4.14"
 blaminar = { git = "https://github.com/westinygame/blaminar" }
+bevy_ecs_tilemap = "0.5.0"
 
 [dev-dependencies]
 westiny_test = { path = "../test"}

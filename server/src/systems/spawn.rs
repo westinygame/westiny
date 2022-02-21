@@ -5,6 +5,7 @@ use westiny_common::collision;
 use westiny_common::events::EntityDelete;
 use westiny_common::metric_dimension::length::{Meter, MeterVec2};
 
+#[allow(clippy::type_complexity)]
 pub fn respawn_player(
     mut commands: Commands,
     query: Query<(
@@ -38,7 +39,7 @@ pub fn respawn_player(
 
                 log::debug!("Request player spawn");
                 spawn_player_event.send(SpawnPlayerEvent {
-                    client: client,
+                    client,
                     network_id: net_id,
                 });
 
@@ -85,17 +86,18 @@ fn create_player_entity(
     network_id: components::NetworkId,
     gun_resource: &GunResource,
 ) {
+    let transform = Transform::from_xyz(
+        initial_pos.x.into_pixel(),
+        initial_pos.y.into_pixel(),
+        0.0,
+    );
     commands
         .spawn()
         .insert(client)
         .insert(network_id)
         .insert(components::Player)
-        .insert(Transform::from_xyz(
-            initial_pos.x.into_pixel(),
-            initial_pos.y.into_pixel(),
-            0.0,
-        ))
-        .insert(GlobalTransform::identity())
+        .insert(GlobalTransform::default())
+        .insert(transform)
         .insert(components::Health(100))
         .insert(components::Input::default())
         .insert(components::Velocity::default())
@@ -111,10 +113,12 @@ fn has_collision(
     collider: &collision::Collider,
 ) -> bool {
     for (transform, bound) in transforms_boundings_query.iter() {
-        if let Some(_) = collision::check_body_collision(
+        let collision = collision::check_body_collision(
             collision::Collider { transform, bound },
             collider.clone(),
-        ) {
+        );
+
+        if collision.is_some() {
             return true;
         }
     }
@@ -129,7 +133,7 @@ fn find_spawn_pos(
     // TODO Quick 'n' dirty stuff
     const MAX_TRIAL_ITERATION: u32 = 1024;
     const MAP_SIZE: u32 = 64;
-    const TILE_SIZE: u32 = 16;
+    const TILE_SIZE: u32 = 32;
     const BOUND: f32 = (MAP_SIZE / 2 * TILE_SIZE) as f32;
 
     let candidate_bounding = components::BoundingCircle { radius: Meter(0.5) };

@@ -18,7 +18,7 @@ pub fn build_map(mut commands: Commands, seed: Seed, map_files_dir: &Path) -> Re
         let map_file_path = map_files_dir.join("rust2.wmap");
         let open_file_result = File::open(&map_file_path);
         if let Err(err) = open_file_result {
-            return Err(MapError::MapFileError(PathBuf::from(map_file_path), err));
+            return Err(MapError::MapFileError(map_file_path, err));
         }
 
         let map_bytes = BufReader::new(open_file_result.unwrap()).bytes();
@@ -27,7 +27,7 @@ pub fn build_map(mut commands: Commands, seed: Seed, map_files_dir: &Path) -> Re
         let mut y = 0;
         for byte in map_bytes {
             if let Err(err) = byte {
-                return Err(MapError::MapFileError(PathBuf::from(map_file_path), err));
+                return Err(MapError::MapFileError(map_file_path, err));
             }
             match byte.unwrap() as char {
                 BARREL_CHAR => {

@@ -34,7 +34,7 @@ pub fn handle_damage(
 
             if let Some(client) = maybe_client {
                 if let Err(err) =
-                    notify_client(&client_registry, &mut transport, health.clone(), &client.id)
+                    notify_client(&client_registry, &mut transport, *health, &client.id)
                 {
                     log::error!("Error while sending Health update to client: {}", err);
                 }
@@ -50,16 +50,15 @@ fn notify_client(
     client: &ClientID,
 ) -> anyhow::Result<()> {
     let client_handle = {
-        client_registry.find_client(*client).ok_or(anyhow::anyhow!(
-            "Client [id: {:?}] not found in registry",
-            client
-        ))?
+        client_registry
+            .find_client(*client)
+            .ok_or_else(|| anyhow::anyhow!("Client [id: {:?}] not found in registry", client))?
     };
 
     let payload = serialize(&PacketType::PlayerUpdate(PlayerUpdate::HealthUpdate(
         new_health,
     )))
-    .map_err(|err| anyhow::Error::new(err))?;
+    .map_err(anyhow::Error::new)?;
 
     transport.send_with_requirements(
         client_handle.addr,

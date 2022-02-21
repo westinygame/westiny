@@ -11,11 +11,11 @@ pub struct EncodeError(rmp_serde::encode::Error);
 pub struct DecodeError(rmp_serde::decode::Error);
 
 pub fn serialize(packet: &PacketType) -> Result<Vec<u8>, EncodeError> {
-    rmp_serde::to_vec(packet).map_err(|e| EncodeError(e))
+    rmp_serde::to_vec(packet).map_err(EncodeError)
 }
 
 pub fn deserialize(buf: &[u8]) -> Result<PacketType, DecodeError> {
-    rmp_serde::from_read_ref(buf).map_err(|e| DecodeError(e))
+    rmp_serde::from_read_ref(buf).map_err(DecodeError)
 }
 
 #[cfg(test)]

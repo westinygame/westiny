@@ -50,10 +50,9 @@ fn disconnect_client(
     client_event_channel: &mut EventWriter<ClientNetworkEvent>,
 ) -> Result<()> {
     log::info!("Disconnecting {:?}", addr);
-    let handle = registry.find_by_addr(&addr).ok_or(anyhow::anyhow!(
-        "Could not find address {} in registry",
-        addr
-    ))?;
+    let handle = registry
+        .find_by_addr(addr)
+        .ok_or_else(|| anyhow::anyhow!("Could not find address {} in registry", addr))?;
     let player_name = handle.player_name.clone();
     let id = registry.remove(addr)?;
     client_event_channel.send(ClientNetworkEvent::ClientDisconnected(id, player_name));
@@ -91,10 +90,12 @@ fn process_payload(
                     input,
                 })
             })
-            .ok_or(anyhow::anyhow!(
-                "Valid input command from unregistered client! Address: {:?}",
-                addr
-            )),
+            .ok_or_else(|| {
+                anyhow::anyhow!(
+                    "Valid input command from unregistered client! Address: {:?}",
+                    addr
+                )
+            }),
         _ => Err(anyhow::anyhow!(
             "Unexpected message from {}, payload={:02x?}",
             addr,

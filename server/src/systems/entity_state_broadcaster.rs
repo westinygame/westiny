@@ -1,6 +1,6 @@
 use crate::components;
 use crate::resources::{ClientRegistry, StreamId};
-use bevy::prelude::{Query, Res, ResMut, Transform};
+use bevy::prelude::{Query, Res, ResMut, GlobalTransform};
 use blaminar::simulation::{DeliveryRequirement, TransportResource, UrgencyRequirement};
 use westiny_common::metric_dimension::length::{Meter, MeterVec2};
 use westiny_common::{network, serialization::serialize};
@@ -10,7 +10,7 @@ use westiny_common::{network, serialization::serialize};
 pub fn broadcast_entity_state(
     client_registry: Res<ClientRegistry>,
     mut net: ResMut<TransportResource>,
-    query: Query<(&components::NetworkId, &Transform)>,
+    query: Query<(&components::NetworkId, &GlobalTransform)>,
 ) {
     let mut network_entities = Vec::new();
     for (network_id, transform) in query.iter() {
@@ -22,7 +22,6 @@ pub fn broadcast_entity_state(
             },
             angle: transform.rotation.to_axis_angle().1,
         };
-
         network_entities.push(entity_state);
     }
 

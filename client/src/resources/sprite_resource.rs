@@ -4,17 +4,9 @@ use bevy::prelude::*;
 use serde::Deserialize;
 use westiny_common::utilities::read_ron;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct SpriteResource {
     pub sprites: Handle<TextureAtlas>,
-}
-
-impl Default for SpriteResource {
-    fn default() -> Self {
-        SpriteResource {
-            sprites: Handle::<TextureAtlas>::default(),
-        }
-    }
 }
 
 impl SpriteResource {
