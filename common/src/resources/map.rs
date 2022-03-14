@@ -45,6 +45,7 @@ pub fn build_map(mut commands: Commands, seed: Seed, map_files_dir: &Path) -> Re
                     x = 0;
                     y += 1;
                 }
+                '\r' => {}
                 other => return Err(InvalidMapCharacter(other, x, y)),
             }
         }
