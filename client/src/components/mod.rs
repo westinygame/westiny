@@ -3,5 +3,9 @@ pub use westiny_common::components::*;
 
 mod weapon_info;
 
-#[derive(bevy::prelude::Component)]
-pub struct Camera;
+pub mod hud {
+    use bevy::prelude::Component;
+
+    #[derive(Component)]
+    pub struct Health;
+}

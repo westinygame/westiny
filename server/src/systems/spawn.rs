@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use westiny_common::collision;
 use westiny_common::events::EntityDelete;
 use westiny_common::metric_dimension::length::{Meter, MeterVec2};
+use blaminar::prelude::*;
 
 #[allow(clippy::type_complexity)]
 pub fn respawn_player(
@@ -55,27 +56,26 @@ pub fn spawn_player(
     client_registry: Res<ClientRegistry>,
     gun_resource: Res<GunResource>,
     mut transforms_boundings_query: Query<(&Transform, &components::BoundingCircle)>,
+    mut net: ResMut<TransportResource>,
 ) {
     for spawn_event in spawn_player_ec.iter() {
-        let spawn_pos = find_spawn_pos(&mut transforms_boundings_query);
-        info!(
-            "Spawn position found for player at ({},{})",
-            spawn_pos.x.0, spawn_pos.y.0
-        );
-        create_player_entity(
-            &spawn_pos,
-            &mut commands,
-            spawn_event.client,
-            spawn_event.network_id,
-            &gun_resource,
-        );
-        info!(
-            "Player created for {}",
-            client_registry
-                .find_client(spawn_event.client.id)
-                .unwrap()
-                .player_name
-        );
+        if let Some(client) = client_registry.find_client(spawn_event.client.id) {
+            let spawn_pos = find_spawn_pos(&mut transforms_boundings_query);
+            info!(
+                "Spawn position found for player at ({},{})",
+                spawn_pos.x.0, spawn_pos.y.0
+            );
+            create_player_entity(
+                &spawn_pos,
+                &mut commands,
+                spawn_event.client,
+                spawn_event.network_id,
+                &gun_resource,
+            );
+            info!("Player created for {}", client.player_name);
+        } else {
+            error!("Client with id {:?} not found in registry. Spawn refused.", spawn_event.client.id);
+        }
     }
 }
 

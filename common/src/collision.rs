@@ -59,7 +59,6 @@ mod test {
     #[test]
     fn test_body_collision() {
         let origin = Transform::default();
-        let mut point = Transform::from_xyz(10.0, 0.0, 0.0);
 
         let small_bounds = BoundingCircle {
             radius: Meter::from_pixel(4.0),
@@ -69,7 +68,7 @@ mod test {
         };
 
         // no collision
-        point = Transform::from_xyz(10.0, 0.0, 0.0);
+        let point = Transform::from_xyz(10.0, 0.0, 0.0);
         assert_eq!(
             check_body_collision(
                 Collider {
@@ -86,7 +85,7 @@ mod test {
         );
 
         // regular collision
-        point = Transform::from_xyz(10.0, 0.0, 0.0);
+        let point = Transform::from_xyz(10.0, 0.0, 0.0);
         assert_eq!(
             check_body_collision(
                 Collider {
@@ -103,7 +102,7 @@ mod test {
         );
 
         // disance equals to radius
-        point = Transform::from_xyz(6.0, 0.0, 0.0);
+        let point = Transform::from_xyz(6.0, 0.0, 0.0);
         assert_eq!(
             check_body_collision(
                 Collider {
@@ -120,7 +119,7 @@ mod test {
         );
 
         // matching points
-        point = Transform::from_xyz(0.0, 0.0, 0.0);
+        let point = Transform::from_xyz(0.0, 0.0, 0.0);
         assert_eq!(
             check_body_collision(
                 Collider {
@@ -136,7 +135,7 @@ mod test {
             "Matching points"
         );
 
-        point = Transform::from_xyz(-5.0, 0.0, 0.0);
+        let point = Transform::from_xyz(-5.0, 0.0, 0.0);
         assert_eq!(
             check_body_collision(
                 Collider {
@@ -152,7 +151,7 @@ mod test {
         );
 
         // touching outline, not considered as a collision
-        point = Transform::from_xyz(10.0, 0.0, 0.0);
+        let point = Transform::from_xyz(10.0, 0.0, 0.0);
         assert_eq!(
             check_body_collision(
                 Collider {

@@ -1,12 +1,12 @@
 use bevy::prelude::*;
 use westiny_common::components::{Input, InputFlags, Velocity};
 use westiny_common::metric_dimension::{MeterPerSec, MeterPerSecVec2};
-use westiny_common::utilities::set_rotation_toward_vector;
+use westiny_common::utilities::rotate_toward_point;
 use westiny_common::MoveDirection;
 
 pub fn apply_input(mut query: Query<(&mut Transform, &mut Velocity, &Input)>) {
     for (mut transform, mut velocity, input) in query.iter_mut() {
-        set_rotation_toward_vector(&mut transform, &input.cursor.into_pixel_vec());
+        rotate_toward_point(&mut transform, &input.cursor.into_pixel_vec());
 
         let move_inputs = move_directions_from_input(input);
         *velocity = get_velocity(&transform, &move_inputs);

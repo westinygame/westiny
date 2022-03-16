@@ -3,7 +3,7 @@ pub use command_transformer::transform_commands;
 pub use death::handle_death;
 pub use entity_delete_broadcaster::entity_delete_system_set;
 pub use entity_state_broadcaster::broadcast_entity_state;
-pub use health::handle_damage;
+pub use health::{handle_damage, send_health_update_on_change};
 pub use network_messenger::read_network_messages;
 pub use player_movement::apply_input;
 pub use shooter::weapon_handler_system_set;

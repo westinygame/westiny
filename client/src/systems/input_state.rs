@@ -3,6 +3,7 @@ use crate::resources::StreamId;
 use westiny_common::components::{self, InputFlags};
 use westiny_common::resources::ServerAddress;
 use westiny_common::{metric_dimension::length::MeterVec2, network, serialization::serialize};
+use crate::systems::camera::PlayCamera;
 
 use bevy::input::{keyboard::KeyCode, mouse::MouseButton};
 use bevy::prelude::*;
@@ -77,7 +78,7 @@ fn update_cursor_position(
 
 pub fn handle_user_inputs(
     mut input_qry: Query<&mut components::Input>,
-    camera_query: Query<(&Camera, &GlobalTransform)>,
+    camera_query: Query<(&Camera, &GlobalTransform), With<PlayCamera>>,
     keyboard_input: Res<Input<KeyCode>>,
     mouse_button_input: Res<Input<MouseButton>>,
     windows: Res<Windows>,

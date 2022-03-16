@@ -1,11 +1,11 @@
 use crate::components::{
-    weapon::Holster, weapon::Weapon, BoundingCircle, Client, Input, InputFlags,
+    weapon::Holster, weapon::Weapon, BoundingCircle, Client, Input, InputFlags, Damage
 };
 use crate::resources::{ClientID, ClientRegistry, StreamId};
 use bevy::prelude::{Commands, Query, Res, ResMut, SystemSet, Time, Transform, Vec3};
 use blaminar::simulation::{DeliveryRequirement, TransportResource, UrgencyRequirement};
 use std::f32::consts::PI;
-use westiny_common::entities::spawn_bullet;
+use westiny_common::entities::BulletBundle;
 use westiny_common::metric_dimension::{length::MeterVec2, MeterPerSecVec2};
 use westiny_common::network::{PacketType, PlayerUpdate, ShotEvent};
 use westiny_common::serialization::serialize;
@@ -197,14 +197,14 @@ mod shooter {
                             * -1.0;
                         let velocity = weapon.details.bullet_speed * velocity_direction;
 
-                        spawn_bullet(
-                            &mut commands,
-                            weapon.details.damage,
-                            bullet_transform,
-                            velocity,
-                            time.time_since_startup(),
-                            weapon.bullet_lifespan_sec(),
-                        );
+                        commands
+                            .spawn_bundle(
+                                BulletBundle::new(
+                                    MeterVec2::from_pixel_vec(bullet_transform.translation.truncate()),
+                                    velocity,
+                                    weapon.bullet_lifespan_sec(),
+                                    time.time_since_startup()))
+                            .insert(Damage(weapon.details.damage));
 
                         broadcast_shot_event(
                             &client_registry,

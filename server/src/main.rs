@@ -125,6 +125,12 @@ fn main() {
         .add_system_set(systems::weapon_handler_system_set().label("weapon_handler"))
         .add_system(systems::lifespan_system.label("lifespan"))
         .add_system(systems::respawn_player.label("respawn").after("health"))
+
+        .add_system(
+            systems::send_health_update_on_change
+                .label("send_health_update")
+                .after("respawn")
+        )
         .add_system_set(
             systems::entity_delete_system_set()
                 .label("entity_delete_ss")

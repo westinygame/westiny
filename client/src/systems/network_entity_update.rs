@@ -1,18 +1,41 @@
 use crate::components::{EntityType, NetworkId};
 use crate::entities::{create_player_character, create_this_player, CorpseBundle};
 use crate::resources::PlayerNetworkId;
+use crate::states::AppState;
 use std::collections::HashMap;
 use westiny_common::metric_dimension::length::Meter;
 use westiny_common::network::{EntityState, PlayerDeath};
 
-use bevy::prelude::{Commands, EventReader, Quat, Query, Res, Time, Transform};
+use bevy::prelude::*;
 
+pub fn spawn_this_player(
+    mut commands: Commands,
+    mut entity_states_events: EventReader<Vec<EntityState>>,
+    player_net_id: Res<PlayerNetworkId>,
+    mut app_state: ResMut<State<AppState>>
+) {
+    let maybe_this_player = entity_states_events
+        .iter()
+        .flat_map(|vec| vec.iter())
+        .filter(|state| state.network_id == player_net_id.0)
+        .last();
+
+    if let Some(entity_state) = maybe_this_player {
+        create_this_player(
+            &mut commands,
+            player_net_id.0,
+            entity_state.position.into_transform(Meter(0.0)),
+        );
+        log::debug!("Player spawned at {:?}", entity_state.position);
+        app_state.set(AppState::Play)
+            .expect("Unable to set app state to Play");
+    }
+}
 pub fn update_network_entities(
     mut commands: Commands,
     mut entity_states_events: EventReader<Vec<EntityState>>,
     mut player_death: EventReader<PlayerDeath>,
     mut network_transforms: Query<(&NetworkId, &mut Transform)>,
-    player_net_id: Res<PlayerNetworkId>,
     time: Res<Time>,
 ) {
     let mut entity_states: HashMap<_, _> = entity_states_events
@@ -26,17 +49,6 @@ pub fn update_network_entities(
             update_transform(&mut transform, state);
             entity_states.remove(net_id);
         }
-    }
-
-    // if it is this player
-    if let Some(&new_state) = entity_states.get(&player_net_id.0) {
-        create_this_player(
-            &mut commands,
-            player_net_id.0,
-            new_state.position.into_transform(Meter(0.0)),
-        );
-        log::debug!("Player spawned at {:?}", new_state.position);
-        entity_states.remove(&player_net_id.0);
     }
 
     for (net_id, entity_state) in entity_states {

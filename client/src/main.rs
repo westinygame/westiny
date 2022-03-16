@@ -2,8 +2,6 @@ use serde::Deserialize;
 use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 
-//use crate::resources::GroundTile;
-//use westiny_common::events::{WestinyEvent, WestinyEventReader};
 use crate::resources::ServerAddress;
 use westiny_common::{
     network::{
@@ -22,9 +20,6 @@ mod entities;
 mod resources;
 mod states;
 mod systems;
-
-//#[cfg(test)]
-//mod test_helpers;
 
 fn main() {
     let application_root_dir = {
@@ -86,16 +81,30 @@ fn main() {
         .add_event::<ShotEvent>()
         .add_state(states::AppState::Connect)
         .add_startup_system(resources::initialize_sprite_resource.label("init_sprite_resource"))
-        .add_startup_system(resources::initialize_sprite_resource.label("init_sprite_resource"))
         .add_system_to_stage(CoreStage::PostUpdate, systems::add_sprite_to_new_sprite_id)
         .add_system(entities::tilemap::set_texture_filters_to_nearest) // Boilerplate to tilemap
+
+        // connect state
         .add_system_set(states::connection::connect_state_systems().after(LaminarLabel))
         .add_system_set(
-            SystemSet::on_exit(states::AppState::Connect)
-                .with_system(|| log::debug!("Exitting connect state")),
-        )
+            SystemSet::on_enter(states::AppState::Connect)
+                .with_system(|| log::debug!("Entering Connect AppState")))
+
+        // play init state setup
         .add_system_set(states::play::setup_system_set())
+
+        // play init state
+        .add_system_set(states::play::init_system_set())
+        .add_system_set(
+            SystemSet::on_enter(states::AppState::PlayInit)
+                .with_system(|| log::debug!("Entering PlayInit AppState")))
+
+        // play state
         .add_system_set(states::play::system_set().after(LaminarLabel))
+        .add_system_set(
+            SystemSet::on_enter(states::AppState::Play)
+                .with_system(|| log::debug!("Entering Play AppState")))
+
         .run();
 }
 
@@ -131,3 +140,4 @@ fn get_server_address() -> ServerAddress {
         }
     }
 }
+

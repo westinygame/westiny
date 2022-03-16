@@ -19,21 +19,25 @@ where
     Ok(deserialized)
 }
 
-pub fn set_rotation_toward_vector(
+pub fn rotate_toward_point(
     transform: &mut bevy::transform::components::Transform,
     vector: &bevy::math::Vec2,
 ) {
-    use bevy::math::{Quat, Vec2, Vec3};
     let dir_vec = *vector - transform.translation.truncate();
+    transform.rotation = get_rotation(&dir_vec);
+}
+
+pub fn get_rotation(vector: &bevy::math::Vec2) -> bevy::math::Quat {
+    use bevy::math::{Quat, Vec2, Vec3};
     let angle = {
-        let abs_angle = dir_vec.angle_between(Vec2::new(0.0, -1.0));
-        if dir_vec.x < 0.0 {
+        let abs_angle = vector.angle_between(Vec2::new(0.0, -1.0));
+        if vector.x < 0.0 {
             2.0 * std::f32::consts::PI - abs_angle
         } else {
             abs_angle
         }
     };
-    transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
+    Quat::from_axis_angle(Vec3::Z, angle)
 }
 
 pub fn rotate_vec3_around_z(quat: &bevy::math::Quat, vec: &mut bevy::math::Vec3) {
@@ -45,7 +49,6 @@ pub fn rotate_vec3_around_z(quat: &bevy::math::Quat, vec: &mut bevy::math::Vec3)
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use std::f32::consts::PI;
     use westiny_test::*;
 

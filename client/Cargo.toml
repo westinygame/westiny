@@ -13,7 +13,12 @@ derive-new = "0.5.9"
 log = "0.4.14"
 blaminar = { git = "https://github.com/westinygame/blaminar" }
 bevy_ecs_tilemap = "0.5.0"
+# TODO somehow make bevy-inspector-egui build only when debugging
+bevy-inspector-egui = "0.8.2"
 
 [dev-dependencies]
 westiny_test = { path = "../test"}
 w-bevy_test = { git = "https://github.com/westinygame/w-bevy_test" }
+
+[features]
+debug = []

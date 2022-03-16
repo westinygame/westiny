@@ -27,7 +27,7 @@ impl Default for ServerAddress {
     }
 }
 
-#[derive(Copy, Clone, Serialize, Deserialize, Eq, PartialEq, Debug, Hash)]
+#[derive(Copy, Clone, Serialize, Deserialize, Eq, PartialEq, Debug, Hash, Default)]
 pub struct Seed(pub u64);
 
 impl Display for Seed {

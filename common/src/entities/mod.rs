@@ -1,5 +1,5 @@
 pub use barrel::{place_barrel, BarrelBundle};
-pub use bullet::spawn_bullet;
+pub use bullet::BulletBundle;
 
 mod barrel;
 mod bullet;

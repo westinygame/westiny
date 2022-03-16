@@ -6,6 +6,7 @@ use blaminar::simulation::{
 };
 use westiny_common::network::PacketType::{ConnectionRequest, ConnectionResponse};
 use westiny_common::serialization::{deserialize, serialize};
+use std::time::Duration;
 
 const PLAYER_NAME_MAGIC: &str = "Narancsos_Feco";
 
@@ -14,7 +15,7 @@ fn get_player_name() -> String {
 }
 
 #[derive(Default)]
-pub struct LastRun(std::time::Duration);
+pub struct LastRun(Duration);
 
 pub fn send_connection_request(
     server_addr: Res<ServerAddress>,
@@ -22,7 +23,8 @@ pub fn send_connection_request(
     time: Res<Time>,
     mut last_run: Local<LastRun>,
 ) {
-    if time.time_since_startup() - last_run.0 < std::time::Duration::from_secs(1u64) {
+    // First condition is to avoid 1sec dead time after first system run
+    if last_run.0 != Duration::ZERO && time.time_since_startup() - last_run.0 < Duration::from_secs(1u64) {
         return;
     }
     last_run.0 = time.time_since_startup();
@@ -61,8 +63,8 @@ pub fn receive_connection_response(
                         ConnectionResponse(Ok(init_data)) => {
                             log::info!("Connection established");
                             app_state
-                                .set(AppState::Play)
-                                .expect("Failed to set AppState to Play");
+                                .set(AppState::PlayInit)
+                                .expect("Failed to set AppState to PlayInit");
                             *seed = init_data.seed;
                             player_network_id.0 = init_data.player_network_id;
                             return;
@@ -96,10 +98,51 @@ mod test {
     const SOCKET_ADDRESS: ([u8; 4], u16) = ([127, 0, 0, 1], 9999);
 
     #[test]
-    fn writes_connected_event_on_connection_confirm() {
+    fn sends_connection_request() {
+        std::env::set_var("USER", "abcd1234");
+
+        let expected_payload = serialize(&ConnectionRequest {
+            player_name: "abcd1234".to_string(),
+        }).unwrap();
+
+        println!("Start test");
+        App::new()
+            .add_plugin(bevy::core::CorePlugin)
+            .init_resource::<TransportResource>()
+            .insert_resource(ServerAddress {
+                address: SocketAddr::from(SOCKET_ADDRESS),
+            })
+            .add_assert_system(move |net: Res<TransportResource>| {
+                                    assert_eq!(net.get_messages().len(), 1);
+                                    assert_eq!(
+                                        net.get_messages()[0],
+                                        blaminar::simulation::Message {
+                                            destination: SocketAddr::from(SOCKET_ADDRESS),
+                                            payload: blaminar::Bytes::copy_from_slice(&expected_payload),
+                                            delivery: DeliveryRequirement::ReliableSequenced(None),
+                                            urgency: UrgencyRequirement::OnTick,
+                                        }
+                                    )
+                               })
+            .add_system(send_connection_request)
+            .run();
+    }
+
+    #[inline]
+    fn ok_init_data() -> network::Result<network::ClientInitialData> {
+        Ok(network::ClientInitialData {
+            player_network_id: NetworkId::new(EntityType::Player, 1234),
+            seed: Seed(100),
+        })
+    }
+
+    #[test]
+    fn sets_app_state_and_resources_on_connection_confirm() {
         App::new()
             .add_state(AppState::Connect)
             .init_resource::<TransportResource>()
+            .init_resource::<Seed>()
+            .init_resource::<PlayerNetworkId>()
             .insert_resource(ServerAddress {
                 address: SocketAddr::from(SOCKET_ADDRESS),
             })
@@ -109,39 +152,17 @@ mod test {
                     .unwrap()
                     .into(),
             ))
-            .add_assert_system(assertion::assert_current_state(AppState::InGame(
-                network::ClientInitialData {
-                    player_network_id: NetworkId::new(EntityType::Player, 0),
-                    seed: Seed(100),
-                },
-            )))
-            .add_system(connect_to_server)
-            .run();
-    }
+            .add_assert_system(assertion::assert_current_state(AppState::Play))
+            .add_assert_system(assertion::assert_resource(Seed(100)))
+            .add_assert_system(assertion::assert_resource(PlayerNetworkId(NetworkId::new(EntityType::Player, 1234))))
 
-    #[inline]
-    fn ok_init_data() -> network::Result<network::ClientInitialData> {
-        Ok(network::ClientInitialData {
-            player_network_id: NetworkId::new(EntityType::Player, 0),
-            seed: Seed(100),
-        })
-    }
-
-    #[test]
-    fn sends_connection_request() {
-        App::new()
-            .add_state(AppState::Connect)
-            .init_resource::<TransportResource>()
-            .insert_resource(ServerAddress {
-                address: SocketAddr::from(SOCKET_ADDRESS),
-            })
             .send_events(vec![Some(NetworkSimulationEvent::Message(
                 SocketAddr::from(SOCKET_ADDRESS),
                 serialize(&PacketType::ConnectionResponse(ok_init_data()))
                     .unwrap()
                     .into(),
             ))])
-            .add_system(connect_to_server)
+            .add_system(receive_connection_response)
             .run();
     }
 }
