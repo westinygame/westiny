@@ -12,6 +12,7 @@ pub use sprite::add_sprite_to_new_sprite_id;
 
 //mod audio_player;
 pub mod hud;
+pub mod notification_bar;
 mod network_entity_update;
 mod network_messenger;
 //mod network_entity_delete;

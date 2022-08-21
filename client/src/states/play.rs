@@ -9,6 +9,7 @@ pub fn setup_system_set() -> SystemSet {
         .with_system(systems::build_map)
         .with_system(systems::camera::setup)
         .with_system(systems::hud::setup)
+        .with_system(systems::notification_bar::setup)
         .with_system(initialize_tilemap)
 }
 
