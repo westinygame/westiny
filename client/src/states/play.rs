@@ -54,4 +54,8 @@ pub fn system_set() -> SystemSet {
             systems::hud::update_hud
                 .after("update_player")
             )
+        .with_system(
+            systems::notification_bar::update_notification_bar
+                .after("update_player")
+            )
 }
