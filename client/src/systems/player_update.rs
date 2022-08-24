@@ -7,7 +7,8 @@ use westiny_common::resources::{AudioQueue, SoundId};
 pub fn update_player(
     mut update_events: EventReader<PlayerUpdate>,
     mut player_state: Query<(&mut Health, &mut WeaponInfo), With<Player>>,
-    mut audio: ResMut<AudioQueue>
+    mut audio: ResMut<AudioQueue>,
+    mut notification: EventWriter<PlayerNotification>
 ) {
     let (mut health, mut weapon_info) = player_state.single_mut();
 
@@ -33,7 +34,7 @@ pub fn update_player(
                 weapon_info.bullets_in_magazine = *ammo_in_magazine;
                 log::debug!("Weapon updated");
 
-                //notification.single_write(PlayerNotification { message: format!("Weapon: {}.", name) })
+                notification.send(PlayerNotification { message: format!("Weapon: {}.", name) })
             }
         }
     }
