@@ -1,23 +1,19 @@
-use bevy::prelude::{AssetServer, AssetHandle, Res};
+use bevy::prelude::{AudioSource, AssetServer, Handle, Res, ResMut};
 
+#[derive(Default)]
 pub struct Sounds
 {
-    pub handles: [AssetHandle; 3],
+    pub handles: [Handle<AudioSource>; 3],
 }
 
 pub fn initialize_audio(
     server: Res<AssetServer>,
-    sounds: Res<Sounds>)
+    mut sounds: ResMut<Sounds>)
 {
-    let sounds = {
-        let loader = world.read_resource::<Loader>();
-        Sounds {
-            handles: [
-                server.load("audio/shot.ogg"),
-                server.load("audio/handgun_ready.ogg"),
-                server.load("audio/ouch.ogg"),
-            ]
-        }
-    };
+    sounds.handles = [
+        server.load("audio/shot.ogg"),
+        server.load("audio/handgun_ready.ogg"),
+        server.load("audio/ouch.ogg"),
+    ];
 }
 

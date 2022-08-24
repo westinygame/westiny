@@ -1,4 +1,4 @@
-//pub use audio_player::AudioPlayerSystem;
+pub use audio_player::play_audio;
 pub use input_state::handle_user_inputs;
 //pub use notification_bar::NotificationBarSystemDesc;
 //pub use network_entity_delete::NetworkEntityDeleteSystemDesc;
@@ -10,7 +10,7 @@ pub use player_update::update_player;
 pub use client_connect::{receive_connection_response, send_connection_request};
 pub use sprite::add_sprite_to_new_sprite_id;
 
-//mod audio_player;
+mod audio_player;
 pub mod hud;
 pub mod notification_bar;
 mod network_entity_update;

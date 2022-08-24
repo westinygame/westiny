@@ -8,7 +8,7 @@ pub fn spawn_bullets(
     mut commands: Commands,
     mut shot_events: EventReader<ShotEvent>,
     time: Res<Time>,
-    //audio
+    mut audio: ResMut<AudioQueue>
 ) {
     let event_cnt = shot_events.iter()
         .inspect(|shot| {
@@ -24,7 +24,7 @@ pub fn spawn_bullets(
         .count();
 
         if event_cnt > 0 {
-        //    audio.play(SoundId::SingleShot, 1.0);
+            audio.play(SoundId::SingleShot, 1.0);
         }
 }
 

@@ -72,6 +72,8 @@ fn main() {
         .init_resource::<TransportResource>()
         .init_resource::<resources::SpriteResource>()
         .init_resource::<resources::PlayerNetworkId>()
+        .init_resource::<resources::Sounds>()
+        .init_resource::<resources::AudioQueue>()
         .add_event::<NetworkSimulationEvent>()
         .add_event::<Vec<EntityState>>()
         .add_event::<PlayerUpdate>()
@@ -81,6 +83,7 @@ fn main() {
         .add_event::<ShotEvent>()
         .add_state(states::AppState::Connect)
         .add_startup_system(resources::initialize_sprite_resource.label("init_sprite_resource"))
+        .add_startup_system(resources::initialize_audio.label("init_audio"))
         .add_system_to_stage(CoreStage::PostUpdate, systems::add_sprite_to_new_sprite_id)
         .add_system(entities::tilemap::set_texture_filters_to_nearest) // Boilerplate to tilemap
 

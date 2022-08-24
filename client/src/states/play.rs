@@ -29,6 +29,8 @@ pub fn system_set() -> SystemSet {
             systems::receive_network_messages
                 .label("network_reception"))
         .with_system(
+            systems::play_audio)
+        .with_system(
             systems::update_network_entities
                 .label("update_network_entities")
                 .after("network_reception"))
