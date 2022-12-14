@@ -17,10 +17,10 @@ pub fn broadcast_entity_state(
         let entity_state = network::EntityState {
             network_id: *network_id,
             position: MeterVec2 {
-                x: Meter::from_pixel(transform.translation.x),
-                y: Meter::from_pixel(transform.translation.y),
+                x: Meter::from_pixel(transform.translation().x),
+                y: Meter::from_pixel(transform.translation().y),
             },
-            angle: transform.rotation.to_axis_angle().1,
+            angle: transform.compute_transform().rotation.to_axis_angle().1,
         };
         network_entities.push(entity_state);
     }

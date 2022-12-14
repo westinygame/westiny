@@ -7,6 +7,7 @@ use westiny_common::{
     network::{
         EntityState, NetworkEntityDelete, PlayerDeath, PlayerNotification, PlayerUpdate, ShotEvent,
     },
+    events::{EntityDelete},
     utilities::read_ron,
     NetworkConfig,
 };
@@ -79,6 +80,7 @@ fn main() {
         .add_event::<PlayerUpdate>()
         .add_event::<PlayerDeath>()
         .add_event::<PlayerNotification>()
+        .add_event::<EntityDelete>()
         .add_event::<NetworkEntityDelete>()
         .add_event::<ShotEvent>()
         .add_state(states::AppState::Connect)
@@ -107,6 +109,10 @@ fn main() {
         .add_system_set(
             SystemSet::on_enter(states::AppState::Play)
                 .with_system(|| log::debug!("Entering Play AppState")))
+
+        .add_system_to_stage(
+            CoreStage::PostUpdate,
+            systems::network_entity_delete::delete_entities)
 
         .run();
 }

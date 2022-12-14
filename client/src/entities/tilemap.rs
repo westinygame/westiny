@@ -10,38 +10,66 @@ const CHUNK_SIZE: u32 = 16;
 
 pub fn initialize_tilemap(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut map_query: MapQuery)
+    asset_server: Res<AssetServer>//,
+    //mut map_query: MapQuery
+    )
 {
 
     let texture_handle = asset_server.load("spritesheet.png");
 
+    let tilemap_size = TilemapSize{x: MAP_SIZE, y: MAP_SIZE}; // ? /CHUNK_SIZE?
+
+    // Layer 1
+    let mut tile_storage = TileStorage::empty(tilemap_size);
     let map_entity = commands.spawn().id();
-    let mut map = Map::new(0u16, map_entity);
 
-    let (mut layer_builder, _) = LayerBuilder::new(
+    bevy_ecs_tilemap::helpers::fill_tilemap(
+        TileTexture(0),
+        tilemap_size,
+        TilemapId(map_entity),
         &mut commands,
-        LayerSettings::new(
-            MapSize(MAP_SIZE/CHUNK_SIZE, MAP_SIZE/CHUNK_SIZE),
-            ChunkSize(CHUNK_SIZE, CHUNK_SIZE),
-            TileSize(TILE_SIZE.into_pixel(), TILE_SIZE.into_pixel()),
-            TextureSize(32.0, 32.0),
-        ),
-        0u16,
-        0u16,
-    );
+        &mut tile_storage
+        );
 
-    layer_builder.set_all(TileBundle::default());
 
-    let layer_entity = map_query.build_layer(&mut commands, layer_builder, texture_handle);
-    map.add_layer(&mut commands, 0u16, layer_entity);
+    // let mut map = Map::new(0u16, map_entity);
+
+    // let (mut layer_builder, _) = LayerBuilder::new(
+    //     &mut commands,
+    //     LayerSettings::new(
+    //         MapSize(MAP_SIZE/CHUNK_SIZE, MAP_SIZE/CHUNK_SIZE),
+    //         ChunkSize(CHUNK_SIZE, CHUNK_SIZE),
+    //         TileSize(TILE_SIZE.into_pixel(), TILE_SIZE.into_pixel()),
+    //         TextureSize(32.0, 32.0),
+    //     ),
+    //     0u16,
+    //     0u16,
+    // );
+
+    // layer_builder.set_all(TileBundle::default());
+
+    // let layer_entity = map_query.build_layer(&mut commands, layer_builder, texture_handle);
+    // map.add_layer(&mut commands, 0u16, layer_entity);
+
+    // let offset = -((MAP_SIZE/2u32) as f32 * TILE_SIZE.into_pixel());
+    // commands
+    //     .entity(map_entity)
+    //     .insert(map)
+    //     .insert(Transform::from_xyz(offset - Meter(0.5).into_pixel(), offset + Meter(0.5).into_pixel(), 0.0))
+    //     .insert(GlobalTransform::default());
 
     let offset = -((MAP_SIZE/2u32) as f32 * TILE_SIZE.into_pixel());
     commands
         .entity(map_entity)
-        .insert(map)
-        .insert(Transform::from_xyz(offset - Meter(0.5).into_pixel(), offset + Meter(0.5).into_pixel(), 0.0))
-        .insert(GlobalTransform::default());
+        .insert_bundle(TilemapBundle{
+            grid_size: TilemapGridSize{ x: 16.0, y: 16.0 }, // ??
+            size: tilemap_size,
+            storage: tile_storage,
+            texture: TilemapTexture(texture_handle),
+            tile_size: TilemapTileSize{ x: TILE_SIZE.into_pixel(), y: TILE_SIZE.into_pixel() },
+            transform: Transform::from_xyz(offset - Meter(0.5).into_pixel(), offset + Meter(0.5).into_pixel(), 0.0),
+            ..Default::default()
+            });
 }
 
 pub fn set_texture_filters_to_nearest(

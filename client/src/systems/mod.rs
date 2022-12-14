@@ -1,7 +1,7 @@
 pub use audio_player::play_audio;
 pub use input_state::handle_user_inputs;
 //pub use notification_bar::NotificationBarSystemDesc;
-//pub use network_entity_delete::NetworkEntityDeleteSystemDesc;
+pub use network_entity_delete::delete_entities;
 pub use network_entity_update::{update_network_entities, spawn_this_player};
 pub use network_messenger::receive_network_messages;
 pub use shooter::spawn_bullets;
@@ -15,7 +15,7 @@ pub mod hud;
 pub mod notification_bar;
 mod network_entity_update;
 mod network_messenger;
-//mod network_entity_delete;
+pub mod network_entity_delete;
 //mod notification_bar;
 pub mod camera;
 mod input_state;

@@ -50,23 +50,20 @@ pub fn setup(
             style: Style {
                 align_self: AlignSelf::FlexEnd,
                 position_type: PositionType::Absolute,
-                position: Rect {
+                position: UiRect {
                     top: Val::Px(5.0),
                     right: Val::Px(5.0),
                     ..Default::default()
                 },
                 ..Default::default()
             },
-            text: Text::with_section(
+            text: Text::from_section(
                 "",
                 TextStyle {
                     font: asset_server.load("fonts/carnevalee_freakshow.ttf"),
                     font_size: 15.0,
                     color: Color::WHITE,
-                },
-                Default::default()
-                //<bevy::prelude::TextAlignment as Default>::default()
-                //alignment: TextAlignment::default()
+                }
             ),
             ..Default::default()
         }

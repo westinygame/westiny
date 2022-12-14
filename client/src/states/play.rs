@@ -46,6 +46,11 @@ pub fn system_set() -> SystemSet {
                 .label("shooter")
                 .before("physics"))
         .with_system(
+            systems::lifespan_system
+                .label("lifespan")
+                .before("physics")
+            )
+        .with_system(
             systems::physics
                 .label("physics"))
         .with_system(
@@ -63,4 +68,11 @@ pub fn system_set() -> SystemSet {
             systems::notification_bar::update_notification_bar
                 .after("update_player")
             )
+        /*.with_system(
+            systems::network_entity_delete::delete_entities
+            .label("delete_entities")
+            .after("shooter")
+            .after("lifespan")
+            .after("update_player"))
+        */
 }

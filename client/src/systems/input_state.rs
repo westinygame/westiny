@@ -7,6 +7,7 @@ use crate::systems::camera::PlayCamera;
 
 use bevy::input::{keyboard::KeyCode, mouse::MouseButton};
 use bevy::prelude::*;
+use bevy::render::camera::{RenderTarget};
 use blaminar::prelude::*;
 
 #[derive(Copy, Clone)]
@@ -60,19 +61,21 @@ fn update_cursor_position(
     camera: &Camera,
     camera_transform: &GlobalTransform,
 ) {
-    let wnd = windows.get(camera.window).unwrap();
+    if let RenderTarget::Window(window_id) = camera.target {
+        let wnd = windows.get(window_id).unwrap();
 
-    if let Some(screen_pos) = wnd.cursor_position() {
-        let window_size = Vec2::new(wnd.width() as f32, wnd.height() as f32);
-        let ndc = (screen_pos / window_size) * 2.0 - Vec2::ONE;
+        if let Some(screen_pos) = wnd.cursor_position() {
+            let window_size = Vec2::new(wnd.width() as f32, wnd.height() as f32);
+            let ndc = (screen_pos / window_size) * 2.0 - Vec2::ONE;
 
-        // matrix for undoing the projection and camera transform
-        let ndc_to_world = camera_transform.compute_matrix() * camera.projection_matrix.inverse();
+            // matrix for undoing the projection and camera transform
+            let ndc_to_world = camera_transform.compute_matrix() * camera.projection_matrix().inverse();
 
-        // use it to convert ndc to world-space coordinates
-        let world_pos = ndc_to_world.project_point3(ndc.extend(-1.0)).truncate();
+            // use it to convert ndc to world-space coordinates
+            let world_pos = ndc_to_world.project_point3(ndc.extend(-1.0)).truncate();
 
-        input.cursor = MeterVec2::from_pixel_vec(world_pos);
+            input.cursor = MeterVec2::from_pixel_vec(world_pos);
+        }
     }
 }
 

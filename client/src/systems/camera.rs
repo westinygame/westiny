@@ -7,14 +7,19 @@ pub struct PlayCamera;
 
 
 pub fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    let mut bundle = OrthographicCameraBundle::new_2d();
-    bundle.orthographic_projection.scale = 0.8;
-    commands
-        .spawn_bundle(bundle)
+    commands.spawn_bundle(
+            Camera2dBundle::default())
+            //Camera2dBundle{
+            //    projection: OrthographicProjection{
+            //        scale: 0.8,
+            //        ..default()
+            //    },
+            //    ..default()
+            //})
         .insert(PlayCamera);
 
-    commands
-        .spawn_bundle(UiCameraBundle::default());
+    // commands
+    //     .spawn_bundle(UiCameraBundle::default());
 
         /*
         .with_children(|parent| {
@@ -294,8 +299,8 @@ pub fn follow_player(
 ) {
     if let Some(player_transform) = player_query.iter().next() {
         let mut camera_transform = camera_query.single_mut();
-        camera_transform.translation.x = player_transform.translation.x;
-        camera_transform.translation.y = player_transform.translation.y;
+        camera_transform.translation.x = player_transform.translation().x;
+        camera_transform.translation.y = player_transform.translation().y;
     }
 }
 

@@ -6,19 +6,19 @@ edition = "2021"
 
 [dependencies]
 westiny_common = { path = "../common" }
-bevy = "0.6.1"
+bevy = "0.8.0"
 serde = "1.0.133"
 anyhow = "1.0.52"
 derive-new = "0.5.9"
 log = "0.4.14"
-blaminar = { git = "https://github.com/westinygame/blaminar" }
-bevy_ecs_tilemap = "0.5.0"
+blaminar = { git = "https://github.com/westinygame/blaminar", rev = "v0.3.0" }
+bevy_ecs_tilemap = "0.7.0"
 # TODO somehow make bevy-inspector-egui build only when debugging
-bevy-inspector-egui = "0.8.2"
+bevy-inspector-egui = "0.12.1"
 
 [dev-dependencies]
 westiny_test = { path = "../test"}
-w-bevy_test = { git = "https://github.com/westinygame/w-bevy_test" }
+w-bevy_test = { git = "https://github.com/westinygame/w-bevy_test", rev = "v0.2.0" }
 
 [features]
 debug = []

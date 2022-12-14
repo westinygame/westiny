@@ -48,7 +48,7 @@ pub fn setup(
                 .spawn_bundle(NodeBundle {
                     style: Style {
                         size: Size::new(Val::Percent(100.0), Val::Px(40.0)),
-                        border: Rect::all(Val::Px(2.0)),
+                        border: UiRect::all(Val::Px(2.0)),
                         ..Default::default()
                     },
                     color: Color::rgba(0.23, 0.08, 0.05, 0.7).into(),
@@ -57,13 +57,12 @@ pub fn setup(
                 .with_children(|parent| {
                     parent.spawn_bundle(TextBundle {
                         style: Style {
-                            margin:Rect::all(Val::Px(5.0)),
+                            margin: UiRect::all(Val::Px(5.0)),
                             ..Default::default()
                         },
-                        text: Text::with_section(
+                        text: Text::from_section(
                             "".to_string(),
-                            hud_style.clone(),
-                            Default::default()
+                            hud_style.clone()
                             ),
                         ..Default::default()
                     })
@@ -88,7 +87,7 @@ pub fn setup(
                 .spawn_bundle(NodeBundle {
                     style: Style {
                         size: Size::new(Val::Percent(100.0), Val::Px(40.0)),
-                        border: Rect::all(Val::Px(2.0)),
+                        border: UiRect::all(Val::Px(2.0)),
                         ..Default::default()
                     },
                     color: Color::rgba(0.23, 0.08, 0.05, 0.7).into(),
@@ -97,13 +96,12 @@ pub fn setup(
                 .with_children(|parent| {
                     parent.spawn_bundle(TextBundle {
                         style: Style {
-                            margin:Rect::all(Val::Px(5.0)),
+                            margin: UiRect::all(Val::Px(5.0)),
                             ..Default::default()
                         },
-                        text: Text::with_section(
+                        text: Text::from_section(
                             "",
-                            hud_style,
-                            Default::default(),
+                            hud_style
                         ),
                         ..Default::default()
                     })
