@@ -5,4 +5,4 @@ authors = ["westinygame"]
 edition = "2021"
 
 [dependencies]
-bevy = "0.6.0"
+bevy = "0.9.1"

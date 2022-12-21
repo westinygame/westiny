@@ -1,7 +1,7 @@
 use crate::components::NetworkId;
 use crate::resources::ClientRegistry;
 use bevy::prelude::{
-    Commands, Entity, EventReader, IntoSystem, ParallelSystemDescriptorCoercion, Query, Res,
+    Commands, Entity, EventReader, IntoSystemDescriptor, Query, Res,
     ResMut, SystemSet,
 };
 use blaminar::simulation::{DeliveryRequirement, TransportResource, UrgencyRequirement};
@@ -13,7 +13,6 @@ pub fn entity_delete_system_set() -> SystemSet {
         .label("entity_delete")
         .with_system(
             broadcast_net_id_deletion
-                .system()
                 .label("entity_delete_broadcaster"),
         )
         .with_system(

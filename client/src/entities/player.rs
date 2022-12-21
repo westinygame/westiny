@@ -54,10 +54,10 @@ pub fn create_player_character(
     transform: Transform,
 ) -> Entity {
     commands
-        .spawn_bundle(PlayerCharacterBundle::new(net_id, transform))
+        .spawn(PlayerCharacterBundle::new(net_id, transform))
         .with_children(|parent| {
             // hand with pistol
-            parent.spawn_bundle(SimpleSpriteSheetBundle::new(
+            parent.spawn(SimpleSpriteSheetBundle::new(
                 Transform::from_xyz(Meter(-0.25).into_pixel(), Meter(-0.2).into_pixel(), -0.3), // relative to parent
                 SpriteId::HandWithPistol,
             ));
@@ -69,5 +69,5 @@ pub fn create_this_player(commands: &mut Commands, net_id: NetworkId, transform:
     let entity = create_player_character(commands, net_id, transform);
     commands
         .entity(entity)
-        .insert_bundle(ThisPlayerBundle::new());
+        .insert(ThisPlayerBundle::new());
 }

@@ -37,7 +37,7 @@ impl_trait! { impl Add::add::<Meter> for Meter -> Meter }
 
 const PIXEL_PER_METER: u16 = 32;
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, Eq, PartialEq)]
 pub struct ThinVec<T> {
     pub x: T,
     pub y: T,
@@ -46,8 +46,9 @@ pub struct ThinVec<T> {
 pub mod length {
     use super::*;
     use bevy::math::{Vec2, Vec3};
+    use bevy::prelude::Reflect;
 
-    #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, PartialOrd)]
+    #[derive(Default, Debug, Copy, Clone, Serialize, Deserialize, PartialEq, PartialOrd, Reflect)]
     pub struct Meter(pub f32);
 
     pub type MeterVec2 = ThinVec<Meter>;
@@ -238,13 +239,8 @@ impl MeterPerSecVec2 {
     }
 
     pub fn rotate(&self, rotation: &Quat) -> Self {
-        let corrected_rotation = if rotation.z < 0.0 {
-            rotation.inverse()
-        } else {
-            *rotation
-        };
         Self::from_raw_vec(
-            corrected_rotation
+            rotation
                 .mul_vec3(self.xy().extend(0.0))
                 .truncate(),
         )

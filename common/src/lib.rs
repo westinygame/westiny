@@ -1,4 +1,4 @@
-use blaminar::simulation::laminar::LaminarConfig;
+use blaminar::simulation::LaminarConfig;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::time::Duration;

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::utils::{Instant, Duration};
 
-use westiny_common::network::{PlayerNotification};
+use westiny_common::network::PlayerNotification;
 
 const NOTIFICATION_VISIBILITY: Duration = Duration::from_secs(10);
 
@@ -11,7 +11,7 @@ pub fn update_notification_bar(
     time: Res<Time>
     )
 {
-    let current_time = time.startup() + time.time_since_startup();
+    let current_time = time.startup() + time.elapsed();
 
     let (mut text, mut bar) = notification_display.single_mut();
 
@@ -33,9 +33,9 @@ pub struct NotificationBarVisibility {
     pub visible_until: Instant
 }
 
-pub fn show_message(text: &mut String,  bar: &mut NotificationBarVisibility, message: &String, visible_until: Instant) {
+pub fn show_message(text: &mut String,  bar: &mut NotificationBarVisibility, message: &str, visible_until: Instant) {
     if !text.is_empty() {
-        text.push_str("\n");
+        text.push('\n');
     }
     text.push_str(message);
     bar.visible_until = visible_until;
@@ -45,28 +45,25 @@ pub fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>
 ) {
-    commands.spawn_bundle(
+    commands.spawn(
         TextBundle {
             style: Style {
                 align_self: AlignSelf::FlexEnd,
                 position_type: PositionType::Absolute,
-                position: Rect {
+                position: UiRect {
                     top: Val::Px(5.0),
                     right: Val::Px(5.0),
                     ..Default::default()
                 },
                 ..Default::default()
             },
-            text: Text::with_section(
+            text: Text::from_section(
                 "",
                 TextStyle {
                     font: asset_server.load("fonts/carnevalee_freakshow.ttf"),
                     font_size: 15.0,
                     color: Color::WHITE,
-                },
-                Default::default()
-                //<bevy::prelude::TextAlignment as Default>::default()
-                //alignment: TextAlignment::default()
+                }
             ),
             ..Default::default()
         }

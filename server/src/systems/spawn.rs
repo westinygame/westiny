@@ -4,7 +4,6 @@ use bevy::prelude::*;
 use westiny_common::collision;
 use westiny_common::events::EntityDelete;
 use westiny_common::metric_dimension::length::{Meter, MeterVec2};
-use blaminar::prelude::*;
 
 #[allow(clippy::type_complexity)]
 pub fn respawn_player(
@@ -26,14 +25,14 @@ pub fn respawn_player(
             // has not been removed yet
             // create a new entity that is waiting until respawn time expires.
             commands
-                .spawn()
+                .spawn_empty()
                 .insert(respawn)
                 .insert(eliminate)
                 .insert(net_id)
                 .insert(client);
         } else {
             // we're waiting for respawn time expiration
-            if time.seconds_since_startup() - eliminate.elimination_time_sec
+            if time.elapsed_seconds_f64() - eliminate.elimination_time_sec
                 >= respawn.respawn_duration.as_secs_f64()
             {
                 // if expired
@@ -56,7 +55,6 @@ pub fn spawn_player(
     client_registry: Res<ClientRegistry>,
     gun_resource: Res<GunResource>,
     mut transforms_boundings_query: Query<(&Transform, &components::BoundingCircle)>,
-    mut net: ResMut<TransportResource>,
 ) {
     for spawn_event in spawn_player_ec.iter() {
         if let Some(client) = client_registry.find_client(spawn_event.client.id) {
@@ -92,7 +90,7 @@ fn create_player_entity(
         0.0,
     );
     commands
-        .spawn()
+        .spawn_empty()
         .insert(client)
         .insert(network_id)
         .insert(components::Player)

@@ -80,7 +80,6 @@ mod tests {
     proptest! {
         #[test]
         fn encode_decode(packet in packet_enum_strategy()) {
-            println!("{:?}", &packet);
             assert_eq!(packet, deserialize(&serialize(&packet).unwrap()).unwrap());
         }
     }

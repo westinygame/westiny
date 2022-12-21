@@ -3,7 +3,7 @@ use bevy::app::PluginGroupBuilder;
 use bevy::diagnostic::{
     Diagnostic, DiagnosticId, Diagnostics, FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin,
 };
-use bevy::prelude::{App, IntoSystem, Plugin, PluginGroup, Res, ResMut};
+use bevy::prelude::{App, Plugin, PluginGroup, Res, ResMut};
 use bevy::utils::Duration;
 
 #[derive(Default)]
@@ -11,8 +11,8 @@ pub struct WestinyDiagnosticsPlugin;
 
 impl Plugin for WestinyDiagnosticsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(Self::setup_system.system())
-            .add_system(Self::log_clients.system());
+        app.add_startup_system(Self::setup_system)
+            .add_system(Self::log_clients);
     }
 }
 
@@ -21,7 +21,7 @@ impl WestinyDiagnosticsPlugin {
         DiagnosticId::from_u128(11365578623599151819941644670456314399);
 
     fn log_clients(mut diag: ResMut<Diagnostics>, registry: Res<ClientRegistry>) {
-        diag.add_measurement(Self::CLIENT_DIAG_ID, registry.client_count() as f64);
+        diag.add_measurement(Self::CLIENT_DIAG_ID, || registry.client_count() as f64);
     }
 
     fn setup_system(mut diagnostics: ResMut<Diagnostics>) {
@@ -36,8 +36,8 @@ impl WestinyDiagnosticsPlugin {
 pub struct DiagnosticPlugins;
 
 impl PluginGroup for DiagnosticPlugins {
-    fn build(&mut self, group: &mut PluginGroupBuilder) {
-        group
+    fn build(self) -> PluginGroupBuilder {
+        PluginGroupBuilder::start::<Self>()
             .add(Self)
             .add(LogDiagnosticsPlugin {
                 filter: Some(vec![
@@ -48,7 +48,7 @@ impl PluginGroup for DiagnosticPlugins {
                 wait_duration: Duration::from_secs(3),
             })
             .add(FrameTimeDiagnosticsPlugin::default())
-            .add(WestinyDiagnosticsPlugin::default());
+            .add(WestinyDiagnosticsPlugin::default())
     }
 }
 

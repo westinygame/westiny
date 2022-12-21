@@ -117,11 +117,6 @@ mod test {
 
     fn make_socket_addr(ip: &str, port: u16) -> SocketAddr {
         use std::str::FromStr;
-        println!("IP: {}", ip);
-        let res_ip = IpAddr::from_str(ip);
-        if let Err(err) = res_ip {
-            println!("{}", err);
-        }
         SocketAddr::new(IpAddr::from_str(ip).unwrap(), port)
     }
 
@@ -141,7 +136,7 @@ mod test {
         appl.add_event::<ClientNetworkEvent>()
             .add_event::<NetworkCommand>()
             .insert_resource(client_registry)
-            .insert_resource(resources::NetworkIdSupplier::new)
+            .insert_resource(resources::NetworkIdSupplier::new())
             .add_system(read_network_messages)
             .send_events(vec![Some(params.send_event)]);
         appl

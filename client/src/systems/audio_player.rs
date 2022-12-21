@@ -12,7 +12,7 @@ pub fn play_audio(
     if let Some(sound_id) = queue.sound
     {
         let handle = &sounds.handles[sound_id as usize];
-        audio.play(handle.clone())
+        audio.play(handle.clone());
     }
 
     queue.sound = None

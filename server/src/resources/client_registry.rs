@@ -16,7 +16,7 @@ pub struct ClientHandle {
     pub player_name: PlayerName,
 }
 
-#[derive(Debug)]
+#[derive(Debug, bevy::prelude::Resource)]
 pub struct ClientRegistry {
     max_slots: usize,
     next_id: u32,

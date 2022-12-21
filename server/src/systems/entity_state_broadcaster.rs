@@ -3,7 +3,7 @@ use crate::resources::{ClientRegistry, StreamId};
 use bevy::prelude::{Query, Res, ResMut, GlobalTransform};
 use blaminar::simulation::{DeliveryRequirement, TransportResource, UrgencyRequirement};
 use westiny_common::metric_dimension::length::{Meter, MeterVec2};
-use westiny_common::{network, serialization::serialize};
+use westiny_common::{network, serialization::serialize, utilities::get_angle};
 
 /// This system is responsible for sending the transform of all the entities that has NetworkID
 /// to every connected clients
@@ -17,10 +17,10 @@ pub fn broadcast_entity_state(
         let entity_state = network::EntityState {
             network_id: *network_id,
             position: MeterVec2 {
-                x: Meter::from_pixel(transform.translation.x),
-                y: Meter::from_pixel(transform.translation.y),
+                x: Meter::from_pixel(transform.translation().x),
+                y: Meter::from_pixel(transform.translation().y),
             },
-            angle: transform.rotation.to_axis_angle().1,
+            angle: get_angle(transform.to_scale_rotation_translation().1),
         };
         network_entities.push(entity_state);
     }

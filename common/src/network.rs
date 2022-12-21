@@ -75,7 +75,7 @@ pub enum PlayerUpdate {
     },
 }
 
-#[derive(Copy, Clone, Serialize, Deserialize, Debug, PartialEq)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
 pub enum ErrorKind {
     AlreadyConnected,
     Other,
@@ -92,7 +92,7 @@ impl Display for ErrorKind {
     }
 }
 
-#[derive(Copy, Clone, Debug, Serialize, Deserialize, new, PartialEq)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize, new, Eq, PartialEq)]
 pub struct Error {
     error_kind: ErrorKind,
 }
@@ -106,3 +106,4 @@ impl Display for Error {
 impl std::error::Error for Error {}
 
 pub type Result<T> = std::result::Result<T, Error>;
+

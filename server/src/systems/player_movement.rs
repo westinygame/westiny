@@ -4,12 +4,12 @@ use westiny_common::metric_dimension::{MeterPerSec, MeterPerSecVec2};
 use westiny_common::utilities::rotate_toward_point;
 use westiny_common::MoveDirection;
 
-pub fn apply_input(mut query: Query<(&mut Transform, &mut Velocity, &Input)>) {
-    for (mut transform, mut velocity, input) in query.iter_mut() {
+pub fn apply_input(mut query: Query<(&GlobalTransform, &mut Transform, &mut Velocity, &Input)>) {
+    for (global_transform, mut transform, mut velocity, input) in query.iter_mut() {
         rotate_toward_point(&mut transform, &input.cursor.into_pixel_vec());
 
         let move_inputs = move_directions_from_input(input);
-        *velocity = get_velocity(&transform, &move_inputs);
+        *velocity = get_velocity(&global_transform.to_scale_rotation_translation().1, &move_inputs);
     }
 }
 
@@ -32,7 +32,7 @@ fn move_directions_from_input(input: &Input) -> Vec<MoveDirection> {
 
 const PLAYER_MAX_WALK_SPEED: MeterPerSec = MeterPerSec(4.0);
 
-fn get_velocity<'a, I>(transform: &Transform, move_inputs: I) -> Velocity
+fn get_velocity<'a, I>(rotation: &Quat, move_inputs: I) -> Velocity
 where
     I: IntoIterator<Item = &'a MoveDirection>,
 {
@@ -46,7 +46,7 @@ where
         );
 
     let avg_vec = sum / (cnt as f32);
-    Velocity(avg_vec.rotate(&transform.rotation))
+    Velocity(avg_vec.rotate(rotation))
 }
 
 fn as_vector2(move_dir: MoveDirection) -> MeterPerSecVec2 {
@@ -95,7 +95,7 @@ mod test {
                     let inputs = $move_dirs;
                     let (exp_x, exp_y) = $expected;
 
-                    let velocity = get_velocity(&transform, &inputs);
+                    let velocity = get_velocity(&transform.rotation, &inputs);
 
                     assert_delta!(exp_x.0, velocity.0.x.0, 0.00001);
                     assert_delta!(exp_y.0, velocity.0.y.0, 0.00001);
