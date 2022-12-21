@@ -9,8 +9,8 @@ pub enum StreamId {
     PlayerDeath,
 }
 
-impl Into<Option<u8>> for StreamId {
-    fn into(self) -> Option<u8> {
-        Some(self as u8)
+impl From<StreamId> for Option<u8> {
+    fn from(id: StreamId) -> Option<u8> {
+        Some(id as u8)
     }
 }

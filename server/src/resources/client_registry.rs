@@ -8,6 +8,7 @@ use westiny_common::PlayerName;
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
 pub struct ClientID(pub u32);
 
+#[derive(Debug)]
 pub struct ClientHandle {
     pub id: ClientID,
     pub addr: SocketAddr,
@@ -15,6 +16,7 @@ pub struct ClientHandle {
     pub player_name: PlayerName,
 }
 
+#[derive(Debug, bevy::prelude::Resource)]
 pub struct ClientRegistry {
     max_slots: usize,
     next_id: u32,
@@ -50,7 +52,7 @@ impl ClientRegistry {
             return Err(AddError::ServerIsFull);
         }
 
-        match self.find_by_addr_or_name(&addr, player_name) {
+        match self.find_by_addr_or_name(addr, player_name) {
             Some(h) if h.player_name.0 == player_name && &h.addr == addr => Ok(h.id),
             Some(_) => Err(AddError::Unauthorized),
             None => Ok(self.add_new_client(*addr, player_name)),
@@ -87,7 +89,7 @@ impl ClientRegistry {
         let id = ClientID(self.next_id);
         self.next_id += 1;
         self.clients.push(ClientHandle {
-            id: id,
+            id,
             addr,
             player_name: PlayerName(player_name.into()),
         });
@@ -138,7 +140,9 @@ mod test {
         assert_eq!(handle.addr, address);
         assert_eq!(handle.player_name.0, "NariFeco");
 
-        let handle_by_addr = reg.find_by_addr(&address).expect("client by address is not found");
+        let handle_by_addr = reg
+            .find_by_addr(&address)
+            .expect("client by address is not found");
         assert_eq!(handle.player_name, handle_by_addr.player_name);
         assert_eq!(handle.id, handle_by_addr.id);
         assert_eq!(handle.addr, handle_by_addr.addr);

@@ -1,11 +1,4 @@
-use amethyst::ecs::prelude::{Component, NullStorage};
+use bevy::ecs::component::Component;
 
-#[derive(Default)]
+#[derive(Component)]
 pub struct Projectile;
-
-impl Component for Projectile
-{
-    type Storage = NullStorage<Self>;
-}
-
-

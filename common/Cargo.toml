@@ -1,12 +1,11 @@
 [package]
 name = "westiny_common"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Abel Suranyi"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
-amethyst = "0.15.3"
-amethyst_test = "0.15.3"
+bevy = "0.9.1"
 serde = "1.0.120"
 derive-new = "0.5.8"
 bitflags = "1.2.1"
@@ -17,7 +16,9 @@ log = "0.4.14"
 ron = "0.6.4"
 num-traits = "0.2"
 num-derive = "0.3"
+blaminar = { git = "https://github.com/westinygame/blaminar", rev = "v0.4.1" }
 
 [dev-dependencies]
 proptest = "0.10.1"
 westiny_test = { path = "../test" }
+w-bevy_test = { git = "https://github.com/westinygame/w-bevy_test", rev = "v0.3.0" }

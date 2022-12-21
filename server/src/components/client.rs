@@ -1,18 +1,8 @@
 use crate::resources::ClientID;
+use bevy::ecs::component::Component;
 use derive_new::new;
-use amethyst::core::ecs::{Component, VecStorage};
 
-#[derive(new, Copy, Clone, Debug)]
+#[derive(Copy, Clone, new, Component)]
 pub struct Client {
-    pub id: ClientID
-}
-
-impl Component for Client {
-    type Storage = VecStorage<Self>;
-}
-
-impl Client {
-    pub fn id(&self) -> &ClientID {
-        &self.id
-    }
+    pub id: ClientID,
 }

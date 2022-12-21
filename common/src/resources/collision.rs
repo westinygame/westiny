@@ -1,34 +1,20 @@
-use amethyst::ecs::Entity;
-use amethyst::core::math::Vector2;
-use crate::metric_dimension::length::Meter;
+use crate::metric_dimension::length::MeterVec2;
+use bevy::prelude::{Entity, Resource};
 
-pub struct Collision
-{
+pub struct Collision {
     pub collider: Entity, // moving
     pub collidee: Entity,
-    pub vector: Vector2<Meter>,
+    pub vector: MeterVec2,
 }
 
+#[derive(Default, Resource)]
 pub struct Collisions(pub Vec<Collision>);
 
-impl Default for Collisions {
-    fn default() -> Self {
-        Collisions(Vec::new())
-    }
-}
-
-pub struct ProjectileCollision
-{
+pub struct ProjectileCollision {
     pub projectile: Entity,
     pub target: Entity,
-    pub vector: Vector2<Meter>,
+    pub vector: MeterVec2,
 }
 
+#[derive(Default, Resource)]
 pub struct ProjectileCollisions(pub Vec<ProjectileCollision>);
-
-impl Default for ProjectileCollisions {
-    fn default() -> Self {
-        ProjectileCollisions(Vec::new())
-    }
-}
-

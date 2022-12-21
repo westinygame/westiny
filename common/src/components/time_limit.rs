@@ -1,20 +1,13 @@
-
-use amethyst::ecs::prelude::{Component, DenseVecStorage};
-use std::time::Duration;
 use crate::metric_dimension::Second;
+use bevy::ecs::component::Component;
+use std::time::Duration;
 
-#[derive(Debug)]
-pub struct Lifespan
-{
+#[derive(Debug, Component)]
+pub struct Lifespan {
     pub living_until: Duration,
 }
 
-impl Component for Lifespan {
-    type Storage = DenseVecStorage<Self>;
-}
-
-impl Lifespan
-{
+impl Lifespan {
     pub fn new(secs_to_live: Second, timing_start: Duration) -> Self {
         Lifespan {
             living_until: timing_start + secs_to_live.into_duration(),

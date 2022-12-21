@@ -2,11 +2,23 @@
 name = "westiny"
 version = "0.1.0"
 authors = ["Domonkos Suranyi <domonkos.suranyi@protonmail.com>"]
-edition = "2018"
+edition = "2021"
 readme = "README.md"
 license-file = "LICENSE"
 
 [workspace]
-members = [ ".", "server", "common", "client", "test"]
+members = [
+    ".",
+    "server",
+    "client",
+    "common",
+    "test"
+]
 # Add everything to default-members as well, e.g. cargo test will execute them as well.
-default-members = [ ".", "server", "common", "client", "test"]
+default-members = [
+    ".",
+    "server",
+    "client",
+    "common",
+    "test"
+]

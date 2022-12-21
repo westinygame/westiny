@@ -1,12 +1,8 @@
-use amethyst::ecs::prelude::{Component, DenseVecStorage};
 use crate::metric_dimension::length::Meter;
+use bevy::prelude::*;
 
-#[derive(Debug)]
+#[derive(Default, Copy, Clone, Debug, Component, Reflect)]
+#[reflect(Component)]
 pub struct BoundingCircle {
     pub radius: Meter,
 }
-
-impl Component for BoundingCircle {
-    type Storage = DenseVecStorage<Self>;
-}
-

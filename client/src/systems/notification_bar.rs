@@ -1,43 +1,71 @@
-use amethyst::
+use bevy::prelude::*;
+use bevy::utils::{Instant, Duration};
+
+use westiny_common::network::PlayerNotification;
+
+const NOTIFICATION_VISIBILITY: Duration = Duration::from_secs(10);
+
+pub fn update_notification_bar(
+    mut notifications: EventReader<PlayerNotification>,
+    mut notification_display: Query<(&mut Text, &mut NotificationBarVisibility)>,
+    time: Res<Time>
+    )
 {
-    core::Time,
-    ecs::{System, SystemData, ReadExpect, WriteExpect, WriteStorage},
-    ecs::shrev::{ReaderId, EventChannel},
-    ui::UiText,
-};
-use amethyst::derive::SystemDesc;
-use derive_new::new;
+    let current_time = time.startup() + time.elapsed();
 
-use crate::resources::{NotificationBar};
-use westiny_common::network::{PlayerNotification};
+    let (mut text, mut bar) = notification_display.single_mut();
 
-#[derive(SystemDesc, new)]
-#[system_desc(name(NotificationBarSystemDesc))]
-pub struct NotificationBarSystem {
-    #[system_desc(event_channel_reader)]
-    notification_reader: ReaderId<PlayerNotification>,
+    for notification in notifications.iter() {
+        log::info!("PlayerNotification: {}", notification.message);
+        show_message(&mut text.sections[0].value, &mut bar, &notification.message, current_time + NOTIFICATION_VISIBILITY);
+    }
+
+    if current_time > bar.visible_until {
+        text.sections[0].value = "".to_string();
+    }
 }
 
-const NOTIFICATION_VISIBILITY_SECONDS: f64 = 10.0;
 
-impl<'s> System<'s> for NotificationBarSystem {
-    type SystemData = (
-        WriteExpect<'s, NotificationBar>,
-        WriteStorage<'s, UiText>,
-        ReadExpect<'s, EventChannel<PlayerNotification>>,
-        ReadExpect<'s, Time>
-        );
+// TODO Each message could be a separate entity with its own Lifespan component...
 
-    fn run(&mut self, (mut bar, mut ui_texts, notifications, time): Self::SystemData)
-    {
-        let current_time = time.absolute_time_seconds();
-        for notification in notifications.read(&mut self.notification_reader) {
-            log::info!("PlayerNotification: {}", notification.message);
-            bar.show_message(&notification.message, &mut ui_texts, current_time + NOTIFICATION_VISIBILITY_SECONDS);
-        }
+#[derive(Component)]
+pub struct NotificationBarVisibility {
+    pub visible_until: Instant
+}
 
-        if current_time > bar.visible_until_sec {
-            bar.hide(&mut ui_texts);
-        }
+pub fn show_message(text: &mut String,  bar: &mut NotificationBarVisibility, message: &str, visible_until: Instant) {
+    if !text.is_empty() {
+        text.push('\n');
     }
+    text.push_str(message);
+    bar.visible_until = visible_until;
+}
+
+pub fn setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>
+) {
+    commands.spawn(
+        TextBundle {
+            style: Style {
+                align_self: AlignSelf::FlexEnd,
+                position_type: PositionType::Absolute,
+                position: UiRect {
+                    top: Val::Px(5.0),
+                    right: Val::Px(5.0),
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            text: Text::from_section(
+                "",
+                TextStyle {
+                    font: asset_server.load("fonts/carnevalee_freakshow.ttf"),
+                    font_size: 15.0,
+                    color: Color::WHITE,
+                }
+            ),
+            ..Default::default()
+        }
+    ).insert(NotificationBarVisibility{visible_until: Instant::now()});
 }

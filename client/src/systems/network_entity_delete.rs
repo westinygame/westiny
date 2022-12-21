@@ -1,50 +1,34 @@
-use derive_new::new;
-use amethyst::ecs::{System, SystemData, Entities};
-use amethyst::derive::SystemDesc;
-use amethyst::shrev::{ReaderId, EventChannel};
-
 use westiny_common::events::EntityDelete;
 use westiny_common::network::NetworkEntityDelete;
-use amethyst::core::ecs::{ReadStorage, Join, Entity, Read};
 use westiny_common::components::NetworkId;
+use bevy::prelude::{Commands, EventReader, Entity, Query};
 
-#[derive(SystemDesc, new)]
-#[system_desc(name(NetworkEntityDeleteSystemDesc))]
-pub struct NetworkEntityDeleteSystem {
-    #[system_desc(event_channel_reader)]
-    reader_delete: ReaderId<EntityDelete>,
+pub fn delete_entities(mut commands: Commands,
+                   mut entity_delete_ec: EventReader<EntityDelete>,
+                   mut net_entity_delete_ec: EventReader<NetworkEntityDelete>,
+                   network_ids: Query<(Entity, &NetworkId)>) {
+    let mut deletions: Vec<Entity> = entity_delete_ec.iter()
+        .map(|del| del.entity_id)
+        .collect();
 
-    #[system_desc(event_channel_reader)]
-    reader_network_delete: ReaderId<NetworkEntityDelete>,
-}
+    let net_deletions: Vec<NetworkId> = net_entity_delete_ec.iter()
+        .map(|del| del.network_id)
+        .collect();
 
-impl<'s> System<'s> for NetworkEntityDeleteSystem {
-    type SystemData = (
-        Read<'s, EventChannel<EntityDelete>>,
-        Read<'s, EventChannel<NetworkEntityDelete>>,
-        ReadStorage<'s, NetworkId>,
-        Entities<'s>);
+    network_ids.iter()
+        .filter(|(_, net_id)| net_deletions.contains(net_id))
+        .for_each(|(entity, _)| deletions.push(entity));
 
-    fn run(&mut self, (entity_deletions, net_entity_deletions, network_ids, entities): Self::SystemData) {
-        let net_deletions: Vec<NetworkId> = net_entity_deletions.read(&mut self.reader_network_delete)
-            .map(|del| del.network_id)
-            .collect();
+    for entity_id in deletions.iter() {
+        commands.entity(*entity_id).despawn();
+    }
 
-        let mut deletions: Vec<Entity> = entity_deletions.read(&mut self.reader_delete)
-            .map(|del| del.entity_id)
-            .collect();
-
-        for (net_id, entity) in (&network_ids, &entities).join() {
-            if net_deletions.contains(net_id) {
-                deletions.push(entity);
-            }
+    // for deduplication -> bevy crashes if despawn is called on a nonexistent entity
+    let mut deleted: Vec<Entity> = vec![];
+    for entity_id in deletions.iter() {
+        if !deleted.contains(entity_id) {
+            commands.entity(*entity_id).despawn();
+            deleted.push(*entity_id);
         }
-
-        deletions.iter()
-            // delete
-            .map(|entity| entities.delete(*entity))
-            // log errors
-            .filter_map(|result| result.err())
-            .for_each(|err| log::error!("Entity could not be deleted {}", err));
     }
 }

@@ -1,20 +1,19 @@
 (
-    axes: {
-        Zoom: MouseWheel(horizontal: false),
+    keyboard: {
+        Forward: [ [KeyCode(W)] ],
+        Backward: [ [KeyCode(S)] ],
+        StrafeLeft: [ [KeyCode(A)] ],
+        StrafeRight: [ [KeyCode(D)] ],
+        Run: [ [KeyCode(LShift)] ],
+        Reload: [ [KeyCode(R)] ],
+        Select1: [ [KeyCode(Key1)] ],
+        Select2: [ [KeyCode(Key2)] ],
+        Select3: [ [KeyCode(Key3)] ],
+        Select4: [ [KeyCode(Key4)] ],
+        Select5: [ [KeyCode(Key5)] ],
     },
-    actions: {
-        Forward: [ [Key(W)] ],
-        Backward: [ [Key(S)] ],
-        StrafeLeft: [ [Key(A)] ],
-        StrafeRight: [ [Key(D)] ],
+    mouse: {
         Shoot: [ [Mouse(Left)] ],
         Use: [ [Mouse(Right)] ],
-        Run: [ [Key(LShift)] ],
-        Reload: [ [Key(R)] ],
-        Select1: [ [Key(Key1)] ],
-        Select2: [ [Key(Key2)] ],
-        Select3: [ [Key(Key3)] ],
-        Select4: [ [Key(Key4)] ],
-        Select5: [ [Key(Key5)] ],
     },
 )

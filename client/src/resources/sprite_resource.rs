@@ -1,52 +1,68 @@
-use amethyst::prelude::*;
-use amethyst::renderer::{ImageFormat, SpriteSheet, SpriteSheetFormat, SpriteRender, Texture};
-use amethyst::assets::{Handle, Loader, AssetStorage};
-use westiny_common::resources::SpriteId;
+use crate::components::SpriteId;
+use crate::resources;
+use bevy::prelude::*;
+use serde::Deserialize;
+use westiny_common::utilities::read_ron;
 
-#[derive(Clone)]
+#[derive(Clone, Default, Resource)]
 pub struct SpriteResource {
-    pub sheet: Handle<SpriteSheet>
+    pub sprites: Handle<TextureAtlas>,
 }
 
-
-
 impl SpriteResource {
-    pub fn sprite_render_for(&self, id: SpriteId) -> SpriteRender {
-        self.sprite_render_at_index(id as usize)
+    pub fn sprite_for(&self, id: SpriteId) -> TextureAtlasSprite {
+        self.sprite_at_index(id as usize)
     }
 
-    fn sprite_render_at_index(&self, index: usize) -> SpriteRender {
-        SpriteRender {
-            sprite_sheet: self.sheet.clone(),
-            sprite_number: index
+    fn sprite_at_index(&self, index: usize) -> TextureAtlasSprite {
+        TextureAtlasSprite {
+            index,
+            ..Default::default()
         }
     }
 }
 
-pub fn initialize_sprite_resource(world: &mut World) -> SpriteResource
-{
-    let res = SpriteResource { sheet: load_sprite_sheet(world) };
-    world.insert(res.clone());
-    res
+#[derive(Deserialize)]
+pub struct SpriteRect {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
 }
 
-fn load_sprite_sheet(world: &mut World) -> Handle<SpriteSheet> {
-    let texture_handle = {
-        let loader = world.read_resource::<Loader>();
-        let texture_storage = world.read_resource::<AssetStorage<Texture>>();
-        loader.load(
-            "spritesheet.png",
-            ImageFormat::default(),
-            (),
-            &texture_storage,
-        )
-    };
-    let loader = world.read_resource::<Loader>();
-    let sprite_sheet_store = world.read_resource::<AssetStorage<SpriteSheet>>();
-    loader.load(
-        "spritesheet.ron",
-        SpriteSheetFormat(texture_handle),
-        (),
-        &sprite_sheet_store,
-    )
+#[derive(Deserialize)]
+pub struct SpriteManifest {
+    pub texture_width: f32,
+    pub texture_height: f32,
+    pub sprites: Vec<SpriteRect>,
+}
+
+pub fn initialize_sprite_resource(
+    mut sprite_resource: ResMut<SpriteResource>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    asset_server: Res<AssetServer>,
+    res: Res<resources::ResourcesDir>,
+) {
+    let texture_handle = asset_server.load(res.crate_resources.join("spritesheet.png"));
+
+    let manifest =
+        read_ron::<SpriteManifest>(&res.crate_resources.join("spritesheet.ron")).unwrap();
+
+    let mut texture_atlas = TextureAtlas::new_empty(
+        texture_handle,
+        Vec2::new(manifest.texture_width, manifest.texture_height),
+    );
+
+    manifest
+        .sprites
+        .iter()
+        .map(|rect| bevy::math::Rect {
+            min: Vec2::new(rect.x, rect.y),
+            max: Vec2::new(rect.x + rect.width, rect.y + rect.height),
+        })
+        .for_each(|rect| {
+            texture_atlas.add_texture(rect);
+        });
+
+    sprite_resource.sprites = texture_atlases.add(texture_atlas);
 }

@@ -1,42 +1,44 @@
-use amethyst::ecs::{Component, DenseVecStorage};
-use std::time::Duration;
-pub use weapon_details::*;
-use crate::resources::weapon::{GunResource, GunId};
 use crate::metric_dimension::Second;
+use crate::resources::weapon::{GunId, GunResource};
+use bevy::ecs::component::Component;
+use std::time::Duration;
+
+pub use weapon_details::*;
 
 const NUMBER_OF_SLOTS: usize = 3;
 
 /// This is the first approach of the inventory. For now it stores fix number of guns
 #[derive(Component)]
-#[storage(DenseVecStorage)]
 pub struct Holster {
     guns: [(Weapon, &'static str); NUMBER_OF_SLOTS],
-    selected: usize
+    selected: usize,
 }
 
 impl Holster {
     pub fn new(gun_resource: &GunResource) -> Self {
         let guns = [
-            (Weapon::new(gun_resource.get_gun(GunId::Revolver)), "Revolver"),
+            (
+                Weapon::new(gun_resource.get_gun(GunId::Revolver)),
+                "Revolver",
+            ),
             (Weapon::new(gun_resource.get_gun(GunId::Shotgun)), "Shotgun"),
-            (Weapon::new(gun_resource.get_gun(GunId::Rifle)), "Rifle")
+            (Weapon::new(gun_resource.get_gun(GunId::Rifle)), "Rifle"),
         ];
 
         Holster { guns, selected: 0 }
     }
 
     pub fn new_with_guns(guns: [(Weapon, &'static str); NUMBER_OF_SLOTS]) -> Self {
-        Holster {
-            guns,
-            selected: 0
-        }
+        Holster { guns, selected: 0 }
     }
 
     pub fn switch(&mut self, slot: usize) -> Option<&'static str> {
         if let Some(newly_selected) = self.guns.get(slot) {
             self.selected = slot;
             Some(newly_selected.1)
-        } else { None }
+        } else {
+            None
+        }
     }
 
     pub fn active_slot(&self) -> usize {
@@ -54,7 +56,7 @@ impl Holster {
 
 pub struct Weapon {
     /// Time::absolute_time()
-    pub last_shot_time: f64,
+    pub last_shot_time: std::time::Duration,
     /// Content of the weapon magazine
     pub bullets_left_in_magazine: u32,
     /// When reload is started. Defined only while reloading.
@@ -68,7 +70,7 @@ pub struct Weapon {
 impl Weapon {
     pub fn new(details: WeaponDetails) -> Self {
         Weapon {
-            last_shot_time: 0.0,
+            last_shot_time: std::time::Duration::ZERO,
             bullets_left_in_magazine: details.magazine_size,
             reload_started_at: None,
             input_lifted: true,
@@ -76,12 +78,12 @@ impl Weapon {
         }
     }
 
-    pub fn is_allowed_to_shoot(&self, current_absolute_time: f64) -> bool {
-        let shoot_interval = 1.0 / self.details.fire_rate as f64;
+    pub fn is_allowed_to_shoot(&self, current_absolute_time: std::time::Duration) -> bool {
+        let shoot_interval = std::time::Duration::from_secs_f32(1.0 / self.details.fire_rate);
         let need_input_press = match self.details.shot {
             Shot::Single => true,
             Shot::Burst(_) => true,
-            Shot::Auto => false
+            Shot::Auto => false,
         };
         let input_ok: bool = !need_input_press || self.input_lifted;
 
@@ -101,11 +103,12 @@ impl Weapon {
 }
 
 mod weapon_details {
-    use serde::Deserialize;
     use crate::metric_dimension::length::Meter;
     use crate::metric_dimension::{MeterPerSec, Second};
+    use bevy::reflect::TypeUuid;
+    use serde::Deserialize;
 
-    #[derive(Debug, PartialEq, Deserialize, Clone)]
+    #[derive(Debug, Eq, PartialEq, Deserialize, Clone)]
     pub enum Shot {
         /// one shot per click (even when player holds down the button)
         Single,
@@ -114,10 +117,11 @@ mod weapon_details {
         Burst(u32),
         /// constant shooting, it will shoot while mouse button held down
         #[allow(dead_code)] // Please remove this allow when using Auto
-        Auto
+        Auto,
     }
 
-    #[derive(Deserialize, Clone, PartialEq)]
+    #[derive(Deserialize, Clone, PartialEq, TypeUuid)]
+    #[uuid = "d8653dbe-c8a2-46a0-9e64-a7eeeb61bc7f"]
     pub struct WeaponDetails {
         /// Fire rate per seconds [1/s]
         pub fire_rate: f32,

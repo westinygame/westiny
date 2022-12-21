@@ -1,88 +1,86 @@
-use amethyst::{
-    derive::SystemDesc,
-    ecs::{System, SystemData},
-    shrev::ReaderId,
-    network::simulation::NetworkSimulationEvent,
+use crate::resources::{PlayerNetworkId, Seed, ServerAddress};
+use crate::states::AppState;
+use bevy::prelude::{EventReader, Local, Res, ResMut, State, Time};
+use blaminar::simulation::{
+    DeliveryRequirement, NetworkSimulationEvent, TransportResource, UrgencyRequirement,
 };
-use amethyst::core::ecs::{Read, Write};
-use amethyst::core::ecs::shrev::EventChannel;
-use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
-use westiny_common::events::AppEvent;
-use amethyst::core::Time;
+use westiny_common::network::PacketType::{ConnectionRequest, ConnectionResponse};
+use westiny_common::serialization::{deserialize, serialize};
 use std::time::Duration;
-use westiny_common::{network, deserialize, serialize};
-use westiny_common::resources::ServerAddress;
 
-const RUN_EVERY_N_SEC: u64 = 1;
 const PLAYER_NAME_MAGIC: &str = "Narancsos_Feco";
 
 fn get_player_name() -> String {
-    std::env::var("USER").unwrap_or(PLAYER_NAME_MAGIC.to_string())
+    std::env::var("USER").unwrap_or_else(|_| PLAYER_NAME_MAGIC.to_string())
 }
 
-#[derive(SystemDesc)]
-#[system_desc(name(ClientConnectSystemDesc))]
-pub struct ClientConnectSystem {
-    #[system_desc(event_channel_reader)]
-    reader: ReaderId<NetworkSimulationEvent>,
+#[derive(Default)]
+pub struct LastRun(Duration);
 
-    #[system_desc(skip)]
-    last_run: Duration,
-}
-
-impl ClientConnectSystem {
-    fn new(reader: ReaderId<NetworkSimulationEvent>) -> Self {
-        ClientConnectSystem {
-            reader,
-            last_run: Duration::default()
-        }
+pub fn send_connection_request(
+    server_addr: Res<ServerAddress>,
+    mut net: ResMut<TransportResource>,
+    time: Res<Time>,
+    mut last_run: Local<LastRun>,
+) {
+    // First condition is to avoid 1sec dead time after first system run
+    if last_run.0 != Duration::ZERO && time.elapsed() - last_run.0 < Duration::from_secs(1u64) {
+        return;
     }
+    last_run.0 = time.elapsed();
+
+    log::info!("Trying to connect to server: {:?}", server_addr.address);
+    let msg = serialize(&ConnectionRequest {
+        player_name: get_player_name(),
+    })
+    .expect("ConnectionRequest could not be serialized");
+    net.send_with_requirements(
+        server_addr.address,
+        &msg,
+        DeliveryRequirement::ReliableSequenced(None),
+        UrgencyRequirement::OnTick,
+    );
 }
 
-impl<'s> System<'s> for ClientConnectSystem {
-    type SystemData = (
-        Read<'s, ServerAddress>,
-        Read<'s, Time>,
-        Write<'s, TransportResource>,
-        Read<'s, EventChannel<NetworkSimulationEvent>>,
-        Write<'s, EventChannel<AppEvent>>
-    );
-
-    fn run(&mut self, (server, time, mut net, net_event_ch, mut app_event): Self::SystemData) {
-        let time_since_start = time.absolute_time();
-
-        if (time_since_start-self.last_run) >= Duration::from_secs(RUN_EVERY_N_SEC) {
-            self.last_run = time_since_start;
-                let msg = serialize(&network::PacketType::ConnectionRequest { player_name: get_player_name() })
-                    .expect("ConnectionRequest could not be serialized");
-
-                log::debug!("Sending message. Time: {}", time_since_start.as_secs_f32());
-                net.send_with_requirements(server.address, &msg, DeliveryRequirement::ReliableSequenced(None), UrgencyRequirement::OnTick);
-        }
-
-        for event in net_event_ch.read(&mut self.reader) {
-            match event {
-                NetworkSimulationEvent::Message(addr, msg) => {
-                    log::debug!("Message: [{}], {:?}", addr, msg);
-                    if &server.address == addr {
-                        match deserialize(&msg) {
-                            Ok(packet) => {
-                                match packet {
-                                    network::PacketType::ConnectionResponse(result) => {
-                                        app_event.single_write(AppEvent::Connection(result));
-                                    }
-                                    _ => log::error!("Unexpected package from server: {:02x?}", packet)
-                                }
-                            }
-                            Err(err) => log::error!("Connection response could not be deserialized. Cause: {:?}", err)
-                        }
-                    } else {
-                        log::warn!("Unexpected message arrived from unknown sender {} while waiting for connection response from server: {}", addr, server.address);
-                    }
+pub fn receive_connection_response(
+    server_addr: Res<ServerAddress>,
+    mut net_event: EventReader<NetworkSimulationEvent>,
+    mut app_state: ResMut<State<AppState>>,
+    mut seed: ResMut<Seed>,
+    mut player_network_id: ResMut<PlayerNetworkId>,
+) {
+    for event in net_event.iter() {
+        match event {
+            NetworkSimulationEvent::Message(addr, msg) => {
+                log::debug!("Message: [{}], {:?}", addr, msg);
+                if server_addr.address != *addr {
+                    log::warn!("Unexpected message arrived from unknown sender {} while waiting for connection response from server: {}", addr, server_addr.address);
+                    continue;
                 }
-                _ => log::info!("Network event: {:?}", event)
 
+                match deserialize(msg) {
+                    Ok(packet) => match packet {
+                        ConnectionResponse(Ok(init_data)) => {
+                            log::info!("Connection established");
+                            app_state
+                                .set(AppState::PlayInit)
+                                .expect("Failed to set AppState to PlayInit");
+                            *seed = init_data.seed;
+                            player_network_id.0 = init_data.player_network_id;
+                            return;
+                        }
+                        ConnectionResponse(Err(err)) => {
+                            log::error!("Conection refused. Reason: {}", err)
+                        }
+                        _ => log::error!("Unexpected package from server: {:02x?}", packet),
+                    },
+                    Err(err) => log::error!(
+                        "Connection response could not be deserialized. Cause: {:?}",
+                        err
+                    ),
+                }
             }
+            _ => log::info!("Network event: {:?}", event),
         }
     }
 }
@@ -90,56 +88,75 @@ impl<'s> System<'s> for ClientConnectSystem {
 #[cfg(test)]
 mod test {
     use super::*;
+    use bevy::prelude::{App, SystemSet};
     use std::net::SocketAddr;
-    use amethyst::Error;
-    use amethyst::prelude::*;
-    use amethyst_test::prelude::*;
-    use westiny_common::components::{NetworkId, EntityType};
+    use w_bevy_test::*;
+    use westiny_common::components::{EntityType, NetworkId};
+    use westiny_common::network::{self, PacketType};
     use westiny_common::resources::Seed;
 
-    const SOCKET_ADDRESS: ([u8;4], u16) = ([127, 0, 0, 1], 9999);
+    const SOCKET_ADDRESS: ([u8; 4], u16) = ([127, 0, 0, 1], 9999);
 
     #[test]
-    fn writes_connected_event_on_connection_confirm() -> Result<(), Error> {
-        amethyst::start_logger(Default::default());
+    fn sends_connection_request() {
+        std::env::set_var("USER", "abcd1234");
 
-        AmethystApplication::blank()
-            .with_resource(EventChannel::<AppEvent>::new())
-            .with_resource(ServerAddress { address: SocketAddr::from(SOCKET_ADDRESS) })
-            .with_setup(move |world: &mut World| {
-                let reader_id = world.fetch_mut::<EventChannel<AppEvent>>().register_reader();
-                world.insert(reader_id);
-            })
-            .with_effect(|world| {
-                let mut network_event_channel = world.fetch_mut::<EventChannel<NetworkSimulationEvent>>();
-                network_event_channel.single_write(
-                    NetworkSimulationEvent::Message(
-                        SocketAddr::from(SOCKET_ADDRESS),
-                        serialize(&network::PacketType::ConnectionResponse(ok_init_data())).unwrap().into()
-                    )
-                );
-            })
-            .with_system_desc(ClientConnectSystemDesc::default(), "client_connect_sys", &[])
+        let expected_payload = serialize(&ConnectionRequest {
+            player_name: "abcd1234".to_string(),
+        }).unwrap();
 
-            .with_assertion(move |world: &mut World| {
-                let app_event_channel = world.fetch_mut::<EventChannel<AppEvent>>();
-                let mut reader_id = world.write_resource::<ReaderId<AppEvent>>();
-
-                let events = app_event_channel.read(&mut reader_id);
-                assert_eq!(events.len(), 1, "There should be exactly 1 AppEvent written");
-                let expected_response: network::Result<network::ClientInitialData> = ok_init_data();
-                assert_eq!(events.collect::<Vec<&AppEvent>>()[0], &AppEvent::Connection(expected_response))
+        App::new()
+            .add_plugin(bevy::core::CorePlugin::default())
+            .add_plugin(bevy::time::TimePlugin::default())
+            .init_resource::<TransportResource>()
+            .insert_resource(ServerAddress {
+                address: SocketAddr::from(SOCKET_ADDRESS),
             })
-            .run()
+            .add_assert_system(move |net: Res<TransportResource>| {
+                                    assert_eq!(net.get_messages().len(), 1);
+                                    assert_eq!(
+                                        net.get_messages()[0],
+                                        blaminar::simulation::Message {
+                                            destination: SocketAddr::from(SOCKET_ADDRESS),
+                                            payload: blaminar::Bytes::copy_from_slice(&expected_payload),
+                                            delivery: DeliveryRequirement::ReliableSequenced(None),
+                                            urgency: UrgencyRequirement::OnTick,
+                                        }
+                                    )
+                               })
+            .add_system(send_connection_request)
+            .run();
     }
 
     #[inline]
     fn ok_init_data() -> network::Result<network::ClientInitialData> {
-            Ok(
-                network::ClientInitialData {
-                    player_network_id: NetworkId::new(EntityType::Player, 0),
-                    seed: Seed(100),
-                }
-            )
+        Ok(network::ClientInitialData {
+            player_network_id: NetworkId::new(EntityType::Player, 1234),
+            seed: Seed(100),
+        })
+    }
+
+    #[test]
+    fn sets_app_state_and_resources_on_connection_confirm() {
+        App::new()
+            .add_state(AppState::Connect)
+            .init_resource::<TransportResource>()
+            .init_resource::<Seed>()
+            .init_resource::<PlayerNetworkId>()
+            .insert_resource(ServerAddress {
+                address: SocketAddr::from(SOCKET_ADDRESS),
+            })
+            .send_event(NetworkSimulationEvent::Message(
+                SocketAddr::from(SOCKET_ADDRESS),
+                serialize(&PacketType::ConnectionResponse(ok_init_data()))
+                    .unwrap()
+                    .into(),
+            ))
+            .add_assert_system(assertion::assert_current_state(AppState::PlayInit))
+            .add_assert_system(assertion::assert_resource(Seed(100)))
+            .add_assert_system(assertion::assert_resource(PlayerNetworkId(NetworkId::new(EntityType::Player, 1234))))
+            .add_system_set(
+                SystemSet::on_update(AppState::Connect).with_system(receive_connection_response))
+            .run();
     }
 }

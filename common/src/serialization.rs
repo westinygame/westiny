@@ -2,7 +2,6 @@ use crate::network::PacketType;
 use anyhow::Result;
 use thiserror::Error;
 
-
 #[derive(Error, Debug)]
 #[error("Could not encode packet: {0:?}")]
 pub struct EncodeError(rmp_serde::encode::Error);
@@ -12,21 +11,20 @@ pub struct EncodeError(rmp_serde::encode::Error);
 pub struct DecodeError(rmp_serde::decode::Error);
 
 pub fn serialize(packet: &PacketType) -> Result<Vec<u8>, EncodeError> {
-    rmp_serde::to_vec(packet).map_err(|e| EncodeError(e))
+    rmp_serde::to_vec(packet).map_err(EncodeError)
 }
 
 pub fn deserialize(buf: &[u8]) -> Result<PacketType, DecodeError> {
-    rmp_serde::from_read_ref(buf).map_err(|e| DecodeError(e))
+    rmp_serde::from_read_ref(buf).map_err(DecodeError)
 }
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use crate::components::{Input, InputFlags, NetworkId, EntityType};
+    use crate::components::{EntityType, Input, InputFlags, NetworkId};
+    use crate::metric_dimension::length::MeterVec2;
     use crate::network::EntityState;
-    use crate::metric_dimension::length::Meter;
-    use amethyst::core::math::Point2;
     use proptest::prelude::*;
 
     fn packet_enum_strategy() -> impl Strategy<Value = PacketType> {
@@ -52,12 +50,12 @@ mod tests {
     prop_compose! {
         fn entity_state_update_gen()(id in network_id_gen(),
                                      pos in arb_point2(),
-                                     rot in any::<f32>()) -> PacketType {
+                                     ang in any::<f32>()) -> PacketType {
             PacketType::EntityStateUpdate(
                 vec![EntityState {
                         network_id: id,
                         position: pos,
-                        rotation: rot,
+                        angle: ang,
                     }]
             )
         }
@@ -70,22 +68,18 @@ mod tests {
     }
 
     fn entity_type_strategy() -> impl Strategy<Value = EntityType> {
-        prop_oneof![
-            Just(EntityType::Player),
-        ]
+        prop_oneof![Just(EntityType::Player),]
     }
 
     prop_compose! {
-        fn arb_point2()(x in any::<f32>(), y in any::<f32>()) -> Point2<Meter> {
-            Point2::new(Meter(x), Meter(y))
+        fn arb_point2()(x in any::<f32>(), y in any::<f32>()) -> MeterVec2 {
+            MeterVec2::from_raw(x, y)
         }
     }
-
 
     proptest! {
         #[test]
         fn encode_decode(packet in packet_enum_strategy()) {
-            println!("{:?}", &packet);
             assert_eq!(packet, deserialize(&serialize(&packet).unwrap()).unwrap());
         }
     }

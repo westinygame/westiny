@@ -1,8 +1,4 @@
-use amethyst::ecs::prelude::{Component, DenseVecStorage};
+use bevy::ecs::component::Component;
 
+#[derive(Component)]
 pub struct Player;
-
-impl Component for Player {
-    type Storage = DenseVecStorage<Self>;
-}
-

@@ -1,8 +1,7 @@
-use amethyst::core::ecs::World;
 use crate::components::weapon::WeaponDetails;
-use std::path::Path;
 use crate::utilities::read_ron;
 
+#[derive(bevy::prelude::Resource)]
 pub struct GunResource {
     weapons: [WeaponDetails; 3],
 }
@@ -15,19 +14,15 @@ pub enum GunId {
     Rifle,
 }
 
-const WEAPON_ASSET_DIR: &'static str = "assets/weapons/";
-
 impl GunResource {
-    pub fn initialize<P: AsRef<Path>>(world: &mut World, resources_path: P) -> anyhow::Result<()>{
-        let path = resources_path.as_ref().join(WEAPON_ASSET_DIR);
+    pub fn load(weapons_dir: &std::path::Path) -> anyhow::Result<Self> {
+        let revolver = read_ron::<WeaponDetails>(&weapons_dir.join("revolver.ron"))?;
+        let shotgun = read_ron::<WeaponDetails>(&weapons_dir.join("shotgun.ron"))?;
+        let rifle = read_ron::<WeaponDetails>(&weapons_dir.join("rifle.ron"))?;
 
-        let revolver: WeaponDetails = read_ron(&path.join("revolver.ron"))?;
-        let shotgun: WeaponDetails = read_ron(&path.join("shotgun.ron"))?;
-        let rifle: WeaponDetails = read_ron(&path.join("rifle.ron"))?;
-        // other weapons here
-
-        world.insert(GunResource { weapons: [revolver, shotgun, rifle]});
-        Ok(())
+        Ok(Self {
+            weapons: [revolver, shotgun, rifle],
+        })
     }
 
     pub fn get_gun(&self, id: GunId) -> WeaponDetails {

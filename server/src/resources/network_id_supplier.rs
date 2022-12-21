@@ -1,20 +1,22 @@
-use westiny_common::components;
-use std::collections::HashMap;
 use crate::components::{EntityType, NetworkId};
+use std::collections::HashMap;
+use westiny_common::components;
 
-#[derive(Default)]
+#[derive(Default, bevy::prelude::Resource)]
 pub struct NetworkIdSupplier {
     next_ids: HashMap<EntityType, u32>,
 }
 
 impl NetworkIdSupplier {
     pub fn new() -> Self {
-        NetworkIdSupplier { next_ids: HashMap::new() }
+        NetworkIdSupplier {
+            next_ids: HashMap::new(),
+        }
     }
 
     pub fn next(&mut self, entity_type: EntityType) -> components::NetworkId {
         let next = self.next_ids.entry(entity_type).or_insert(0);
-        let network_id = NetworkId::new(entity_type, next.clone());
+        let network_id = NetworkId::new(entity_type, *next);
         *next += 1;
         network_id
     }
@@ -29,7 +31,10 @@ mod test {
         let mut supplier = NetworkIdSupplier::new();
         for i in 0..1000 {
             let actual = supplier.next(EntityType::Player);
-            let expected = NetworkId { entity_type: EntityType::Player, id: i};
+            let expected = NetworkId {
+                entity_type: EntityType::Player,
+                id: i,
+            };
             assert_eq!(expected, actual, "With Player entity")
         }
 
@@ -37,7 +42,10 @@ mod test {
 
         for i in 1000..1100 {
             let actual = supplier.next(EntityType::Player);
-            let expected = NetworkId { entity_type: EntityType::Player, id: i};
+            let expected = NetworkId {
+                entity_type: EntityType::Player,
+                id: i,
+            };
             assert_eq!(expected, actual, "With Player entity")
         }
     }

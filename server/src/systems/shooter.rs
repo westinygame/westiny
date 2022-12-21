@@ -1,323 +1,382 @@
-use amethyst::ecs::{Read, System, ReadStorage, ReadExpect, Entities, WriteStorage, WriteExpect};
-use amethyst::core::{Transform, Time, math::{Vector3, Vector2}};
-use amethyst::ecs::prelude::{LazyUpdate, Join};
-
-use crate::components::{Damage, Client, weapon::Weapon, weapon::Holster, Input, InputFlags, BoundingCircle};
-use westiny_common::entities::spawn_bullet;
-use amethyst::prelude::Builder;
-use crate::resources::{ClientRegistry, StreamId, ClientID};
-use amethyst::network::simulation::{TransportResource, DeliveryRequirement, UrgencyRequirement};
-use westiny_common::serialize;
-use westiny_common::network::{PacketType, ShotEvent, PlayerUpdate};
-use amethyst::core::math::{Point2, UnitComplex};
-use std::time::Duration;
-use westiny_common::metric_dimension::MeterPerSec;
-use westiny_common::metric_dimension::length::Meter;
+use crate::components::{
+    weapon::Holster, weapon::Weapon, BoundingCircle, Client, Input, InputFlags, Damage
+};
+use crate::resources::{ClientID, ClientRegistry, StreamId};
+use bevy::prelude::{Commands, Query, Res, ResMut, SystemSet, Time, Transform, Vec3};
+use blaminar::simulation::{DeliveryRequirement, TransportResource, UrgencyRequirement};
 use std::f32::consts::PI;
+use westiny_common::entities::BulletBundle;
+use westiny_common::metric_dimension::{length::MeterVec2, MeterPerSecVec2};
+use westiny_common::network::{PacketType, PlayerUpdate, ShotEvent};
+use westiny_common::serialization::serialize;
 
-pub struct ShooterSystem;
-
-impl<'s> System<'s> for ShooterSystem {
-    type SystemData = (
-        Entities<'s>,
-        ReadStorage<'s, Transform>,
-        ReadStorage<'s, Input>,
-        ReadStorage<'s, BoundingCircle>,
-        WriteStorage<'s, Holster>,
-        ReadStorage<'s, Client>,
-        Read<'s, Time>,
-        ReadExpect<'s, LazyUpdate>,
-        ReadExpect<'s, ClientRegistry>,
-        WriteExpect<'s, TransportResource>
-    );
-
-    fn run(&mut self, (entities, transforms, inputs, bounds, mut holsters, clients, time, lazy_update, client_registry, mut net): Self::SystemData) {
-        for (input, player_transform, bound, holster, client) in (&inputs, &transforms, (&bounds).maybe(), &mut holsters, (&clients).maybe()).join() {
-            if let Some(selected_slot) = Self::selected_slot(&input) {
-                Self::switch_weapon(&time, &client_registry, &mut net, holster, client, selected_slot)
-            }
-
-            let mut weapon = holster.active_gun_mut();
-
-            if input.flags.intersects(InputFlags::SHOOT) {
-                if weapon.is_allowed_to_shoot(time.absolute_time_seconds()) {
-                    Self::shoot(&entities, &time, &lazy_update, &client_registry, &mut net, player_transform, bound, &mut weapon, client);
-                }
-            } else {
-                weapon.input_lifted = true;
-            }
-
-            if let Some(reload_start) = weapon.reload_started_at {
-                Self::check_reload_finish(&time, &client_registry, &mut net, weapon, client, &reload_start)
-            }
-        }
-    }
+pub fn weapon_handler_system_set() -> SystemSet {
+    SystemSet::new()
+        .label("weapon_handler")
+        .with_system(weapon_switcher::switch_weapon)
+        .with_system(reloader::reload)
+        .with_system(shoot)
 }
 
+mod weapon_switcher {
+    use super::*;
 
-impl ShooterSystem {
-    fn send_ammo_update(
-        client_id: &ClientID,
-        client_registry: &ClientRegistry,
-        ammo_in_magazine: u32,
-        net: &mut TransportResource,
-    ) -> anyhow::Result<()> {
-        let payload = serialize(&PacketType::PlayerUpdate(PlayerUpdate::AmmoUpdate{ammo_in_magazine}))
-            .map_err(|err| anyhow::anyhow!("Failed to serialize AmmoUpdate: {}", err))?;
-        let address = client_registry.find_client(*client_id).map(|handle| handle.addr)
-            .ok_or(anyhow::anyhow!("Client with id {:?} not found in registry", client_id))?;
-        net.send_with_requirements(address,
-                                   &payload,
-                                   DeliveryRequirement::ReliableSequenced(StreamId::AmmoUpdate.into()),
-                                   UrgencyRequirement::OnTick
-        );
-        Ok(())
-    }
-
-    fn shoot(entities: &Entities,
-             time: &Time,
-             lazy_update: &LazyUpdate,
-             client_registry: &ClientRegistry,
-             mut net: &mut TransportResource,
-             player_transform: &Transform,
-             bound: Option<&BoundingCircle>,
-             mut weapon: &mut Weapon,
-             client: Option<&Client>) {
-        let mut bullet_transform = Transform::default();
-        bullet_transform.set_translation(*player_transform.translation());
-        bullet_transform.set_rotation(*player_transform.rotation());
-
-        let direction3d = (bullet_transform.rotation() * Vector3::y()).normalize();
-        let direction2d = Vector2::new(-direction3d.x, -direction3d.y);
-
-        if let Some(bound) = bound {
-            *bullet_transform.translation_mut() -= bound.radius.into_pixel() * direction3d;
-        }
-
-        for _pellet_idx in 0..weapon.details.pellet_number {
-            let velocity = weapon.details.bullet_speed * Self::apply_spread(&direction2d, weapon.details.spread);
-            let bullet_builder = lazy_update.create_entity(&entities)
-                .with(Damage(weapon.details.damage));
-
-            spawn_bullet(bullet_transform.clone(),
-                         velocity.clone(),
-                         time.absolute_time(),
-                         weapon.bullet_lifespan_sec(),
-                         bullet_builder);
-
-            Self::broadcast_shot_event(client_registry, net, &mut weapon, &mut bullet_transform, &velocity);
-        }
-
-        weapon.last_shot_time = time.absolute_time_seconds();
-        weapon.input_lifted = false;
-        weapon.bullets_left_in_magazine -= 1;
-
-        if let Some(client) = client {
-            if let Err(err) = Self::send_ammo_update(&client.id,
-                                                     &client_registry,
-                                                     weapon.bullets_left_in_magazine,
-                                                     &mut net) {
-                log::error!("Failed to send ammo update to client {:?}. Error: {}", client.id, err);
-            }
-        }
-
-        // Temporary auto-reload
-        if weapon.bullets_left_in_magazine <= 0 && weapon.is_allowed_to_reload() {
-            weapon.reload_started_at = Some(time.absolute_time());
-        }
-
-    }
-
-    fn apply_spread(reference_direction: &Vector2<f32>, spread: f32) -> Vector2<f32>
-    {
-        if spread > 0.0
-        {
-            use rand::Rng;
-            let spread_rad = rand::thread_rng().gen_range(-spread..spread) * (PI / 180.0);
-            UnitComplex::new(spread_rad) * reference_direction
-        } else {
-            reference_direction.clone_owned()
-        }
-    }
-
-    fn broadcast_shot_event(client_registry: &ClientRegistry,
-                            net: &mut TransportResource,
-                            weapon: &mut Weapon,
-                            bullet_transform: &mut Transform,
-                            velocity: &Vector2<MeterPerSec>) {
-        let payload = serialize(&PacketType::ShotEvent(ShotEvent {
-            position: Point2::new(Meter::from_pixel(bullet_transform.translation().x), Meter::from_pixel(bullet_transform.translation().y)),
-            velocity: *velocity,
-            bullet_time_limit_secs: weapon.bullet_lifespan_sec(),
-        })).expect("ShotEvent's serialization failed");
-
-        client_registry.get_clients().iter().map(|handle| handle.addr).for_each(|addr| {
-            net.send_with_requirements(addr,
-                                       &payload,
-                                       DeliveryRequirement::ReliableSequenced(StreamId::ShotEvent.into()),
-                                       UrgencyRequirement::OnTick);
-        })
-    }
-
-    fn check_reload_finish(time: &Time,
-                           client_registry: &ClientRegistry,
-                           mut net: &mut TransportResource,
-                           weapon: &mut Weapon,
-                           client: Option<&Client>,
-                           reload_start: &Duration) {
-        if time.absolute_time_seconds() >= reload_start.as_secs_f64() + weapon.details.reload_time.0 as f64 {
-            weapon.bullets_left_in_magazine = weapon.details.magazine_size;
-            weapon.reload_started_at = None;
-
-            if let Some(client) = client {
-                if let Err(err) = Self::send_ammo_update(&client.id,
-                                                         &client_registry,
-                                                         weapon.bullets_left_in_magazine,
-                                                         &mut net) {
-                    log::error!("Failed to send AmmoUpdate to client {:?}. Error: {}", client.id, err);
-                }
-            }
-        }
-    }
-
-    fn switch_weapon(time: &Time,
-                     client_registry: &ClientRegistry,
-                     net: &mut TransportResource,
-                     holster: &mut Holster,
-                     client: Option<&Client>,
-                     selected_slot: usize) {
-        if holster.active_slot() != selected_slot {
-            if let Some(gun_name) = holster.switch(selected_slot) {
-                let gun = holster.active_gun_mut();
-                if gun.reload_started_at.is_some() {
-                    // if last switch from this happened mid-reload, restart it
-                    gun.reload_started_at = Some(time.absolute_real_time());
+    pub fn switch_weapon(
+        time: Res<Time>,
+        client_registry: Res<ClientRegistry>,
+        mut net: ResMut<TransportResource>,
+        mut input_query: Query<(&Input, &mut Holster, Option<&Client>)>,
+    ) {
+        for (input, mut holster, maybe_client) in input_query.iter_mut() {
+            if let Some(selected_slot) = selected_slot(input) {
+                if holster.active_slot() == selected_slot {
+                    continue;
                 }
 
-                if let Some(client) = client.and_then(|client| client_registry.find_client(client.id)) {
-                    let payload_packet = PacketType::PlayerUpdate(PlayerUpdate::WeaponSwitch {
-                        name: gun_name.to_string(),
-                        magazine_size: gun.details.magazine_size,
-                        ammo_in_magazine: gun.bullets_left_in_magazine,
-                    });
+                if let Some(gun_name) = holster.switch(selected_slot) {
+                    let gun = holster.active_gun_mut();
+                    if gun.reload_started_at.is_some() {
+                        // if last switch from this happened mid-reload, restart it
+                        gun.reload_started_at = Some(time.elapsed());
+                    }
 
-                    let payload = serialize(&payload_packet).expect(&format!("Failed to serialize 'WeaponSwitch' packet: {:?}", payload_packet));
-                    net.send_with_requirements(client.addr,
-                                               &payload,
-                                               DeliveryRequirement::ReliableSequenced(StreamId::WeaponSwitch.into()),
-                                               UrgencyRequirement::OnTick);
+                    if let Some(client) =
+                        maybe_client.and_then(|client| client_registry.find_client(client.id))
+                    {
+                        let payload_packet = PacketType::PlayerUpdate(PlayerUpdate::WeaponSwitch {
+                            name: gun_name.to_string(),
+                            magazine_size: gun.details.magazine_size,
+                            ammo_in_magazine: gun.bullets_left_in_magazine,
+                        });
+
+                        let payload = serialize(&payload_packet).unwrap_or_else(|_| {
+                            panic!(
+                                "Failed to serialize 'WeaponSwitch' packet: {:?}",
+                                payload_packet
+                            )
+                        });
+                        net.send_with_requirements(
+                            client.addr,
+                            &payload,
+                            DeliveryRequirement::ReliableSequenced(StreamId::WeaponSwitch.into()),
+                            UrgencyRequirement::OnTick,
+                        );
+                    }
                 }
             }
         }
     }
 
     fn selected_slot(input: &Input) -> Option<usize> {
-        input.get_selection().and_then(|&select| {
-            match select {
-                InputFlags::SELECT1 => Some(0_usize),
-                InputFlags::SELECT2 => Some(1_usize),
-                InputFlags::SELECT3 => Some(2_usize),
-                _ => None
-            }
+        input.get_selection().and_then(|&select| match select {
+            InputFlags::SELECT1 => Some(0_usize),
+            InputFlags::SELECT2 => Some(1_usize),
+            InputFlags::SELECT3 => Some(2_usize),
+            _ => None,
         })
     }
+}
+
+fn send_ammo_update(
+    client_id: &ClientID,
+    client_registry: &ClientRegistry,
+    ammo_in_magazine: u32,
+    net: &mut TransportResource,
+) -> anyhow::Result<()> {
+    let payload = serialize(&PacketType::PlayerUpdate(PlayerUpdate::AmmoUpdate {
+        ammo_in_magazine,
+    }))
+    .map_err(|err| anyhow::anyhow!("Failed to serialize AmmoUpdate: {}", err))?;
+    let address = client_registry
+        .find_client(*client_id)
+        .map(|handle| handle.addr)
+        .ok_or_else(|| anyhow::anyhow!("Client with id {:?} not found in registry", client_id))?;
+    net.send_with_requirements(
+        address,
+        &payload,
+        DeliveryRequirement::ReliableSequenced(StreamId::AmmoUpdate.into()),
+        UrgencyRequirement::OnTick,
+    );
+    Ok(())
+}
+
+mod reloader {
+    use super::*;
+
+    pub fn reload(
+        time: Res<Time>,
+        client_registry: Res<ClientRegistry>,
+        mut net: ResMut<TransportResource>,
+        mut input_query: Query<(&Input, &mut Holster, Option<&Client>)>,
+    ) {
+        for (&input, mut holster, maybe_client) in input_query.iter_mut() {
+            let mut weapon = holster.active_gun_mut();
+            if input.flags.intersects(InputFlags::RELOAD) && weapon.is_allowed_to_reload() {
+                weapon.reload_started_at = Some(time.elapsed())
+            } else if let Some(reload_start) = weapon.reload_started_at {
+                check_reload_finish(
+                    &time,
+                    &client_registry,
+                    &mut net,
+                    weapon,
+                    maybe_client,
+                    &reload_start,
+                )
+            }
+        }
+    }
+
+    fn check_reload_finish(
+        time: &Time,
+        client_registry: &ClientRegistry,
+        net: &mut TransportResource,
+        weapon: &mut Weapon,
+        client: Option<&Client>,
+        reload_start: &std::time::Duration,
+    ) {
+        if time.elapsed_seconds()
+            >= reload_start.as_secs_f32() + weapon.details.reload_time.0
+        {
+            weapon.bullets_left_in_magazine = weapon.details.magazine_size;
+            weapon.reload_started_at = None;
+
+            if let Some(client) = client {
+                if let Err(err) = send_ammo_update(
+                    &client.id,
+                    client_registry,
+                    weapon.bullets_left_in_magazine,
+                    net,
+                ) {
+                    log::error!(
+                        "Failed to send AmmoUpdate to client {:?}. Error: {}",
+                        client.id,
+                        err
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[allow(clippy::type_complexity)]
+pub fn shoot(
+    mut commands: Commands,
+    time: Res<Time>,
+    client_registry: Res<ClientRegistry>,
+    mut net: ResMut<TransportResource>,
+    mut query: Query<(
+        &Input,
+        &Transform,
+        Option<&BoundingCircle>,
+        &mut Holster,
+        Option<&Client>,
+    )>,
+) {
+    for (input, shooter_transform, maybe_bound, mut holster, maybe_client) in query.iter_mut() {
+        let mut weapon = holster.active_gun_mut();
+        if input.flags.intersects(InputFlags::SHOOT) {
+            if weapon.is_allowed_to_shoot(time.elapsed()) {
+                let mut bullet_transform = *shooter_transform;
+
+                let mut direction3d = Vec3::Y;
+                westiny_common::utilities::rotate_vec3_around_z(
+                    bullet_transform.rotation,
+                    &mut direction3d,
+                );
+                if let Some(bound) = maybe_bound {
+                    bullet_transform.translation -= bound.radius.into_pixel() * direction3d;
+                }
+
+                for _pellet_idx in 0..weapon.details.pellet_number {
+                    let velocity_direction = spread_to_quat(weapon.details.spread)
+                        .mul_vec3(direction3d)
+                        .truncate()
+                        * -1.0;
+                    let velocity = weapon.details.bullet_speed * velocity_direction;
+
+                    commands
+                        .spawn(
+                            BulletBundle::new(
+                                MeterVec2::from_pixel_vec(bullet_transform.translation.truncate()),
+                                velocity,
+                                weapon.bullet_lifespan_sec(),
+                                time.elapsed()))
+                        .insert(Damage(weapon.details.damage));
+
+                    broadcast_shot_event(
+                        &client_registry,
+                        &mut net,
+                        weapon,
+                        &bullet_transform,
+                        &velocity,
+                    );
+                }
+
+                weapon.last_shot_time = time.elapsed();
+                weapon.input_lifted = false;
+                weapon.bullets_left_in_magazine -= 1;
+
+                if let Some(client) = maybe_client {
+                    if let Err(err) = send_ammo_update(
+                        &client.id,
+                        &client_registry,
+                        weapon.bullets_left_in_magazine,
+                        &mut net,
+                    ) {
+                        bevy::log::error!(
+                            "Failed to send ammo update to client {:?}. Error: {}",
+                            client.id,
+                            err
+                        );
+                    }
+                }
+            }
+        } else {
+            weapon.input_lifted = true;
+        }
+    }
+}
+
+fn spread_to_quat(spread: f32) -> bevy::math::Quat {
+    let angle = if spread > 0.0 {
+        use rand::Rng;
+        rand::thread_rng().gen_range(-spread..spread) * (PI / 180.0)
+    } else {
+        0.0
+    };
+
+    bevy::math::Quat::from_rotation_z(angle)
+}
+
+fn broadcast_shot_event(
+    client_registry: &ClientRegistry,
+    net: &mut TransportResource,
+    weapon: &Weapon,
+    bullet_transform: &Transform,
+    velocity: &MeterPerSecVec2,
+) {
+    let payload = serialize(&PacketType::ShotEvent(ShotEvent {
+        position: MeterVec2::from_pixel_vec(bullet_transform.translation.truncate()),
+        velocity: *velocity,
+        bullet_time_limit_secs: weapon.bullet_lifespan_sec(),
+    }))
+    .expect("ShotEvent's serialization failed");
+
+    client_registry
+        .get_clients()
+        .iter()
+        .map(|handle| handle.addr)
+        .for_each(|addr| {
+            net.send_with_requirements(
+                addr,
+                &payload,
+                DeliveryRequirement::ReliableSequenced(StreamId::ShotEvent.into()),
+                UrgencyRequirement::OnTick,
+            );
+        })
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use amethyst_test::prelude::*;
-    use amethyst::prelude::{World, WorldExt, Builder};
-    use crate::components::{Input, InputFlags, weapon, Velocity, Projectile, Lifespan};
-    use std::net::SocketAddr;
-    use amethyst::Error;
-    use amethyst::core::num::Bounded;
-    use westiny_common::deserialize;
     use crate::components::weapon::WeaponDetails;
+    use crate::components::{weapon, Input, InputFlags};
+    use bevy::prelude::{App, Commands, Transform};
+    use std::net::SocketAddr;
+    use w_bevy_test::TestApp;
     use westiny_common::metric_dimension::length::Meter;
+    use westiny_common::metric_dimension::MeterPerSec;
     use westiny_common::metric_dimension::Second;
 
+    fn spawn_shooting_player(mut commands: Commands) {
+        let input = Input {
+            flags: InputFlags::SHOOT,
+            cursor: MeterVec2::from_raw(0.0, 0.0),
+        };
+
+        let gun = WeaponDetails {
+            damage: 5,
+            bullet_distance_limit: Meter(7.5),
+            fire_rate: f32::MAX,
+            magazine_size: 6,
+            reload_time: Second(1.0),
+            spread: 0.0,
+            shot: weapon::Shot::Single,
+            bullet_speed: MeterPerSec(12.5),
+            pellet_number: 1,
+        };
+
+        let guns = [
+            (Weapon::new(gun.clone()), "Weapon1"),
+            (Weapon::new(gun.clone()), "Weapon2"),
+            (Weapon::new(gun), "Weapon3"),
+        ];
+
+        commands
+            .spawn_empty()
+            .insert(input)
+            .insert(Transform::default())
+            .insert(BoundingCircle { radius: Meter(1.0) })
+            .insert(Holster::new_with_guns(guns));
+    }
+
     #[test]
-    fn broadcast_shot_event() -> anyhow::Result<(), Error>{
-        amethyst::start_logger(Default::default());
+    fn broadcast_shot_event() {
+        use westiny_common::serialization::deserialize;
+
         let mut client_registry = ClientRegistry::new(3);
-        client_registry.add(&SocketAddr::new("111.222.111.222".parse().unwrap(), 9999), "player1")?;
-        client_registry.add(&SocketAddr::new("222.111.222.111".parse().unwrap(), 9999), "player2")?;
-        client_registry.add(&SocketAddr::new("111.111.111.111".parse().unwrap(), 9999), "player3")?;
+        client_registry
+            .add(
+                &SocketAddr::new("111.222.111.222".parse().unwrap(), 9999),
+                "player1",
+            )
+            .unwrap();
+        client_registry
+            .add(
+                &SocketAddr::new("222.111.222.111".parse().unwrap(), 9999),
+                "player2",
+            )
+            .unwrap();
+        client_registry
+            .add(
+                &SocketAddr::new("111.111.111.111".parse().unwrap(), 9999),
+                "player3",
+            )
+            .unwrap();
 
-        AmethystApplication::blank()
-            .with_setup(|world: &mut World| {
-                world.register::<Input>();
-                world.register::<Transform>();
-                world.register::<BoundingCircle>();
-                world.register::<Holster>();
+        let mut time = bevy::prelude::Time::default();
+        time.update();
 
-                world.register::<Damage>();
-                world.register::<Velocity>();
-                world.register::<Projectile>();
-                world.register::<Lifespan>();
-            })
-            .with_setup(|world: &mut World| {
-                let input = Input {
-                    flags: InputFlags::SHOOT,
-                    cursor: Point2::new(Meter(0.0), Meter(0.0)),
-                };
-
-                let gun = WeaponDetails {
-                    damage: 5,
-                    bullet_distance_limit: Meter(7.5),
-                    fire_rate: f32::max_value(),
-                    magazine_size: 6,
-                    reload_time: Second(1.0),
-                    spread: 0.0,
-                    shot: weapon::Shot::Single,
-                    bullet_speed: MeterPerSec(12.5),
-                    pellet_number: 1,
-                };
-
-                let guns = [
-                    (Weapon::new(gun.clone()), "Weapon1"),
-                    (Weapon::new(gun.clone()), "Weapon2"),
-                    (Weapon::new(gun), "Weapon3"),
-                ];
-
-                world.create_entity()
-                    .with(input)
-                    .with(Transform::default())
-                    .with(BoundingCircle { radius: Meter(1.0) })
-                    .with(Holster::new_with_guns(guns))
-                    .build();
-            })
-            .with_resource(client_registry)
-            .with_resource(TransportResource::new())
-            .with_system(ShooterSystem, "shooter", &[])
-            .with_assertion(|world: &mut World| {
-                let net = world.fetch_mut::<TransportResource>();
+        App::new()
+            .insert_resource(client_registry)
+            .insert_resource(TransportResource::new())
+            .insert_resource(time)
+            .add_startup_system(spawn_shooting_player)
+            .add_system(shoot)
+            .add_assert_system(|net: ResMut<TransportResource>| {
                 let messages = net.get_messages();
 
                 assert_eq!(3, messages.len());
                 let expected_msg = ShotEvent {
-                    position: Point2::new(Meter(0.0), Meter(-1.0)),
-                    velocity: Vector2::new(MeterPerSec(0.0), MeterPerSec(-12.5)),
-                    bullet_time_limit_secs: Second(0.6)
+                    position: MeterVec2::from_raw(0.0, -1.0),
+                    velocity: MeterPerSecVec2::from_raw(0.0, -12.5),
+                    bullet_time_limit_secs: Second(0.6),
                 };
 
                 messages.iter().for_each(|msg| {
                     let deserialized = deserialize(&msg.payload).expect("failed to deserailize");
                     if let PacketType::ShotEvent(ev) = deserialized {
-                        // could not apply '==' on PacketType
                         assert_eq!(ev.position, expected_msg.position);
                         assert_eq!(ev.velocity, expected_msg.velocity);
-                        assert_eq!(ev.bullet_time_limit_secs, expected_msg.bullet_time_limit_secs);
+                        assert_eq!(
+                            ev.bullet_time_limit_secs,
+                            expected_msg.bullet_time_limit_secs
+                        );
                     } else {
                         panic!("Unexpected message");
                     }
                 })
             })
-            .run()
+            .run();
     }
-}
-
-impl ShooterSystem {
-
 }

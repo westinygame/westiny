@@ -1,85 +1,31 @@
-use derive_new::new;
+use westiny_common::resources::{AudioQueue, SoundId};
+use westiny_common::entities::BulletBundle;
 use westiny_common::network::ShotEvent;
-use amethyst::core::math::{Point2, Vector2};
-use amethyst::prelude::{Builder, World};
-use amethyst::core::{Transform, Time};
-use std::time::Duration;
-use amethyst::renderer::SpriteRender;
-use crate::resources::SpriteResource;
-use westiny_common::resources::{SpriteId, AudioQueue, SoundId};
-use westiny_common::entities::spawn_bullet;
-use amethyst::core::ecs::{System, ReaderId, Read, LazyUpdate, Entities, SystemData, WriteExpect};
-use amethyst::core::ecs::shrev::EventChannel;
-use westiny_common::metric_dimension::{MeterPerSec, Second};
-use westiny_common::metric_dimension::length::Meter;
+use westiny_common::components::SpriteId;
+use bevy::prelude::*;
 
-#[derive(Default)]
-pub struct ShooterSystemDesc;
+pub fn spawn_bullets(
+    mut commands: Commands,
+    mut shot_events: EventReader<ShotEvent>,
+    time: Res<Time>,
+    mut audio: ResMut<AudioQueue>
+) {
+    let event_cnt = shot_events.iter()
+        .inspect(|shot| {
+            commands.spawn(
+                BulletBundle::new(
+                    shot.position,
+                    shot.velocity,
+                    shot.bullet_time_limit_secs,
+                    time.elapsed())
+                )
+            .insert(SpriteId::Bullet)
+            .insert(VisibilityBundle::default());
+        })
+        .count();
 
-impl<'a, 'b> ::amethyst::core::SystemDesc<'a, 'b, ShooterSystem> for ShooterSystemDesc {
-    fn build(self, world: &mut World) -> ShooterSystem {
-        <ShooterSystem as System<'_>>::SystemData::setup(world);
-
-        let reader_id = world
-            .fetch_mut::<EventChannel<ShotEvent>>()
-            .register_reader();
-
-        let bullet_sprite = world.fetch::<SpriteResource>().sprite_render_for(SpriteId::Bullet);
-        ShooterSystem::new(reader_id, bullet_sprite)
-    }
-}
-
-#[derive(new)]
-pub struct ShooterSystem {
-    shot_reader: ReaderId<ShotEvent>,
-    bullet_sprite: SpriteRender,
-}
-
-impl<'s> System<'s> for ShooterSystem {
-    type SystemData = (
-        Read<'s, EventChannel<ShotEvent>>,
-        Read<'s, Time>,
-        Read<'s, LazyUpdate>,
-        Entities<'s>,
-        WriteExpect<'s, AudioQueue>,
-    );
-
-    fn run(&mut self, (shot_event_channel, time, lazy, entities, mut audio): Self::SystemData) {
-        let events = shot_event_channel.read(&mut self.shot_reader);
-        if events.len() == 0 {
-            return;
+        if event_cnt > 0 {
+            audio.play(SoundId::SingleShot, 1.0);
         }
-        let current_time = time.absolute_time();
-        audio.play(SoundId::SingleShot, 1.0);
-        events.for_each(|shot_event|
-                self.spawn_bullet(
-                &shot_event.position,
-                &shot_event.velocity,
-                shot_event.bullet_time_limit_secs,
-                current_time,
-                lazy.create_entity(&entities)));
-
-
-    }
 }
 
-impl ShooterSystem {
-    fn spawn_bullet<B: Builder>(&self,
-                                pos: &Point2<Meter>,
-                                velocity: &Vector2<MeterPerSec>,
-                                time_limit_sec: Second,
-                                current_time: Duration,
-                                entity_builder: B) {
-        let transform = {
-            let mut transform = Transform::default();
-            transform.set_translation_xyz(pos.x.into_pixel(), pos.y.into_pixel(), 0.0);
-            westiny_common::utilities::set_rotation_toward_vector(&mut transform, velocity);
-            transform
-        };
-
-        let prepared_builder = entity_builder
-            .with(self.bullet_sprite.clone());
-
-        spawn_bullet(transform, *velocity, current_time, time_limit_sec, prepared_builder);
-    }
-}

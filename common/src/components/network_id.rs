@@ -1,9 +1,8 @@
-use amethyst::core::ecs::{Component, DenseVecStorage};
-use serde::{Serialize, Deserialize};
+use bevy::ecs::component::Component;
 use derive_new::new;
+use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize, Hash, new, Component)]
-#[storage(DenseVecStorage)]
 pub struct NetworkId {
     pub entity_type: EntityType,
     pub id: u32,

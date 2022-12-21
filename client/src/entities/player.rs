@@ -1,73 +1,73 @@
-use amethyst::core::Transform;
-use amethyst::core::transform::Parent;
-use amethyst::prelude::*;
-use amethyst::ecs::Entity;
-use log::info;
-
-use westiny_common::components::{Input, Health, Player, NetworkId, BoundingCircle};
-use crate::resources::SpriteResource;
-use westiny_common::resources::SpriteId;
-use crate::components::WeaponInfo;
+use crate::components::{BoundingCircle, Health, Input, NetworkId, Player, SpriteId, WeaponInfo};
+use bevy::prelude::{BuildChildren, Bundle, Commands, Entity, Transform};
+use westiny_common::entities::SimpleSpriteSheetBundle;
 use westiny_common::metric_dimension::length::Meter;
 
-pub const CHARACTER_HEIGHT : f32 = 1.8;
+pub const CHARACTER_HEIGHT: f32 = 1.8;
 
-pub fn create_hand_for_character<B: Builder>(
-    builder: B,
-    sprite_resource: &SpriteResource,
-    parent: Entity
-    ) -> Entity
-{
-    let mut hand_transform = Transform::default();
-    hand_transform.set_translation_xyz(Meter(-0.25).into_pixel(), Meter(-0.2).into_pixel(), -0.3); // relative to parent
+#[derive(Bundle)]
+pub struct PlayerCharacterBundle {
+    pub net_id: NetworkId,
+    pub bounding_circle: BoundingCircle,
 
-    builder
-        .with(Parent{entity: parent})
-        .with(hand_transform)
-        .with(sprite_resource.sprite_render_for(SpriteId::HandWithPistol))
-        .build()
+    #[bundle]
+    pub sprite_sheet_bundle: SimpleSpriteSheetBundle,
 }
 
-pub fn create_character<B: Builder, F: Fn() -> B>(
-    character_builder: B,
-    factory: F,
-    sprite_resource: &SpriteResource,
-    network_id: NetworkId,
-    mut transform: Transform
-    ) -> Entity
-{
-    transform.set_translation_z(CHARACTER_HEIGHT);
-    let entity = character_builder
-        .with(network_id)
-        .with(sprite_resource.sprite_render_for(SpriteId::Player))
-        .with(transform)
-        .with(BoundingCircle{radius: Meter(0.5)})
-        .build();
-
-    create_hand_for_character(factory(), &sprite_resource, entity);
-    entity
+impl PlayerCharacterBundle {
+    pub fn new(net_id: NetworkId, mut transform: Transform) -> Self {
+        transform.translation.z = CHARACTER_HEIGHT;
+        Self {
+            net_id,
+            bounding_circle: BoundingCircle { radius: Meter(0.5) },
+            sprite_sheet_bundle: SimpleSpriteSheetBundle::new(transform, SpriteId::Player),
+        }
+    }
 }
 
-pub fn create_player<B: Builder, F>(
-    factory: F,
-    sprite_resource: &SpriteResource,
-    network_id: NetworkId,
+#[derive(Bundle)]
+pub struct ThisPlayerBundle {
+    pub player: Player,
+    pub health: Health,
+    pub input: Input,
+    pub weapon_info: WeaponInfo,
+}
+
+impl ThisPlayerBundle {
+    pub fn new() -> Self {
+        ThisPlayerBundle {
+            player: Player,
+            health: Health(100),
+            input: Input::default(),
+            weapon_info: WeaponInfo {
+                magazine_size: 6,
+                bullets_in_magazine: 6,
+                name: "Revolver".to_string(),
+            },
+        }
+    }
+}
+
+pub fn create_player_character(
+    commands: &mut Commands,
+    net_id: NetworkId,
     transform: Transform,
-    ) -> Entity
-where F: Fn () -> B
-{
+) -> Entity {
+    commands
+        .spawn(PlayerCharacterBundle::new(net_id, transform))
+        .with_children(|parent| {
+            // hand with pistol
+            parent.spawn(SimpleSpriteSheetBundle::new(
+                Transform::from_xyz(Meter(-0.25).into_pixel(), Meter(-0.2).into_pixel(), -0.3), // relative to parent
+                SpriteId::HandWithPistol,
+            ));
+        })
+        .id()
+}
 
-    let builder = factory()
-        .with(Player)
-        .with(Health(100))
-        .with(Input::default())
-        // TODO WeaponInfo should be received within SpawnEvent
-        .with(WeaponInfo {
-            magazine_size: 6,
-            bullets_in_magazine: 6,
-            name: "Revolver".to_string()
-        });
-    let entity = create_character(builder, factory, sprite_resource, network_id, transform);
-    info!("Player created.");
-    entity
+pub fn create_this_player(commands: &mut Commands, net_id: NetworkId, transform: Transform) {
+    let entity = create_player_character(commands, net_id, transform);
+    commands
+        .entity(entity)
+        .insert(ThisPlayerBundle::new());
 }
