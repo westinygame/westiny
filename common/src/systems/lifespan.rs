@@ -8,7 +8,7 @@ pub fn lifespan_system(
     mut delete_entity: EventWriter<EntityDelete>,
 ) {
     for (entity, lifespan) in lifespans.iter() {
-        if time.time_since_startup() >= lifespan.living_until {
+        if time.elapsed() >= lifespan.living_until {
             delete_entity.send(EntityDelete::new(entity));
         }
     }

@@ -1,5 +1,6 @@
 use crate::components::{Lifespan, Projectile, Velocity};
 use crate::metric_dimension::{length::MeterVec2, MeterPerSecVec2, Second};
+use crate::utilities::get_rotation;
 use bevy::prelude::{Transform, GlobalTransform, Bundle};
 use std::time::Duration;
 
@@ -25,7 +26,7 @@ impl BulletBundle {
                 position.x.into_pixel(),
                 position.y.into_pixel(),
                 1.0);
-            transform.rotation = crate::utilities::get_rotation(&velocity.into_pixel_per_sec_vec());
+            transform.rotation = get_rotation(&velocity.into_pixel_per_sec_vec());
             transform
         };
 

@@ -68,6 +68,7 @@ fn process_payload(
     log::debug!("Message: {:02x?}", payload);
     match deserialize(payload)? {
         PacketType::EntityStateUpdate(state) => {
+            log::debug!("Entity State update, state={:?}", state);
             entity_update_channel.send(state);
             Ok(())
         }
@@ -77,10 +78,12 @@ fn process_payload(
             Ok(())
         }
         PacketType::PlayerUpdate(player_update) => {
+            log::debug!("Player update, {:?}", player_update);
             player_update_channel.send(player_update);
             Ok(())
         }
         PacketType::Notification(notification) => {
+            log::debug!("Notification, {:?}", notification);
             message_channel.send(notification);
             Ok(())
         }

@@ -22,8 +22,8 @@ pub fn handle_damage(
                 health.0 = 0;
                 commands.add(Insert {
                     entity: damage_event.target,
-                    component: Eliminated {
-                        elimination_time_sec: time.seconds_since_startup(),
+                    bundle: Eliminated {
+                        elimination_time_sec: time.elapsed_seconds_f64(),
                     },
                 });
             } else {
@@ -34,6 +34,7 @@ pub fn handle_damage(
     }
 }
 
+#[allow(clippy::type_complexity)]
 pub fn send_health_update_on_change(
     client_registry: Res<ClientRegistry>,
     mut transport: ResMut<TransportResource>,

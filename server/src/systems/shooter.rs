@@ -15,7 +15,7 @@ pub fn weapon_handler_system_set() -> SystemSet {
         .label("weapon_handler")
         .with_system(weapon_switcher::switch_weapon)
         .with_system(reloader::reload)
-        .with_system(shooter::shoot)
+        .with_system(shoot)
 }
 
 mod weapon_switcher {
@@ -37,7 +37,7 @@ mod weapon_switcher {
                     let gun = holster.active_gun_mut();
                     if gun.reload_started_at.is_some() {
                         // if last switch from this happened mid-reload, restart it
-                        gun.reload_started_at = Some(time.time_since_startup());
+                        gun.reload_started_at = Some(time.elapsed());
                     }
 
                     if let Some(client) =
@@ -112,7 +112,7 @@ mod reloader {
         for (&input, mut holster, maybe_client) in input_query.iter_mut() {
             let mut weapon = holster.active_gun_mut();
             if input.flags.intersects(InputFlags::RELOAD) && weapon.is_allowed_to_reload() {
-                weapon.reload_started_at = Some(time.time_since_startup())
+                weapon.reload_started_at = Some(time.elapsed())
             } else if let Some(reload_start) = weapon.reload_started_at {
                 check_reload_finish(
                     &time,
@@ -134,8 +134,8 @@ mod reloader {
         client: Option<&Client>,
         reload_start: &std::time::Duration,
     ) {
-        if time.seconds_since_startup()
-            >= reload_start.as_secs_f64() + weapon.details.reload_time.0 as f64
+        if time.elapsed_seconds()
+            >= reload_start.as_secs_f32() + weapon.details.reload_time.0
         {
             weapon.bullets_left_in_magazine = weapon.details.magazine_size;
             weapon.reload_started_at = None;
@@ -158,126 +158,122 @@ mod reloader {
     }
 }
 
-mod shooter {
-    use super::*;
+#[allow(clippy::type_complexity)]
+pub fn shoot(
+    mut commands: Commands,
+    time: Res<Time>,
+    client_registry: Res<ClientRegistry>,
+    mut net: ResMut<TransportResource>,
+    mut query: Query<(
+        &Input,
+        &Transform,
+        Option<&BoundingCircle>,
+        &mut Holster,
+        Option<&Client>,
+    )>,
+) {
+    for (input, shooter_transform, maybe_bound, mut holster, maybe_client) in query.iter_mut() {
+        let mut weapon = holster.active_gun_mut();
+        if input.flags.intersects(InputFlags::SHOOT) {
+            if weapon.is_allowed_to_shoot(time.elapsed()) {
+                let mut bullet_transform = *shooter_transform;
 
-    #[allow(clippy::type_complexity)]
-    pub fn shoot(
-        mut commands: Commands,
-        time: Res<Time>,
-        client_registry: Res<ClientRegistry>,
-        mut net: ResMut<TransportResource>,
-        mut query: Query<(
-            &Input,
-            &Transform,
-            Option<&BoundingCircle>,
-            &mut Holster,
-            Option<&Client>,
-        )>,
-    ) {
-        for (input, shooter_transform, maybe_bound, mut holster, maybe_client) in query.iter_mut() {
-            let mut weapon = holster.active_gun_mut();
-            if input.flags.intersects(InputFlags::SHOOT) {
-                if weapon.is_allowed_to_shoot(time.time_since_startup()) {
-                    let mut bullet_transform = *shooter_transform;
+                let mut direction3d = Vec3::Y;
+                westiny_common::utilities::rotate_vec3_around_z(
+                    bullet_transform.rotation,
+                    &mut direction3d,
+                );
+                if let Some(bound) = maybe_bound {
+                    bullet_transform.translation -= bound.radius.into_pixel() * direction3d;
+                }
 
-                    let mut direction3d = Vec3::Y;
-                    westiny_common::utilities::rotate_vec3_around_z(
-                        &bullet_transform.rotation,
-                        &mut direction3d,
+                for _pellet_idx in 0..weapon.details.pellet_number {
+                    let velocity_direction = spread_to_quat(weapon.details.spread)
+                        .mul_vec3(direction3d)
+                        .truncate()
+                        * -1.0;
+                    let velocity = weapon.details.bullet_speed * velocity_direction;
+
+                    commands
+                        .spawn(
+                            BulletBundle::new(
+                                MeterVec2::from_pixel_vec(bullet_transform.translation.truncate()),
+                                velocity,
+                                weapon.bullet_lifespan_sec(),
+                                time.elapsed()))
+                        .insert(Damage(weapon.details.damage));
+
+                    broadcast_shot_event(
+                        &client_registry,
+                        &mut net,
+                        weapon,
+                        &bullet_transform,
+                        &velocity,
                     );
-                    if let Some(bound) = maybe_bound {
-                        bullet_transform.translation -= bound.radius.into_pixel() * direction3d;
-                    }
+                }
 
-                    for _pellet_idx in 0..weapon.details.pellet_number {
-                        let velocity_direction = spread_to_quat(weapon.details.spread)
-                            .mul_vec3(direction3d)
-                            .truncate()
-                            * -1.0;
-                        let velocity = weapon.details.bullet_speed * velocity_direction;
+                weapon.last_shot_time = time.elapsed();
+                weapon.input_lifted = false;
+                weapon.bullets_left_in_magazine -= 1;
 
-                        commands
-                            .spawn_bundle(
-                                BulletBundle::new(
-                                    MeterVec2::from_pixel_vec(bullet_transform.translation.truncate()),
-                                    velocity,
-                                    weapon.bullet_lifespan_sec(),
-                                    time.time_since_startup()))
-                            .insert(Damage(weapon.details.damage));
-
-                        broadcast_shot_event(
-                            &client_registry,
-                            &mut net,
-                            weapon,
-                            &bullet_transform,
-                            &velocity,
+                if let Some(client) = maybe_client {
+                    if let Err(err) = send_ammo_update(
+                        &client.id,
+                        &client_registry,
+                        weapon.bullets_left_in_magazine,
+                        &mut net,
+                    ) {
+                        bevy::log::error!(
+                            "Failed to send ammo update to client {:?}. Error: {}",
+                            client.id,
+                            err
                         );
                     }
-
-                    weapon.last_shot_time = time.time_since_startup();
-                    weapon.input_lifted = false;
-                    weapon.bullets_left_in_magazine -= 1;
-
-                    if let Some(client) = maybe_client {
-                        if let Err(err) = send_ammo_update(
-                            &client.id,
-                            &client_registry,
-                            weapon.bullets_left_in_magazine,
-                            &mut net,
-                        ) {
-                            bevy::log::error!(
-                                "Failed to send ammo update to client {:?}. Error: {}",
-                                client.id,
-                                err
-                            );
-                        }
-                    }
                 }
-            } else {
-                weapon.input_lifted = true;
             }
+        } else {
+            weapon.input_lifted = true;
         }
     }
+}
 
-    fn spread_to_quat(spread: f32) -> bevy::math::Quat {
-        let angle = if spread > 0.0 {
-            use rand::Rng;
-            rand::thread_rng().gen_range(-spread..spread) * (PI / 180.0)
-        } else {
-            0.0
-        };
+fn spread_to_quat(spread: f32) -> bevy::math::Quat {
+    let angle = if spread > 0.0 {
+        use rand::Rng;
+        rand::thread_rng().gen_range(-spread..spread) * (PI / 180.0)
+    } else {
+        0.0
+    };
 
-        bevy::math::Quat::from_rotation_z(angle)
-    }
+    bevy::math::Quat::from_rotation_z(angle)
+}
 
-    fn broadcast_shot_event(
-        client_registry: &ClientRegistry,
-        net: &mut TransportResource,
-        weapon: &Weapon,
-        bullet_transform: &Transform,
-        velocity: &MeterPerSecVec2,
-    ) {
-        let payload = serialize(&PacketType::ShotEvent(ShotEvent {
-            position: MeterVec2::from_pixel_vec(bullet_transform.translation.truncate()),
-            velocity: *velocity,
-            bullet_time_limit_secs: weapon.bullet_lifespan_sec(),
-        }))
-        .expect("ShotEvent's serialization failed");
+fn broadcast_shot_event(
+    client_registry: &ClientRegistry,
+    net: &mut TransportResource,
+    weapon: &Weapon,
+    bullet_transform: &Transform,
+    velocity: &MeterPerSecVec2,
+) {
+    let payload = serialize(&PacketType::ShotEvent(ShotEvent {
+        position: MeterVec2::from_pixel_vec(bullet_transform.translation.truncate()),
+        velocity: *velocity,
+        bullet_time_limit_secs: weapon.bullet_lifespan_sec(),
+    }))
+    .expect("ShotEvent's serialization failed");
 
-        client_registry
-            .get_clients()
-            .iter()
-            .map(|handle| handle.addr)
-            .for_each(|addr| {
-                net.send_with_requirements(
-                    addr,
-                    &payload,
-                    DeliveryRequirement::ReliableSequenced(StreamId::ShotEvent.into()),
-                    UrgencyRequirement::OnTick,
-                );
-            })
-    }
+    client_registry
+        .get_clients()
+        .iter()
+        .map(|handle| handle.addr)
+        .for_each(|addr| {
+            net.send_with_requirements(
+                addr,
+                &payload,
+                DeliveryRequirement::ReliableSequenced(StreamId::ShotEvent.into()),
+                UrgencyRequirement::OnTick,
+            );
+        })
 }
 
 #[cfg(test)]
@@ -317,7 +313,7 @@ mod test {
         ];
 
         commands
-            .spawn()
+            .spawn_empty()
             .insert(input)
             .insert(Transform::default())
             .insert(BoundingCircle { radius: Meter(1.0) })
@@ -356,7 +352,7 @@ mod test {
             .insert_resource(TransportResource::new())
             .insert_resource(time)
             .add_startup_system(spawn_shooting_player)
-            .add_system(shooter::shoot)
+            .add_system(shoot)
             .add_assert_system(|net: ResMut<TransportResource>| {
                 let messages = net.get_messages();
 

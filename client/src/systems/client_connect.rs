@@ -24,10 +24,10 @@ pub fn send_connection_request(
     mut last_run: Local<LastRun>,
 ) {
     // First condition is to avoid 1sec dead time after first system run
-    if last_run.0 != Duration::ZERO && time.time_since_startup() - last_run.0 < Duration::from_secs(1u64) {
+    if last_run.0 != Duration::ZERO && time.elapsed() - last_run.0 < Duration::from_secs(1u64) {
         return;
     }
-    last_run.0 = time.time_since_startup();
+    last_run.0 = time.elapsed();
 
     log::info!("Trying to connect to server: {:?}", server_addr.address);
     let msg = serialize(&ConnectionRequest {
@@ -88,7 +88,7 @@ pub fn receive_connection_response(
 #[cfg(test)]
 mod test {
     use super::*;
-    use bevy::prelude::App;
+    use bevy::prelude::{App, SystemSet};
     use std::net::SocketAddr;
     use w_bevy_test::*;
     use westiny_common::components::{EntityType, NetworkId};
@@ -105,9 +105,9 @@ mod test {
             player_name: "abcd1234".to_string(),
         }).unwrap();
 
-        println!("Start test");
         App::new()
-            .add_plugin(bevy::core::CorePlugin)
+            .add_plugin(bevy::core::CorePlugin::default())
+            .add_plugin(bevy::time::TimePlugin::default())
             .init_resource::<TransportResource>()
             .insert_resource(ServerAddress {
                 address: SocketAddr::from(SOCKET_ADDRESS),
@@ -152,17 +152,11 @@ mod test {
                     .unwrap()
                     .into(),
             ))
-            .add_assert_system(assertion::assert_current_state(AppState::Play))
+            .add_assert_system(assertion::assert_current_state(AppState::PlayInit))
             .add_assert_system(assertion::assert_resource(Seed(100)))
             .add_assert_system(assertion::assert_resource(PlayerNetworkId(NetworkId::new(EntityType::Player, 1234))))
-
-            .send_events(vec![Some(NetworkSimulationEvent::Message(
-                SocketAddr::from(SOCKET_ADDRESS),
-                serialize(&PacketType::ConnectionResponse(ok_init_data()))
-                    .unwrap()
-                    .into(),
-            ))])
-            .add_system(receive_connection_response)
+            .add_system_set(
+                SystemSet::on_update(AppState::Connect).with_system(receive_connection_response))
             .run();
     }
 }

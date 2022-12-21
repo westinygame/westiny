@@ -1,6 +1,6 @@
 use bevy::ecs::component::Component;
 
-#[derive(Copy, Clone, PartialEq, Component)]
+#[derive(Copy, Clone, Eq, PartialEq, Component)]
 #[repr(usize)]
 pub enum SpriteId {
     Grass = 0,

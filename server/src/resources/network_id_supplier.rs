@@ -2,7 +2,7 @@ use crate::components::{EntityType, NetworkId};
 use std::collections::HashMap;
 use westiny_common::components;
 
-#[derive(Default)]
+#[derive(Default, bevy::prelude::Resource)]
 pub struct NetworkIdSupplier {
     next_ids: HashMap<EntityType, u32>,
 }

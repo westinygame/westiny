@@ -108,7 +108,7 @@ mod weapon_details {
     use bevy::reflect::TypeUuid;
     use serde::Deserialize;
 
-    #[derive(Debug, PartialEq, Deserialize, Clone)]
+    #[derive(Debug, Eq, PartialEq, Deserialize, Clone)]
     pub enum Shot {
         /// one shot per click (even when player holds down the button)
         Single,

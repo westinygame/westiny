@@ -65,7 +65,7 @@ pub fn update_network_entities(
         .iter()
         .map(|death| death.position.into_transform(Meter(0.0)))
         .for_each(|transform| {
-            commands.spawn_bundle(CorpseBundle::new(transform, time.time_since_startup()));
+            commands.spawn(CorpseBundle::new(transform, time.elapsed()));
         });
 }
 

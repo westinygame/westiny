@@ -12,7 +12,7 @@ pub fn place_barrel(commands: &mut Commands, pos: Vec2) {
         BARREL_HEIGHT,
     );
 
-    commands.spawn_bundle(BarrelBundle {
+    commands.spawn(BarrelBundle {
         bounding_circle: BoundingCircle {
             radius: BARREL_DIAMETER / 2f32,
         },

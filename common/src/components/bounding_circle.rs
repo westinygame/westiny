@@ -1,7 +1,8 @@
 use crate::metric_dimension::length::Meter;
-use bevy::ecs::component::Component;
+use bevy::prelude::*;
 
-#[derive(Copy, Clone, Debug, Component)]
+#[derive(Default, Copy, Clone, Debug, Component, Reflect)]
+#[reflect(Component)]
 pub struct BoundingCircle {
     pub radius: Meter,
 }

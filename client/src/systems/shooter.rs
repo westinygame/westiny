@@ -12,14 +12,15 @@ pub fn spawn_bullets(
 ) {
     let event_cnt = shot_events.iter()
         .inspect(|shot| {
-            commands.spawn_bundle(
+            commands.spawn(
                 BulletBundle::new(
                     shot.position,
                     shot.velocity,
                     shot.bullet_time_limit_secs,
-                    time.time_since_startup())
+                    time.elapsed())
                 )
-            .insert(SpriteId::Bullet);
+            .insert(SpriteId::Bullet)
+            .insert(VisibilityBundle::default());
         })
         .count();
 

@@ -5,21 +5,21 @@ mod barrel;
 mod bullet;
 
 use crate::components::SpriteId;
-use bevy::prelude::{Bundle, GlobalTransform, Transform};
+use bevy::prelude::{Bundle, SpatialBundle, Transform};
 
 #[derive(Bundle)]
 pub struct SimpleSpriteSheetBundle {
-    pub global_transform: GlobalTransform,
-    pub transform: Transform,
     pub sprite: SpriteId,
+
+    #[bundle]
+    pub spatial: SpatialBundle
 }
 
 impl SimpleSpriteSheetBundle {
     pub fn new(transform: Transform, sprite: SpriteId) -> Self {
         SimpleSpriteSheetBundle {
-            global_transform: GlobalTransform::default(),
-            transform,
             sprite,
+            spatial: SpatialBundle::from_transform(transform)
         }
     }
 }

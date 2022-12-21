@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use serde::Deserialize;
 use westiny_common::utilities::read_ron;
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Resource)]
 pub struct SpriteResource {
     pub sprites: Handle<TextureAtlas>,
 }
@@ -56,7 +56,7 @@ pub fn initialize_sprite_resource(
     manifest
         .sprites
         .iter()
-        .map(|rect| bevy::sprite::Rect {
+        .map(|rect| bevy::math::Rect {
             min: Vec2::new(rect.x, rect.y),
             max: Vec2::new(rect.x + rect.width, rect.y + rect.height),
         })

@@ -33,29 +33,29 @@ pub fn setup(
         color: Color::WHITE,
     };
 
-    commands.spawn_bundle(NodeBundle {
+    commands.spawn(NodeBundle {
             style: Style {
                 size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
                 justify_content: JustifyContent::SpaceBetween,
                 flex_direction: FlexDirection::RowReverse,
                 ..Default::default()
             },
-            color: Color::NONE.into(),
+            background_color: Color::NONE.into(),
             ..Default::default()
         })
         .with_children(|parent| {
             parent
-                .spawn_bundle(NodeBundle {
+                .spawn(NodeBundle {
                     style: Style {
                         size: Size::new(Val::Percent(100.0), Val::Px(40.0)),
                         border: UiRect::all(Val::Px(2.0)),
                         ..Default::default()
                     },
-                    color: Color::rgba(0.23, 0.08, 0.05, 0.7).into(),
+                    background_color: Color::rgba(0.23, 0.08, 0.05, 0.7).into(),
                     ..Default::default()
                 })
                 .with_children(|parent| {
-                    parent.spawn_bundle(TextBundle {
+                    parent.spawn(TextBundle {
                         style: Style {
                             margin: UiRect::all(Val::Px(5.0)),
                             ..Default::default()
@@ -72,29 +72,29 @@ pub fn setup(
                 });
         });
 
-    commands.spawn_bundle(NodeBundle {
+    commands.spawn(NodeBundle {
             style: Style {
                 size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
                 justify_content: JustifyContent::SpaceBetween,
                 flex_direction: FlexDirection::RowReverse,
                 ..Default::default()
             },
-            color: Color::NONE.into(),
+            background_color: Color::NONE.into(),
             ..Default::default()
         })
         .with_children(|parent| {
             parent
-                .spawn_bundle(NodeBundle {
+                .spawn(NodeBundle {
                     style: Style {
                         size: Size::new(Val::Percent(100.0), Val::Px(40.0)),
                         border: UiRect::all(Val::Px(2.0)),
                         ..Default::default()
                     },
-                    color: Color::rgba(0.23, 0.08, 0.05, 0.7).into(),
+                    background_color: Color::rgba(0.23, 0.08, 0.05, 0.7).into(),
                     ..Default::default()
                 })
                 .with_children(|parent| {
-                    parent.spawn_bundle(TextBundle {
+                    parent.spawn(TextBundle {
                         style: Style {
                             margin: UiRect::all(Val::Px(5.0)),
                             ..Default::default()

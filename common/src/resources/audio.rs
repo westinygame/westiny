@@ -6,7 +6,7 @@ pub enum SoundId {
     Ouch = 2,
 }
 
-#[derive(Default)]
+#[derive(Default, bevy::prelude::Resource)]
 pub struct AudioQueue {
     pub sound: Option<SoundId>,
 }

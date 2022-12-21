@@ -36,8 +36,8 @@ impl WestinyDiagnosticsPlugin {
 pub struct DiagnosticPlugins;
 
 impl PluginGroup for DiagnosticPlugins {
-    fn build(&mut self, group: &mut PluginGroupBuilder) {
-        group
+    fn build(self) -> PluginGroupBuilder {
+        PluginGroupBuilder::start::<Self>()
             .add(Self)
             .add(LogDiagnosticsPlugin {
                 filter: Some(vec![
@@ -48,7 +48,7 @@ impl PluginGroup for DiagnosticPlugins {
                 wait_duration: Duration::from_secs(3),
             })
             .add(FrameTimeDiagnosticsPlugin::default())
-            .add(WestinyDiagnosticsPlugin::default());
+            .add(WestinyDiagnosticsPlugin::default())
     }
 }
 

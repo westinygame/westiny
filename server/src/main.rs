@@ -79,7 +79,7 @@ fn main() {
         .add_event::<westiny_common::events::EntityDelete>()
         .add_plugins(MinimalPlugins)
         .add_plugins(DiagnosticPlugins)
-        .add_plugin(LogPlugin)
+        .add_plugin(LogPlugin::default())
         .add_plugin(TransformPlugin)
         .add_plugin(LaminarPlugin::new(socket_address, laminar_config))
         .add_startup_system(systems::build_map)

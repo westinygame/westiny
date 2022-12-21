@@ -1,6 +1,6 @@
-use bevy::prelude::{AudioSource, AssetServer, Handle, Res, ResMut};
+use bevy::prelude::{Resource, AudioSource, AssetServer, Handle, Res, ResMut};
 
-#[derive(Default)]
+#[derive(Default, Resource)]
 pub struct Sounds
 {
     pub handles: [Handle<AudioSource>; 3],

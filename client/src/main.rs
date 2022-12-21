@@ -7,7 +7,7 @@ use westiny_common::{
     network::{
         EntityState, NetworkEntityDelete, PlayerDeath, PlayerNotification, PlayerUpdate, ShotEvent,
     },
-    events::{EntityDelete},
+    events::EntityDelete,
     utilities::read_ron,
     NetworkConfig,
 };
@@ -15,6 +15,7 @@ use westiny_common::{
 use blaminar::prelude::{LaminarLabel, LaminarPlugin, NetworkSimulationEvent, TransportResource};
 
 use bevy::prelude::*;
+use bevy_inspector_egui::WorldInspectorPlugin;
 
 mod components;
 mod entities;
@@ -60,8 +61,8 @@ fn main() {
             })
     };
 
-    App::new()
-        .add_plugins(DefaultPlugins)
+    let mut app = App::new();
+    app.add_plugins(DefaultPlugins)
         .add_plugin(LaminarPlugin::new(client_socket, laminar_config))
         .add_plugin(bevy_ecs_tilemap::TilemapPlugin)
         .insert_resource(get_server_address())
@@ -109,15 +110,22 @@ fn main() {
         .add_system_set(
             SystemSet::on_enter(states::AppState::Play)
                 .with_system(|| log::debug!("Entering Play AppState")))
+        .add_plugin(WorldInspectorPlugin::default())
 
         .add_system_to_stage(
             CoreStage::PostUpdate,
-            systems::network_entity_delete::delete_entities)
+            systems::network_entity_delete::delete_entities);
+        
+        register_reflected_types(&mut app);
 
-        .run();
+        app.run();
 }
 
 const DEFAULT_CLIENT_PORT: u16 = 4557;
+
+fn register_reflected_types(app: &mut App) {
+    app.register_type::<components::BoundingCircle>();
+}
 
 #[derive(Deserialize)]
 pub struct ClientPort(pub u16);

@@ -16,7 +16,7 @@ pub fn delete_entities(mut commands: Commands,
         .collect();
 
     network_ids.iter()
-        .filter(|(entity, net_id)| net_deletions.contains(net_id))
+        .filter(|(_, net_id)| net_deletions.contains(net_id))
         .for_each(|(entity, _)| deletions.push(entity));
 
     for entity_id in deletions.iter() {
@@ -26,7 +26,7 @@ pub fn delete_entities(mut commands: Commands,
     // for deduplication -> bevy crashes if despawn is called on a nonexistent entity
     let mut deleted: Vec<Entity> = vec![];
     for entity_id in deletions.iter() {
-        if !deleted.contains(&*entity_id) {
+        if !deleted.contains(entity_id) {
             commands.entity(*entity_id).despawn();
             deleted.push(*entity_id);
         }

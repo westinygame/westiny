@@ -7,7 +7,7 @@ use crate::systems::camera::PlayCamera;
 
 use bevy::input::{keyboard::KeyCode, mouse::MouseButton};
 use bevy::prelude::*;
-use bevy::render::camera::{RenderTarget};
+use bevy::render::camera::RenderTarget;
 use blaminar::prelude::*;
 
 #[derive(Copy, Clone)]
@@ -40,7 +40,7 @@ fn update_input_keys(
     mouse_btn_input: &Input<MouseButton>,
 ) {
     INPUT_FLAG_MAPPING.iter()
-        .map(|(flag, control)| (flag, is_held_down(*control, &*keyboard_input, &*mouse_btn_input)))
+        .map(|(flag, control)| (flag, is_held_down(*control, keyboard_input, mouse_btn_input)))
         .for_each(|(flag, pressed)| input.flags.set(*flag, pressed));
 }
 
@@ -90,7 +90,7 @@ pub fn handle_user_inputs(
 ) {
     // NOTE: Only one Input component exists on the client
     if let Some(mut input) = input_qry.iter_mut().next() {
-        update_input_keys(&mut input, &*keyboard_input, &*mouse_button_input);
+        update_input_keys(&mut input, &keyboard_input, &mouse_button_input);
 
         let (camera, camera_transform) = camera_query.single();
         update_cursor_position(&mut input, &windows, camera, camera_transform);

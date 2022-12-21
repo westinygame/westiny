@@ -1,6 +1,7 @@
 use crate::components::weapon::WeaponDetails;
 use crate::utilities::read_ron;
 
+#[derive(bevy::prelude::Resource)]
 pub struct GunResource {
     weapons: [WeaponDetails; 3],
 }

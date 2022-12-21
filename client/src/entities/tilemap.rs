@@ -1,92 +1,64 @@
 use bevy::prelude::*;
 use bevy::render::render_resource::TextureUsages;
 use bevy_ecs_tilemap::prelude::*;
+use bevy_ecs_tilemap::helpers::filling::fill_tilemap;
 
 use westiny_common::metric_dimension::length::Meter;
 
 const TILE_SIZE: Meter = Meter(1.0);
 const MAP_SIZE: u32 = 64;
-const CHUNK_SIZE: u32 = 16;
 
 pub fn initialize_tilemap(
     mut commands: Commands,
-    asset_server: Res<AssetServer>//,
-    //mut map_query: MapQuery
+    asset_server: Res<AssetServer>
     )
 {
-
-    let texture_handle = asset_server.load("spritesheet.png");
+    let texture_handle: Handle<Image> = asset_server.load("spritesheet.png");
 
     let tilemap_size = TilemapSize{x: MAP_SIZE, y: MAP_SIZE}; // ? /CHUNK_SIZE?
 
     // Layer 1
     let mut tile_storage = TileStorage::empty(tilemap_size);
-    let map_entity = commands.spawn().id();
+    let map_entity = commands.spawn_empty().id();
 
-    bevy_ecs_tilemap::helpers::fill_tilemap(
-        TileTexture(0),
+    fill_tilemap(
+        TileTextureIndex(0),
         tilemap_size,
         TilemapId(map_entity),
         &mut commands,
         &mut tile_storage
         );
 
+    let tile_size = TilemapTileSize { x: TILE_SIZE.into_pixel(), y: TILE_SIZE.into_pixel() };
+    let grid_size = tile_size.into();
+    let map_type = TilemapType::Square;
 
-    // let mut map = Map::new(0u16, map_entity);
+    commands.entity(map_entity).insert(TilemapBundle {
+        grid_size,
+        map_type,
+        size: tilemap_size,
+        storage: tile_storage,
+        texture: TilemapTexture::Single(texture_handle),
+        tile_size,
+        transform: get_tilemap_center_transform(&tilemap_size, &grid_size, &map_type, 0.0),
+        ..Default::default()
+    });
 
-    // let (mut layer_builder, _) = LayerBuilder::new(
-    //     &mut commands,
-    //     LayerSettings::new(
-    //         MapSize(MAP_SIZE/CHUNK_SIZE, MAP_SIZE/CHUNK_SIZE),
-    //         ChunkSize(CHUNK_SIZE, CHUNK_SIZE),
-    //         TileSize(TILE_SIZE.into_pixel(), TILE_SIZE.into_pixel()),
-    //         TextureSize(32.0, 32.0),
-    //     ),
-    //     0u16,
-    //     0u16,
-    // );
-
-    // layer_builder.set_all(TileBundle::default());
-
-    // let layer_entity = map_query.build_layer(&mut commands, layer_builder, texture_handle);
-    // map.add_layer(&mut commands, 0u16, layer_entity);
-
-    // let offset = -((MAP_SIZE/2u32) as f32 * TILE_SIZE.into_pixel());
-    // commands
-    //     .entity(map_entity)
-    //     .insert(map)
-    //     .insert(Transform::from_xyz(offset - Meter(0.5).into_pixel(), offset + Meter(0.5).into_pixel(), 0.0))
-    //     .insert(GlobalTransform::default());
-
-    let offset = -((MAP_SIZE/2u32) as f32 * TILE_SIZE.into_pixel());
-    commands
-        .entity(map_entity)
-        .insert_bundle(TilemapBundle{
-            grid_size: TilemapGridSize{ x: 16.0, y: 16.0 }, // ??
-            size: tilemap_size,
-            storage: tile_storage,
-            texture: TilemapTexture(texture_handle),
-            tile_size: TilemapTileSize{ x: TILE_SIZE.into_pixel(), y: TILE_SIZE.into_pixel() },
-            transform: Transform::from_xyz(offset - Meter(0.5).into_pixel(), offset + Meter(0.5).into_pixel(), 0.0),
-            ..Default::default()
-            });
 }
 
+// TODO This is a workaround. Is it still necessary?
 pub fn set_texture_filters_to_nearest(
     mut texture_events: EventReader<AssetEvent<Image>>,
     mut textures: ResMut<Assets<Image>>,
 ) {
     // quick and dirty, run this for all textures anytime a texture is created.
     for event in texture_events.iter() {
-        match event {
-            AssetEvent::Created { handle } => {
-                if let Some(mut texture) = textures.get_mut(handle) {
+        if let AssetEvent::Created { handle } = event {
+            if let Some(mut texture) = textures.get_mut(handle) {
                     texture.texture_descriptor.usage = TextureUsages::TEXTURE_BINDING
                         | TextureUsages::COPY_SRC
                         | TextureUsages::COPY_DST;
-                }
             }
-            _ => (),
         }
     }
 }

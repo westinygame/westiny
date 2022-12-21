@@ -1,7 +1,7 @@
 use crate::components::NetworkId;
 use crate::resources::ClientRegistry;
 use bevy::prelude::{
-    Commands, Entity, EventReader, ParallelSystemDescriptorCoercion, Query, Res,
+    Commands, Entity, EventReader, IntoSystemDescriptor, Query, Res,
     ResMut, SystemSet,
 };
 use blaminar::simulation::{DeliveryRequirement, TransportResource, UrgencyRequirement};

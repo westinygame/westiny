@@ -1,20 +1,19 @@
 pub use audio::{AudioQueue, SoundId};
-//pub use cursor_pos::CursorPosition;
 pub use map::build_map;
 
 mod audio;
 pub mod collision;
-//mod cursor_pos;
 pub mod map;
 pub mod weapon;
 
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::net::SocketAddr;
+use bevy::prelude::Resource;
 
 const DEFAULT_SERVER_PORT: u16 = 5745;
 
-#[derive(Clone, Deserialize, PartialEq)]
+#[derive(Clone, Deserialize, Eq, PartialEq, Resource)]
 pub struct ServerAddress {
     pub address: SocketAddr,
 }
@@ -27,7 +26,7 @@ impl Default for ServerAddress {
     }
 }
 
-#[derive(Copy, Clone, Serialize, Deserialize, Eq, PartialEq, Debug, Hash, Default)]
+#[derive(Copy, Clone, Serialize, Deserialize, Eq, PartialEq, Debug, Hash, Default, Resource)]
 pub struct Seed(pub u64);
 
 impl Display for Seed {
@@ -36,6 +35,7 @@ impl Display for Seed {
     }
 }
 
+#[derive(Resource)]
 pub struct ResourcesDir {
     pub common_resources: std::path::PathBuf,
     pub crate_resources: std::path::PathBuf,

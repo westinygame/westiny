@@ -9,7 +9,7 @@ mod audio;
 mod network_stream_id;
 mod sprite_resource;
 
-#[derive(Debug)]
+#[derive(Debug, bevy::prelude::Resource)]
 #[cfg_attr(test, derive(Eq, PartialEq))]
 pub struct PlayerNetworkId(pub NetworkId);
 

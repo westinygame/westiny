@@ -5,7 +5,7 @@ authors = ["Abel Suranyi"]
 edition = "2021"
 
 [dependencies]
-bevy = "0.8.0"
+bevy = "0.9.1"
 serde = "1.0.120"
 derive-new = "0.5.8"
 bitflags = "1.2.1"
@@ -16,9 +16,9 @@ log = "0.4.14"
 ron = "0.6.4"
 num-traits = "0.2"
 num-derive = "0.3"
-blaminar = { git = "https://github.com/westinygame/blaminar", rev = "v0.3.0" }
+blaminar = { git = "https://github.com/westinygame/blaminar", rev = "v0.4.1" }
 
 [dev-dependencies]
 proptest = "0.10.1"
 westiny_test = { path = "../test" }
-w-bevy_test = { git = "https://github.com/westinygame/w-bevy_test", rev = "v0.2.0" }
+w-bevy_test = { git = "https://github.com/westinygame/w-bevy_test", rev = "v0.3.0" }

@@ -1,6 +1,5 @@
 use crate::states::AppState;
 use crate::systems;
-use crate::components;
 use crate::entities::tilemap::initialize_tilemap;
 use bevy::prelude::*;
 
