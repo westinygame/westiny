@@ -7,11 +7,15 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::result::Result;
+use rand::rngs::StdRng;
+use rand::{SeedableRng, Rng};
+
 
 const BARREL_CHAR: char = 'x';
 const EMPTY_CHAR: char = ' ';
 
 const MAP_OFFSET: (i32, i32) = (-32, -32);
+const MAP_SIZE: u32 = 64; // TODO it is copied from tilemap.rs! Make it more generic!
 
 pub fn build_map(mut commands: Commands, seed: Seed, map_files_dir: &Path) -> Result<(), MapError> {
     if seed.0 == 0 {
@@ -52,7 +56,15 @@ pub fn build_map(mut commands: Commands, seed: Seed, map_files_dir: &Path) -> Re
 
         Ok(())
     } else {
-        Err(SeedError(seed))
+        let mut rng = StdRng::seed_from_u64(seed.0);
+        println!("{}", rng.gen_range(0..MAP_SIZE));
+        for _ in 0..500 {
+            let x = rng.gen_range(0i32..MAP_SIZE as i32);
+            let y = rng.gen_range(0i32..MAP_SIZE as i32);
+            let pos = Vec2::new((x + MAP_OFFSET.0) as f32, -(y + MAP_OFFSET.1) as f32);
+            entities::place_barrel(&mut commands, pos);
+        }
+        Ok(())
     }
 }
 
